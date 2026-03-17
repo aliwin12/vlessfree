@@ -165,6 +165,17 @@ const MOCK_KEYS: VlessKey[] = [
     config: 'vless://35e9c5d8-6d91-41d3-9587-585150c50936@uk-lhr-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=p0MkIIxkklgPs4vJJP5Qp9RxdqgMnjmgoIt5t8g6uSU&security=reality&sid=794dbecd&sni=uk-lhr-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%AC%F0%9F%87%A7%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%202',
     expiryDate: '20.03.2026',
     status: 'online',
+  },
+  {
+    id: 9,
+    name: 'Server №9',
+    location: '🇷🇺 Россия, Москва',
+    protocol: 'VLESS',
+    latency: '0ms',
+    load: 0,
+    config: 'vless://ddeb5fc9-aed2-4d59-b6d1-71ead220c878@ru-svo-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=04Kor4UEaxb90YlCNktYu52799Dw5uoYeaagJ-xQ8wA&security=reality&sid=8957cb90&sni=ru-svo-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B7%F0%9F%87%BA%20%D0%A0%D0%BE%D1%81%D1%81%D0%B8%D1%8F%201',
+    expiryDate: '20.03.2026',
+    status: 'online',
   }
 ];
 
