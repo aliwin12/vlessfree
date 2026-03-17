@@ -519,6 +519,18 @@ function HowToUsePage() {
   );
 }
 
+function NotchLogo() {
+  return (
+    <div className="iphone-notch-logo fixed top-0 left-1/2 -translate-x-1/2 z-[200] pointer-events-none">
+      <div className="px-6 py-2 rounded-b-[20px] bg-white/5 backdrop-blur-xl border-x border-b border-white/10 flex items-center justify-center">
+        <span className="text-[8px] md:text-[10px] font-bold uppercase tracking-[0.4em] text-white/30 whitespace-nowrap">
+          VLESS PREMIUM
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function AppContent() {
   const [keys] = useState<VlessKey[]>(MOCK_KEYS);
   const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -563,6 +575,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-[#050505] selection:bg-white selection:text-black pt-safe pb-safe">
+      <NotchLogo />
       <AnimatePresence>
         {showModal && location.pathname === '/' && (
           <motion.div 

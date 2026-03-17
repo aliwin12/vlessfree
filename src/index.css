@@ -136,6 +136,29 @@
   filter: saturate(1.5) blur(150px);
 }
 
+.iphone-notch-logo {
+  display: none;
+}
+
+.is-iphone .iphone-notch-logo {
+  display: block;
+  animation: notch-slide-down 1.2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+@keyframes notch-slide-down {
+  from { transform: translate(-50%, -100%); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.is-iphone .iphone-notch-logo span {
+  animation: notch-text-glow 4s ease-in-out infinite;
+}
+
+@keyframes notch-text-glow {
+  0%, 100% { opacity: 0.3; text-shadow: 0 0 10px rgba(255, 255, 255, 0); }
+  50% { opacity: 0.6; text-shadow: 0 0 20px rgba(255, 255, 255, 0.4); }
+}
+
 .glow-text {
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
 }
