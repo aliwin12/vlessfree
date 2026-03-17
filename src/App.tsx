@@ -199,7 +199,22 @@ function BottomNav() {
   );
 }
 
-function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, activeTab, setActiveTab }: any) {
+function SkeletonCard() {
+  return (
+    <div className="glass rounded-[20px] md:rounded-[32px] p-4 md:p-8 animate-pulse">
+      <div className="flex justify-between items-start mb-4 md:mb-8">
+        <div className="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl bg-white/5" />
+        <div className="w-16 h-3 bg-white/5 rounded" />
+      </div>
+      <div className="w-3/4 h-6 md:h-8 bg-white/5 rounded mb-2" />
+      <div className="w-1/2 h-4 bg-white/5 rounded mb-4 md:mb-6" />
+      <div className="w-1/3 h-3 bg-white/5 rounded mb-6 md:mb-8" />
+      <div className="w-full h-12 md:h-14 bg-white/5 rounded-xl md:rounded-2xl" />
+    </div>
+  );
+}
+
+function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, activeTab, setActiveTab, loading }: any) {
   const filteredKeys = keys.filter((key: any) => {
     if (activeTab === 'active') return key.status === 'online' || key.status === 'unstable';
     return key.status === 'offline';
@@ -252,7 +267,17 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
 
       {/* Nodes Grid / Empty State */}
       <AnimatePresence mode="wait">
-        {filteredKeys.length > 0 ? (
+        {loading ? (
+          <motion.div 
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
+          >
+            {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} />)}
+          </motion.div>
+        ) : filteredKeys.length > 0 ? (
           <motion.div 
             key={activeTab}
             initial={{ opacity: 0, y: 20 }}
@@ -501,6 +526,7 @@ function AppContent() {
   const [showModal, setShowModal] = useState(true);
   const [selectedKey, setSelectedKey] = useState<VlessKey | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
+  const [loading, setLoading] = useState(true);
   const location = useLocation();
 
   useEffect(() => {
@@ -512,10 +538,16 @@ function AppContent() {
     if (isIPhone) {
       document.body.classList.add('is-iphone');
     }
+
+    // Simulate loading
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500);
     
     return () => {
       window.removeEventListener('scroll', handleScroll);
       document.body.classList.remove('is-iphone');
+      clearTimeout(timer);
     };
   }, []);
 
@@ -669,6 +701,7 @@ function AppContent() {
             setSelectedKey={setSelectedKey} 
             activeTab={activeTab} 
             setActiveTab={setActiveTab} 
+            loading={loading}
           />
         } />
         <Route path="/how-to-use" element={<HowToUsePage />} />
