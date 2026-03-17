@@ -196,28 +196,13 @@ export default function App() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-5xl md:text-7xl font-serif italic mb-8 tracking-tighter leading-tight">
+            <h2 className="text-5xl md:text-7xl font-serif italic mb-4 tracking-tighter leading-tight">
               Ключи для <br /> 
               <span className="text-white/40">свободного интернета.</span>
             </h2>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-12 flex justify-center gap-12"
-          >
-            {[
-              { icon: Cpu, label: "Оптимизация" },
-              { icon: Lock, label: "Шифрование" },
-              { icon: Activity, label: "99.9% Аптайм" }
-            ].map((item, i) => (
-              <div key={i} className="flex flex-col items-center gap-2 opacity-40 hover:opacity-100 transition-opacity cursor-default">
-                <item.icon className="w-5 h-5" />
-                <span className="text-[10px] uppercase tracking-widest font-bold">{item.label}</span>
-              </div>
-            ))}
+            <p className="text-xl md:text-2xl text-white/40 font-serif italic tracking-tight">
+              Актуальные ключи VLESS
+            </p>
           </motion.div>
         </section>
 
@@ -282,7 +267,7 @@ export default function App() {
         </div>
 
         {/* Footer */}
-        <footer className="mt-32 py-12 border-t border-white/10 flex justify-center items-center opacity-40 text-[10px] uppercase tracking-[0.2em] font-bold">
+        <footer className="mt-32 py-12 border-t border-white/10 flex justify-between items-center opacity-40 text-[10px] uppercase tracking-[0.2em] font-bold">
           <div className="flex items-center gap-2">
             © 2026 
             <img 
@@ -291,6 +276,9 @@ export default function App() {
               className="h-4 w-auto object-contain"
               referrerPolicy="no-referrer"
             />
+          </div>
+          <div className="text-right">
+            Сайт может обновляться раз в два дня
           </div>
         </footer>
       </main>
