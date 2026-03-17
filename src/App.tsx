@@ -163,28 +163,39 @@ function BottomNav() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[60] glass border-t pb-safe backdrop-blur-2xl">
-      <div className="flex justify-around items-center h-14">
+    <motion.nav 
+      initial={{ y: 100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.5, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      className="md:hidden fixed bottom-0 left-0 right-0 z-[60] glass border-t pb-safe backdrop-blur-2xl"
+    >
+      <div className="flex justify-around items-center h-14 md:h-16">
         <Link 
           to="/" 
           className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/') ? 'text-white' : 'text-white/30'}`}
         >
-          <div className={`p-1 rounded-lg transition-all duration-300 ${isActive('/') ? 'bg-white/10' : ''}`}>
-            <Globe className={`w-4 h-4 ${isActive('/') ? 'glow-text' : ''}`} />
-          </div>
-          <span className={`text-[8px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/') ? 'opacity-100' : 'opacity-60'}`}>Сервера</span>
+          <motion.div 
+            whileTap={{ scale: 0.9 }}
+            className={`p-1.5 rounded-xl transition-all duration-300 ${isActive('/') ? 'bg-white/10' : ''}`}
+          >
+            <Globe className={`w-5 h-5 ${isActive('/') ? 'glow-text' : ''}`} />
+          </motion.div>
+          <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/') ? 'opacity-100' : 'opacity-60'}`}>Сервера</span>
         </Link>
         <Link 
           to="/how-to-use" 
           className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/how-to-use') ? 'text-white' : 'text-white/30'}`}
         >
-          <div className={`p-1 rounded-lg transition-all duration-300 ${isActive('/how-to-use') ? 'bg-white/10' : ''}`}>
-            <Smartphone className={`w-4 h-4 ${isActive('/how-to-use') ? 'glow-text' : ''}`} />
-          </div>
-          <span className={`text-[8px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/how-to-use') ? 'opacity-100' : 'opacity-60'}`}>Гайд</span>
+          <motion.div 
+            whileTap={{ scale: 0.9 }}
+            className={`p-1.5 rounded-xl transition-all duration-300 ${isActive('/how-to-use') ? 'bg-white/10' : ''}`}
+          >
+            <Smartphone className={`w-5 h-5 ${isActive('/how-to-use') ? 'glow-text' : ''}`} />
+          </motion.div>
+          <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/how-to-use') ? 'opacity-100' : 'opacity-60'}`}>Гайд</span>
         </Link>
       </div>
-    </nav>
+    </motion.nav>
   );
 }
 
@@ -203,7 +214,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h2 className="text-4xl sm:text-5xl md:text-7xl font-serif italic mb-4 tracking-tighter leading-tight selectable">
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-serif italic mb-4 tracking-tighter leading-tight selectable glow-text-iphone">
             Ключи для <br className="hidden sm:block" /> 
             <span className="text-white/40">свободного интернета.</span>
           </h2>
