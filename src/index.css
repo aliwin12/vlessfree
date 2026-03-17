@@ -13,32 +13,18 @@
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
     user-select: none;
-    touch-action: manipulation;
   }
-
-  body.is-iphone {
-    height: 100dvh;
-    overflow: hidden;
-    position: fixed;
-    width: 100%;
-    overscroll-behavior: none;
-  }
-
-  body.is-iphone #root {
-    height: 100%;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
+  
+  /* Allow selection in specific areas if needed, but generally disable for app feel */
   .selectable {
     user-select: text;
   }
 
   .pt-safe {
-    padding-top: env(safe-area-inset-top, 20px);
+    padding-top: env(safe-area-inset-top);
   }
   .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 20px);
+    padding-bottom: env(safe-area-inset-bottom);
   }
   .mt-safe {
     margin-top: env(safe-area-inset-top);
@@ -95,7 +81,7 @@
 
 /* Floating Header for iPhone */
 .is-iphone header.fixed.top-0 {
-  top: calc(env(safe-area-inset-top, 20px) + 12px);
+  top: 16px;
   left: 20px;
   right: 20px;
   border-radius: 20px;
@@ -148,29 +134,6 @@
 .is-iphone .fixed.inset-0.overflow-hidden.pointer-events-none {
   opacity: 1.5;
   filter: saturate(1.5) blur(150px);
-}
-
-.iphone-notch-logo {
-  display: none;
-}
-
-.is-iphone .iphone-notch-logo {
-  display: block;
-  animation: notch-slide-down 1.2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-}
-
-@keyframes notch-slide-down {
-  from { transform: translate(-50%, -100%); opacity: 0; }
-  to { transform: translate(-50%, 0); opacity: 1; }
-}
-
-.is-iphone .iphone-notch-logo img {
-  animation: notch-logo-glow 4s ease-in-out infinite;
-}
-
-@keyframes notch-logo-glow {
-  0%, 100% { opacity: 0.3; filter: drop-shadow(0 0 0px rgba(255, 255, 255, 0)); }
-  50% { opacity: 0.6; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3)); }
 }
 
 .glow-text {

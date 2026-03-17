@@ -519,27 +519,6 @@ function HowToUsePage() {
   );
 }
 
-function NotchLogo() {
-  return (
-    <div className="iphone-notch-logo fixed top-0 left-1/2 -translate-x-1/2 z-[200] pointer-events-none">
-      <div className="px-5 py-1 rounded-b-[18px] bg-black/40 backdrop-blur-3xl border-x border-b border-white/5 flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
-        <img 
-          src="https://s10.iimage.su/s/17/gzMssIvxlmD4o7bBXdXbwchG1mLsp8EHi8CdMFJ2o.png" 
-          alt="logo icon" 
-          className="w-2.5 h-2.5 object-contain opacity-50"
-          referrerPolicy="no-referrer"
-        />
-        <img 
-          src="https://s10.iimage.su/s/17/gW7gsFfxcyoojRD4cNLejI21W6YZc62Ieh9AfziAL.png" 
-          alt="logo text" 
-          className="h-2 w-auto object-contain opacity-30"
-          referrerPolicy="no-referrer"
-        />
-      </div>
-    </div>
-  );
-}
-
 function AppContent() {
   const [keys] = useState<VlessKey[]>(MOCK_KEYS);
   const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -584,7 +563,6 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-[#050505] selection:bg-white selection:text-black pt-safe pb-safe">
-      <NotchLogo />
       <AnimatePresence>
         {showModal && location.pathname === '/' && (
           <motion.div 
