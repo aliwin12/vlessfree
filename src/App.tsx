@@ -172,14 +172,14 @@ export default function App() {
           >
             <div className="w-10 h-10 bg-white/10 flex items-center justify-center rounded-xl overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.1)]">
               <img 
-                src="/src/logo.png" 
+                src="/logo.png" 
                 alt="vlessfree logo" 
                 className="w-full h-full object-contain p-1"
                 referrerPolicy="no-referrer"
               />
             </div>
             <img 
-              src="/src/logotext.png" 
+              src="/logotext.png" 
               alt="vlessfree" 
               className="h-8 md:h-10 w-auto object-contain glow-text"
               referrerPolicy="no-referrer"
@@ -271,7 +271,7 @@ export default function App() {
           <div className="flex items-center gap-2">
             © 2026 
             <img 
-              src="/src/logotext.png" 
+              src="/logotext.png" 
               alt="vlessfree" 
               className="h-4 w-auto object-contain"
               referrerPolicy="no-referrer"
