@@ -4,65 +4,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, Calendar, X, AlertTriangle, Monitor, Smartphone, Terminal, Info, ChevronRight, Download, ExternalLink } from 'lucide-react';
+import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, Calendar, X, AlertTriangle, Monitor, Smartphone, Terminal, Info, ChevronRight, Download, ExternalLink, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-
-const TARGET_DATE = new Date('2026-03-18T07:00:00');
-
-function CountdownTimer() {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      const difference = TARGET_DATE.getTime() - now.getTime();
-
-      if (difference <= 0) {
-        clearInterval(timer);
-        return;
-      }
-
-      setTimeLeft({
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((difference / 1000 / 60) % 60),
-        seconds: Math.floor((difference / 1000) % 60)
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
-    <div className="flex gap-4 justify-center items-center font-mono text-2xl md:text-3xl tracking-tighter">
-      <div className="flex flex-col items-center">
-        <span>{String(timeLeft.days).padStart(2, '0')}</span>
-        <span className="text-[10px] uppercase opacity-40 tracking-widest">дн</span>
-      </div>
-      <span className="opacity-20">:</span>
-      <div className="flex flex-col items-center">
-        <span>{String(timeLeft.hours).padStart(2, '0')}</span>
-        <span className="text-[10px] uppercase opacity-40 tracking-widest">ч</span>
-      </div>
-      <span className="opacity-20">:</span>
-      <div className="flex flex-col items-center">
-        <span>{String(timeLeft.minutes).padStart(2, '0')}</span>
-        <span className="text-[10px] uppercase opacity-40 tracking-widest">мин</span>
-      </div>
-      <span className="opacity-20">:</span>
-      <div className="flex flex-col items-center">
-        <span>{String(timeLeft.seconds).padStart(2, '0')}</span>
-        <span className="text-[10px] uppercase opacity-40 tracking-widest">сек</span>
-      </div>
-    </div>
-  );
-}
 
 interface VlessKey {
   id: number;
@@ -181,10 +125,12 @@ const MOCK_KEYS: VlessKey[] = [
 
 function Header({ scrolled }: { scrolled: boolean }) {
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'py-4 glass border-b' : 'py-8 bg-transparent'}`}>
-      <div className="max-w-7xl mx-auto px-6 relative flex justify-center items-center">
-        <Link to="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/10 flex items-center justify-center rounded-xl overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+    <header className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-500 ${
+      scrolled ? 'py-2 md:py-4 glass border-b' : 'py-3 md:py-8 bg-transparent md:bg-transparent glass md:glass-none border-b md:border-none'
+    }`}>
+      <div className="max-w-7xl mx-auto px-4 md:px-6 relative flex justify-center items-center">
+        <Link to="/" className="flex items-center gap-2 md:gap-3">
+          <div className="w-8 h-8 md:w-10 md:h-10 bg-white/10 flex items-center justify-center rounded-lg md:rounded-xl overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.1)]">
             <img 
               src="https://s10.iimage.su/s/17/gzMssIvxlmD4o7bBXdXbwchG1mLsp8EHi8CdMFJ2o.png" 
               alt="vlessfree logo" 
@@ -195,19 +141,50 @@ function Header({ scrolled }: { scrolled: boolean }) {
           <img 
             src="https://s10.iimage.su/s/17/gW7gsFfxcyoojRD4cNLejI21W6YZc62Ieh9AfziAL.png" 
             alt="vlessfree" 
-            className="h-8 md:h-10 w-auto object-contain glow-text"
+            className="h-6 md:h-10 w-auto object-contain glow-text"
             referrerPolicy="no-referrer"
           />
         </Link>
         
+        {/* Desktop Button */}
         <Link 
           to="/how-to-use" 
-          className="absolute right-6 px-4 py-2 rounded-xl bg-white/5 hover:bg-white hover:text-black text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10"
+          className="hidden md:block absolute right-6 px-4 py-2 rounded-xl bg-white/5 hover:bg-white hover:text-black text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10"
         >
           Как установить VPN
         </Link>
       </div>
     </header>
+  );
+}
+
+function BottomNav() {
+  const location = useLocation();
+  const isActive = (path: string) => location.pathname === path;
+
+  return (
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[60] glass border-t pb-safe backdrop-blur-2xl">
+      <div className="flex justify-around items-center h-14">
+        <Link 
+          to="/" 
+          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/') ? 'text-white' : 'text-white/30'}`}
+        >
+          <div className={`p-1 rounded-lg transition-all duration-300 ${isActive('/') ? 'bg-white/10' : ''}`}>
+            <Globe className={`w-4 h-4 ${isActive('/') ? 'glow-text' : ''}`} />
+          </div>
+          <span className={`text-[8px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/') ? 'opacity-100' : 'opacity-60'}`}>Сервера</span>
+        </Link>
+        <Link 
+          to="/how-to-use" 
+          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/how-to-use') ? 'text-white' : 'text-white/30'}`}
+        >
+          <div className={`p-1 rounded-lg transition-all duration-300 ${isActive('/how-to-use') ? 'bg-white/10' : ''}`}>
+            <Smartphone className={`w-4 h-4 ${isActive('/how-to-use') ? 'glow-text' : ''}`} />
+          </div>
+          <span className={`text-[8px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/how-to-use') ? 'opacity-100' : 'opacity-60'}`}>Гайд</span>
+        </Link>
+      </div>
+    </nav>
   );
 }
 
@@ -218,46 +195,48 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
   });
 
   return (
-    <main className="relative pt-40 pb-20 px-6 max-w-7xl mx-auto">
+    <main className="relative pt-20 md:pt-40 pb-28 md:pb-20 px-4 md:px-6 max-w-7xl mx-auto min-h-screen flex flex-col">
       {/* Hero Section */}
-      <section className="mb-24 text-center">
+      <section className="mb-8 md:mb-24 text-center shrink-0">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h2 className="text-5xl md:text-7xl font-serif italic mb-4 tracking-tighter leading-tight">
-            Ключи для <br /> 
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-serif italic mb-4 tracking-tighter leading-tight selectable">
+            Ключи для <br className="hidden sm:block" /> 
             <span className="text-white/40">свободного интернета.</span>
           </h2>
-          <p className="text-xl md:text-2xl text-white/40 font-serif italic tracking-tight">
+          <p className="text-lg md:text-2xl text-white/40 font-serif italic tracking-tight">
             Актуальные ключи VLESS
           </p>
         </motion.div>
       </section>
 
-      {/* Tabs */}
-      <div className="flex justify-center gap-4 mb-12">
-        <button 
-          onClick={() => setActiveTab('active')}
-          className={`px-8 py-3 rounded-2xl text-[10px] uppercase tracking-[0.2em] font-bold transition-all ${
-            activeTab === 'active' 
-            ? 'bg-white text-black shadow-[0_10px_30px_rgba(255,255,255,0.1)]' 
-            : 'bg-white/5 text-white/40 hover:bg-white/10'
-          }`}
-        >
-          Активные
-        </button>
-        <button 
-          onClick={() => setActiveTab('inactive')}
-          className={`px-8 py-3 rounded-2xl text-[10px] uppercase tracking-[0.2em] font-bold transition-all ${
-            activeTab === 'inactive' 
-            ? 'bg-white text-black shadow-[0_10px_30px_rgba(255,255,255,0.1)]' 
-            : 'bg-white/5 text-white/40 hover:bg-white/10'
-          }`}
-        >
-          Неактивные
-        </button>
+      {/* Tabs / Segmented Control */}
+      <div className="flex justify-center mb-8 md:mb-16 shrink-0">
+        <div className="glass p-1 rounded-xl md:rounded-3xl flex gap-1 bg-white/5">
+          <button 
+            onClick={() => setActiveTab('active')}
+            className={`px-5 md:px-8 py-2 md:py-3 rounded-lg md:rounded-2xl text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-bold transition-all duration-300 ${
+              activeTab === 'active' 
+              ? 'bg-white text-black shadow-xl scale-[1.02]' 
+              : 'text-white/40 hover:text-white/60'
+            }`}
+          >
+            Активные
+          </button>
+          <button 
+            onClick={() => setActiveTab('inactive')}
+            className={`px-5 md:px-8 py-2 md:py-3 rounded-lg md:rounded-2xl text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-bold transition-all duration-300 ${
+              activeTab === 'inactive' 
+              ? 'bg-white text-black shadow-xl scale-[1.02]' 
+              : 'text-white/40 hover:text-white/60'
+            }`}
+          >
+            Неактивные
+          </button>
+        </div>
       </div>
 
       {/* Nodes Grid / Empty State */}
@@ -268,7 +247,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
           >
             {filteredKeys.map((key: any, index: number) => (
               <motion.div
@@ -276,51 +255,51 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 + index * 0.05 }}
-                className={`glass rounded-3xl p-8 group hover:border-white/30 transition-all duration-500 ${key.status === 'offline' ? 'opacity-60 grayscale' : ''}`}
+                className={`glass rounded-[20px] md:rounded-[32px] p-4 md:p-8 group hover:border-white/30 transition-all duration-500 ${key.status === 'offline' ? 'opacity-60 grayscale' : ''}`}
               >
-                <div className="flex justify-between items-start mb-8">
-                  <div className={`w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-colors duration-500 ${key.status === 'offline' ? 'bg-rose-500/10 text-rose-500' : ''}`}>
-                    <Globe className="w-6 h-6" />
+                <div className="flex justify-between items-start mb-4 md:mb-8">
+                  <div className={`w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-colors duration-500 ${key.status === 'offline' ? 'bg-rose-500/10 text-rose-500' : ''}`}>
+                    <Globe className="w-4 h-4 md:w-6 md:h-6" />
                   </div>
                   <button 
                     onClick={() => setSelectedKey(key)}
-                    className="text-[10px] uppercase tracking-widest font-bold opacity-30 hover:opacity-100 transition-opacity"
+                    className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 hover:opacity-100 transition-opacity"
                   >
                     Подробнее
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-2xl font-serif italic tracking-tight">{key.name}</h3>
+                <div className="flex items-center gap-2 mb-1 md:mb-2">
+                  <h3 className="text-xl md:text-2xl font-serif italic tracking-tight selectable">{key.name}</h3>
                   {key.status === 'unstable' && (
-                    <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-[8px] uppercase tracking-widest font-bold border border-amber-500/20">
+                    <span className="px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-[7px] md:text-[8px] uppercase tracking-widest font-bold border border-amber-500/20">
                       Нестабильный
                     </span>
                   )}
                   {key.status === 'offline' && (
-                    <span className="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-500 text-[8px] uppercase tracking-widest font-bold border border-rose-500/20">
+                    <span className="px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-500 text-[7px] md:text-[8px] uppercase tracking-widest font-bold border border-rose-500/20">
                       Отключен
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-white/40 mb-6">{key.location}</p>
+                <p className="text-xs md:text-sm text-white/40 mb-4 md:mb-6 selectable">{key.location}</p>
 
                 {key.reason && (
-                  <div className="bg-rose-500/5 border border-rose-500/10 rounded-xl p-4 mb-6">
-                    <p className="text-[10px] text-rose-500/60 uppercase tracking-widest font-bold mb-1">Причина:</p>
-                    <p className="text-xs text-rose-500/80">{key.reason}</p>
+                  <div className="bg-rose-500/5 border border-rose-500/10 rounded-lg md:rounded-xl p-3 md:p-4 mb-4 md:mb-6">
+                    <p className="text-[9px] md:text-[10px] text-rose-500/60 uppercase tracking-widest font-bold mb-1">Причина:</p>
+                    <p className="text-[11px] md:text-xs text-rose-500/80">{key.reason}</p>
                   </div>
                 )}
 
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold opacity-30 mb-8">
+                <div className="flex items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 mb-6 md:mb-8">
                   <Calendar className="w-3 h-3" />
-                  <span>Активен до: {key.expiryDate}</span>
+                  <span>До: {key.expiryDate}</span>
                 </div>
 
                 <button
                   onClick={() => handleCopy(key.id, key.config)}
                   disabled={key.status === 'offline'}
-                  className={`w-full py-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${
+                  className={`w-full py-3.5 md:py-4 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${
                     key.status === 'offline'
                     ? 'bg-white/5 text-white/20 cursor-not-allowed'
                     : copiedId === key.id 
@@ -377,18 +356,9 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
       </AnimatePresence>
 
       {/* Footer */}
-      <footer className="mt-32 py-12 border-t border-white/10 flex justify-between items-center opacity-40 text-[10px] uppercase tracking-[0.2em] font-bold">
-        <div className="flex items-center gap-2">
-          © 2026 
-          <img 
-            src="https://s10.iimage.su/s/17/gW7gsFfxcyoojRD4cNLejI21W6YZc62Ieh9AfziAL.png" 
-            alt="vlessfree" 
-            className="h-4 w-auto object-contain"
-            referrerPolicy="no-referrer"
-          />
-        </div>
-        <div className="text-right">
-          Сайт может обновляться раз в два дня
+      <footer className="mt-24 md:mt-32 py-10 md:py-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6 opacity-40 text-[10px] uppercase tracking-[0.2em] font-bold text-center md:text-left">
+        <div className="flex flex-col gap-2">
+          <p>© 2026 VLESSFREE</p>
         </div>
       </footer>
     </main>
@@ -432,64 +402,64 @@ function HowToUsePage() {
   ];
 
   return (
-    <main className="relative pt-40 pb-20 px-6 max-w-5xl mx-auto">
+    <main className="relative pt-20 md:pt-40 pb-28 md:pb-20 px-4 md:px-6 max-w-5xl mx-auto min-h-screen flex flex-col">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-16 text-center"
+        className="mb-8 md:mb-16 text-center shrink-0"
       >
-        <h2 className="text-5xl md:text-6xl font-serif italic mb-6 tracking-tighter">
-          Как установить <br />
+        <h2 className="text-4xl sm:text-5xl md:text-6xl font-serif italic mb-4 md:mb-6 tracking-tighter leading-tight">
+          Как установить <br className="hidden sm:block" />
           <span className="text-white/40">и настроить VPN.</span>
         </h2>
-        <p className="text-white/40 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-white/40 max-w-2xl mx-auto leading-relaxed text-sm md:text-base">
           Следуйте инструкциям ниже для вашей операционной системы. Мы подобрали лучшие приложения для работы с нашими ключами.
         </p>
       </motion.div>
 
-      <div className="grid gap-8">
+      <div className="grid gap-6 md:gap-8 flex-1">
         {platforms.map((platform, index) => (
           <motion.div
             key={platform.name}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="glass rounded-[32px] p-8 md:p-10 flex flex-col md:flex-row gap-8 items-start hover:border-white/20 transition-all duration-500"
+            className="glass rounded-[24px] md:rounded-[32px] p-5 md:p-10 flex flex-col md:flex-row gap-5 md:gap-8 items-start hover:border-white/20 transition-all duration-500"
           >
-            <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center shrink-0">
-              <platform.icon className="w-8 h-8" />
+            <div className="w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-white/5 flex items-center justify-center shrink-0">
+              <platform.icon className="w-5 h-5 md:w-8 md:h-8" />
             </div>
             
             <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-3 mb-4">
-                <h3 className="text-2xl font-serif italic tracking-tight">{platform.name}</h3>
-                <span className="px-3 py-1 rounded-full bg-white/10 text-[10px] uppercase tracking-widest font-bold">
+              <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3 md:mb-4">
+                <h3 className="text-xl md:text-2xl font-serif italic tracking-tight">{platform.name}</h3>
+                <span className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-white/10 text-[8px] md:text-[10px] uppercase tracking-widest font-bold">
                   {platform.app}
                 </span>
               </div>
               
-              <p className="text-white/60 mb-6 text-sm leading-relaxed">
+              <p className="text-white/60 mb-4 md:mb-6 text-xs md:text-sm leading-relaxed">
                 {platform.description}
               </p>
               
-              <div className="bg-white/5 rounded-2xl p-6 mb-8 border border-white/5">
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold opacity-30 mb-4">
+              <div className="bg-white/5 rounded-xl md:rounded-2xl p-4 md:p-6 mb-6 md:mb-8 border border-white/5">
+                <div className="flex items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 mb-3 md:mb-4">
                   <Info className="w-3 h-3" />
                   <span>Инструкция</span>
                 </div>
-                <p className="text-sm leading-relaxed text-white/80">
+                <p className="text-xs md:text-sm leading-relaxed text-white/80">
                   {platform.tutorial}
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-3 md:gap-4">
                 <a 
                   href={platform.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-white text-black rounded-xl text-[10px] uppercase tracking-widest font-bold hover:scale-105 active:scale-95 transition-all"
+                  className="inline-flex items-center gap-2 px-5 md:px-8 py-3 md:py-4 bg-white text-black rounded-lg md:rounded-xl text-[9px] md:text-[10px] uppercase tracking-widest font-bold hover:scale-105 active:scale-95 transition-all"
                 >
-                  <Download className="w-4 h-4" /> Скачать приложение
+                  <Download className="w-3 h-3 md:w-4 md:h-4" /> Скачать приложение
                 </a>
               </div>
             </div>
@@ -497,14 +467,14 @@ function HowToUsePage() {
         ))}
       </div>
 
-      <div className="mt-20 p-10 glass rounded-[40px] text-center border-white/10">
-        <h3 className="text-2xl font-serif italic mb-4">Остались вопросы?</h3>
-        <p className="text-white/40 text-sm mb-8">
+      <div className="mt-12 md:mt-20 p-6 md:p-10 glass rounded-[24px] md:rounded-[40px] text-center border-white/10 shrink-0">
+        <h3 className="text-xl md:text-2xl font-serif italic mb-3 md:mb-4">Остались вопросы?</h3>
+        <p className="text-white/40 text-xs md:text-sm mb-6 md:mb-8">
           Если у вас возникли трудности с настройкой, попробуйте поискать видео-туториалы по названию приложения на YouTube.
         </p>
         <Link 
-          to="/"
-          className="inline-flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold opacity-40 hover:opacity-100 transition-opacity"
+          to="/" 
+          className="inline-flex items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-60 hover:opacity-100 transition-opacity"
         >
           Вернуться к списку серверов <ChevronRight className="w-4 h-4" />
         </Link>
@@ -539,7 +509,7 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] selection:bg-white selection:text-black">
+    <div className="min-h-screen bg-[#050505] selection:bg-white selection:text-black pt-safe pb-safe">
       <AnimatePresence>
         {showModal && location.pathname === '/' && (
           <motion.div 
@@ -552,7 +522,7 @@ function AppContent() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative max-w-lg w-full glass rounded-[40px] p-8 md:p-12 text-center overflow-hidden"
+              className="relative max-w-lg w-full glass rounded-[32px] md:rounded-[40px] p-6 md:p-12 text-center overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500/0 via-amber-500 to-amber-500/0" />
               
@@ -566,11 +536,10 @@ function AppContent() {
                 Доделываю ещё сайт и сервера ищу нормальные, так что будет мало серверов в первое время
               </p>
 
-              <div className="glass bg-white/5 rounded-3xl p-8 mb-4">
-                <div className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-40 mb-6">
-                  До переноса номера в т2
+              <div className="glass bg-white/5 rounded-3xl p-8 mb-4 flex items-center justify-center min-h-[120px]">
+                <div className="text-2xl md:text-3xl font-serif italic tracking-tight text-white">
+                  Ура я теперь в т2
                 </div>
-                <CountdownTimer />
               </div>
               
               <div className="text-[10px] uppercase tracking-[0.2em] font-bold opacity-20 mb-10">
@@ -599,41 +568,41 @@ function AppContent() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative max-w-lg w-full glass rounded-[40px] p-8 md:p-12 overflow-hidden"
+              className="relative max-w-lg w-full glass rounded-[24px] md:rounded-[40px] p-5 md:p-12 overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <button 
                 onClick={() => setSelectedKey(null)}
-                className="absolute top-6 right-6 w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+                className="absolute top-4 md:top-6 right-4 md:right-6 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 md:w-5 md:h-5" />
               </button>
 
-              <div className="w-16 h-16 rounded-3xl bg-white/5 flex items-center justify-center mb-8">
-                <Globe className="w-8 h-8" />
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl bg-white/5 flex items-center justify-center mb-6 md:mb-8">
+                <Globe className="w-6 h-6 md:w-8 md:h-8" />
               </div>
 
-              <h2 className="text-3xl font-serif italic mb-2 tracking-tighter">
+              <h2 className="text-2xl md:text-3xl font-serif italic mb-1 md:mb-2 tracking-tighter selectable">
                 {selectedKey.name}
               </h2>
-              <p className="text-white/40 mb-8">{selectedKey.location}</p>
+              <p className="text-white/40 text-xs md:text-sm mb-6 md:mb-8 selectable">{selectedKey.location}</p>
 
-              <div className="space-y-4 mb-10">
-                <div className="flex justify-between items-center py-4 border-b border-white/5">
-                  <span className="text-[10px] uppercase tracking-widest font-bold opacity-30">Протокол</span>
-                  <span className="text-sm font-mono">{selectedKey.protocol}</span>
+              <div className="space-y-3 md:space-y-4 mb-8 md:mb-10">
+                <div className="flex justify-between items-center py-3 md:py-4 border-b border-white/5">
+                  <span className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30">Протокол</span>
+                  <span className="text-xs md:text-sm font-mono selectable">{selectedKey.protocol}</span>
                 </div>
-                <div className="flex justify-between items-center py-4 border-b border-white/5">
-                  <span className="text-[10px] uppercase tracking-widest font-bold opacity-30">Активен до</span>
-                  <span className="text-sm font-mono">{selectedKey.expiryDate}</span>
+                <div className="flex justify-between items-center py-3 md:py-4 border-b border-white/5">
+                  <span className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30">Активен до</span>
+                  <span className="text-xs md:text-sm font-mono selectable">{selectedKey.expiryDate}</span>
                 </div>
-                <div className="flex justify-between items-center py-4 border-b border-white/5">
-                  <span className="text-[10px] uppercase tracking-widest font-bold opacity-30">Статус</span>
-                  <span className={`text-sm flex items-center gap-2 ${
+                <div className="flex justify-between items-center py-3 md:py-4 border-b border-white/5">
+                  <span className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30">Статус</span>
+                  <span className={`text-xs md:text-sm flex items-center gap-2 ${
                     selectedKey.status === 'online' ? 'text-emerald-500' : 
                     selectedKey.status === 'unstable' ? 'text-amber-500' : 'text-rose-500'
                   }`}>
-                    <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                    <div className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full animate-pulse ${
                       selectedKey.status === 'online' ? 'bg-emerald-500' : 
                       selectedKey.status === 'unstable' ? 'bg-amber-500' : 'bg-rose-500'
                     }`} />
@@ -645,7 +614,7 @@ function AppContent() {
 
               <button 
                 onClick={() => handleCopy(selectedKey.id, selectedKey.config)}
-                className={`w-full py-5 rounded-2xl text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${
+                className={`w-full py-4 md:py-5 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${
                   copiedId === selectedKey.id 
                   ? 'bg-emerald-500 text-white' 
                   : 'bg-white text-black'
@@ -667,6 +636,7 @@ function AppContent() {
       </div>
 
       <Header scrolled={scrolled} />
+      <BottomNav />
 
       <Routes>
         <Route path="/" element={
