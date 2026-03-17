@@ -123,11 +123,10 @@ const MOCK_KEYS: VlessKey[] = [
   }
 ];
 
-function Header({ scrolled, isIPhone }: { scrolled: boolean; isIPhone: boolean }) {
-  const glassClass = isIPhone ? 'liquid-glass' : 'glass';
+function Header({ scrolled }: { scrolled: boolean }) {
   return (
     <header className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-500 ${
-      scrolled ? `py-2 md:py-4 ${glassClass} border-b` : `py-3 md:py-8 bg-transparent md:bg-transparent ${glassClass} md:glass-none border-b md:border-none`
+      scrolled ? 'py-2 md:py-4 glass border-b' : 'py-3 md:py-8 bg-transparent md:bg-transparent glass md:glass-none border-b md:border-none'
     }`}>
       <div className="max-w-7xl mx-auto px-4 md:px-6 relative flex justify-center items-center">
         <Link to="/" className="flex items-center gap-2 md:gap-3">
@@ -150,7 +149,7 @@ function Header({ scrolled, isIPhone }: { scrolled: boolean; isIPhone: boolean }
         {/* Desktop Button */}
         <Link 
           to="/how-to-use" 
-          className={`hidden md:block absolute right-6 px-4 py-2 rounded-xl bg-white/5 hover:bg-white hover:text-black text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10 ${isIPhone ? 'floating' : ''}`}
+          className="hidden md:block absolute right-6 px-4 py-2 rounded-xl bg-white/5 hover:bg-white hover:text-black text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10"
         >
           Как установить VPN
         </Link>
@@ -159,19 +158,18 @@ function Header({ scrolled, isIPhone }: { scrolled: boolean; isIPhone: boolean }
   );
 }
 
-function BottomNav({ isIPhone }: { isIPhone: boolean }) {
+function BottomNav() {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
-  const glassClass = isIPhone ? 'liquid-glass' : 'glass';
 
   return (
-    <nav className={`md:hidden fixed bottom-0 left-0 right-0 z-[60] ${glassClass} border-t pb-safe backdrop-blur-2xl`}>
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-[60] glass border-t pb-safe backdrop-blur-2xl">
       <div className="flex justify-around items-center h-14">
         <Link 
           to="/" 
           className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/') ? 'text-white' : 'text-white/30'}`}
         >
-          <div className={`p-1 rounded-lg transition-all duration-300 ${isActive('/') ? 'bg-white/10' : ''} ${isIPhone && isActive('/') ? 'floating' : ''}`}>
+          <div className={`p-1 rounded-lg transition-all duration-300 ${isActive('/') ? 'bg-white/10' : ''}`}>
             <Globe className={`w-4 h-4 ${isActive('/') ? 'glow-text' : ''}`} />
           </div>
           <span className={`text-[8px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/') ? 'opacity-100' : 'opacity-60'}`}>Сервера</span>
@@ -180,7 +178,7 @@ function BottomNav({ isIPhone }: { isIPhone: boolean }) {
           to="/how-to-use" 
           className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/how-to-use') ? 'text-white' : 'text-white/30'}`}
         >
-          <div className={`p-1 rounded-lg transition-all duration-300 ${isActive('/how-to-use') ? 'bg-white/10' : ''} ${isIPhone && isActive('/how-to-use') ? 'floating' : ''}`}>
+          <div className={`p-1 rounded-lg transition-all duration-300 ${isActive('/how-to-use') ? 'bg-white/10' : ''}`}>
             <Smartphone className={`w-4 h-4 ${isActive('/how-to-use') ? 'glow-text' : ''}`} />
           </div>
           <span className={`text-[8px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/how-to-use') ? 'opacity-100' : 'opacity-60'}`}>Гайд</span>
@@ -190,14 +188,11 @@ function BottomNav({ isIPhone }: { isIPhone: boolean }) {
   );
 }
 
-function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, activeTab, setActiveTab, isIPhone }: any) {
+function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, activeTab, setActiveTab }: any) {
   const filteredKeys = keys.filter((key: any) => {
     if (activeTab === 'active') return key.status === 'online' || key.status === 'unstable';
     return key.status === 'offline';
   });
-
-  const glassClass = isIPhone ? 'liquid-glass' : 'glass';
-  const buttonClass = isIPhone ? 'liquid-glass floating' : 'glass';
 
   return (
     <main className="relative pt-20 md:pt-40 pb-28 md:pb-20 px-4 md:px-6 max-w-7xl mx-auto min-h-screen flex flex-col">
@@ -207,7 +202,6 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className={isIPhone ? 'floating' : ''}
         >
           <h2 className="text-4xl sm:text-5xl md:text-7xl font-serif italic mb-4 tracking-tighter leading-tight selectable">
             Ключи для <br className="hidden sm:block" /> 
@@ -221,14 +215,14 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
 
       {/* Tabs / Segmented Control */}
       <div className="flex justify-center mb-8 md:mb-16 shrink-0">
-        <div className={`${glassClass} p-1 rounded-xl md:rounded-3xl flex gap-1 bg-white/5`}>
+        <div className="glass p-1 rounded-xl md:rounded-3xl flex gap-1 bg-white/5">
           <button 
             onClick={() => setActiveTab('active')}
             className={`px-5 md:px-8 py-2 md:py-3 rounded-lg md:rounded-2xl text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-bold transition-all duration-300 ${
               activeTab === 'active' 
               ? 'bg-white text-black shadow-xl scale-[1.02]' 
               : 'text-white/40 hover:text-white/60'
-            } ${isIPhone && activeTab === 'active' ? 'floating' : ''}`}
+            }`}
           >
             Активные
           </button>
@@ -238,7 +232,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
               activeTab === 'inactive' 
               ? 'bg-white text-black shadow-xl scale-[1.02]' 
               : 'text-white/40 hover:text-white/60'
-            } ${isIPhone && activeTab === 'inactive' ? 'floating' : ''}`}
+            }`}
           >
             Неактивные
           </button>
@@ -261,10 +255,10 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 + index * 0.05 }}
-                className={`${glassClass} rounded-[20px] md:rounded-[32px] p-4 md:p-8 group hover:border-white/30 transition-all duration-500 ${key.status === 'offline' ? 'opacity-60 grayscale' : ''}`}
+                className={`glass rounded-[20px] md:rounded-[32px] p-4 md:p-8 group hover:border-white/30 transition-all duration-500 ${key.status === 'offline' ? 'opacity-60 grayscale' : ''}`}
               >
                 <div className="flex justify-between items-start mb-4 md:mb-8">
-                  <div className={`w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-colors duration-500 ${key.status === 'offline' ? 'bg-rose-500/10 text-rose-500' : ''} ${isIPhone ? 'floating' : ''}`}>
+                  <div className={`w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-colors duration-500 ${key.status === 'offline' ? 'bg-rose-500/10 text-rose-500' : ''}`}>
                     <Globe className="w-4 h-4 md:w-6 md:h-6" />
                   </div>
                   <button 
@@ -311,7 +305,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
                     : copiedId === key.id 
                     ? 'bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
                     : 'bg-white/5 hover:bg-white hover:text-black'
-                  } ${isIPhone ? 'floating' : ''}`}
+                  }`}
                 >
                   <AnimatePresence mode="wait">
                     {copiedId === key.id ? (
@@ -362,16 +356,16 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
       </AnimatePresence>
 
       {/* Footer */}
-      <footer className="mt-auto pt-12 pb-8 text-center border-t border-white/5">
-        <p className="text-[10px] uppercase tracking-[0.2em] font-bold opacity-20">
-          © 2026 VLESSFREE
-        </p>
+      <footer className="mt-24 md:mt-32 py-10 md:py-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6 opacity-40 text-[10px] uppercase tracking-[0.2em] font-bold text-center md:text-left">
+        <div className="flex flex-col gap-2">
+          <p>© 2026 VLESSFREE</p>
+        </div>
       </footer>
     </main>
   );
 }
 
-function HowToUsePage({ isIPhone }: { isIPhone: boolean }) {
+function HowToUsePage() {
   const platforms = [
     {
       name: 'Windows',
@@ -407,9 +401,6 @@ function HowToUsePage({ isIPhone }: { isIPhone: boolean }) {
     }
   ];
 
-  const glassClass = isIPhone ? 'liquid-glass' : 'glass';
-  const buttonClass = isIPhone ? 'liquid-glass floating' : 'glass';
-
   return (
     <main className="relative pt-20 md:pt-40 pb-28 md:pb-20 px-4 md:px-6 max-w-5xl mx-auto min-h-screen flex flex-col">
       <motion.div
@@ -433,9 +424,9 @@ function HowToUsePage({ isIPhone }: { isIPhone: boolean }) {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}
-            className={`${glassClass} rounded-[24px] md:rounded-[32px] p-5 md:p-10 flex flex-col md:flex-row gap-5 md:gap-8 items-start hover:border-white/20 transition-all duration-500`}
+            className="glass rounded-[24px] md:rounded-[32px] p-5 md:p-10 flex flex-col md:flex-row gap-5 md:gap-8 items-start hover:border-white/20 transition-all duration-500"
           >
-            <div className={`w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-white/5 flex items-center justify-center shrink-0 ${isIPhone ? 'floating' : ''}`}>
+            <div className="w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-white/5 flex items-center justify-center shrink-0">
               <platform.icon className="w-5 h-5 md:w-8 md:h-8" />
             </div>
             
@@ -466,7 +457,7 @@ function HowToUsePage({ isIPhone }: { isIPhone: boolean }) {
                   href={platform.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-2 px-5 md:px-8 py-3 md:py-4 bg-white text-black rounded-lg md:rounded-xl text-[9px] md:text-[10px] uppercase tracking-widest font-bold hover:scale-105 active:scale-95 transition-all ${isIPhone ? 'floating' : ''}`}
+                  className="inline-flex items-center gap-2 px-5 md:px-8 py-3 md:py-4 bg-white text-black rounded-lg md:rounded-xl text-[9px] md:text-[10px] uppercase tracking-widest font-bold hover:scale-105 active:scale-95 transition-all"
                 >
                   <Download className="w-3 h-3 md:w-4 md:h-4" /> Скачать приложение
                 </a>
@@ -476,14 +467,14 @@ function HowToUsePage({ isIPhone }: { isIPhone: boolean }) {
         ))}
       </div>
 
-      <div className={`mt-12 md:mt-20 p-6 md:p-10 ${glassClass} rounded-[24px] md:rounded-[40px] text-center border-white/10 shrink-0`}>
+      <div className="mt-12 md:mt-20 p-6 md:p-10 glass rounded-[24px] md:rounded-[40px] text-center border-white/10 shrink-0">
         <h3 className="text-xl md:text-2xl font-serif italic mb-3 md:mb-4">Остались вопросы?</h3>
         <p className="text-white/40 text-xs md:text-sm mb-6 md:mb-8">
           Если у вас возникли трудности с настройкой, попробуйте поискать видео-туториалы по названию приложения на YouTube.
         </p>
         <Link 
           to="/" 
-          className={`inline-flex items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-60 hover:opacity-100 transition-opacity ${isIPhone ? 'floating' : ''}`}
+          className="inline-flex items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-60 hover:opacity-100 transition-opacity"
         >
           Вернуться к списку серверов <ChevronRight className="w-4 h-4" />
         </Link>
@@ -493,14 +484,7 @@ function HowToUsePage({ isIPhone }: { isIPhone: boolean }) {
 }
 
 function AppContent() {
-  const [isIPhone, setIsIPhone] = useState(false);
   const [keys] = useState<VlessKey[]>(MOCK_KEYS);
-
-  useEffect(() => {
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    setIsIPhone(/iphone/.test(userAgent));
-  }, []);
-
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [showModal, setShowModal] = useState(true);
@@ -508,13 +492,20 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
   const location = useLocation();
 
-  const glassClass = isIPhone ? 'liquid-glass' : 'glass';
-  const buttonClass = isIPhone ? 'liquid-glass floating' : 'glass';
-
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    
+    // Detect iPhone and add class to body
+    const isIPhone = /iPhone/i.test(navigator.userAgent);
+    if (isIPhone) {
+      document.body.classList.add('is-iphone');
+    }
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.body.classList.remove('is-iphone');
+    };
   }, []);
 
   useEffect(() => {
@@ -541,11 +532,11 @@ function AppContent() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className={`relative max-w-lg w-full ${glassClass} rounded-[32px] md:rounded-[40px] p-6 md:p-12 text-center overflow-hidden`}
+              className="relative max-w-lg w-full glass rounded-[32px] md:rounded-[40px] p-6 md:p-12 text-center overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500/0 via-amber-500 to-amber-500/0" />
               
-              <div className={`text-6xl mb-6 ${isIPhone ? 'floating' : ''}`}>⚠️</div>
+              <div className="text-6xl mb-6">⚠️</div>
               
               <h2 className="text-3xl md:text-4xl font-serif italic mb-4 tracking-tighter">
                 Ещё доделываем
@@ -555,7 +546,7 @@ function AppContent() {
                 Доделываю ещё сайт и сервера ищу нормальные, так что будет мало серверов в первое время
               </p>
 
-              <div className={`${glassClass} bg-white/5 rounded-3xl p-8 mb-4 flex items-center justify-center min-h-[120px]`}>
+              <div className="glass bg-white/5 rounded-3xl p-8 mb-4 flex items-center justify-center min-h-[120px]">
                 <div className="text-2xl md:text-3xl font-serif italic tracking-tight text-white">
                   Ура я теперь в т2
                 </div>
@@ -567,7 +558,7 @@ function AppContent() {
 
               <button 
                 onClick={() => setShowModal(false)}
-                className={`w-full py-5 bg-white text-black rounded-2xl text-xs font-bold uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_20px_40px_rgba(255,255,255,0.1)] ${isIPhone ? 'floating' : ''}`}
+                className="w-full py-5 bg-white text-black rounded-2xl text-xs font-bold uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_20px_40px_rgba(255,255,255,0.1)]"
               >
                 Понятно
               </button>
@@ -587,7 +578,7 @@ function AppContent() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className={`relative max-w-lg w-full ${glassClass} rounded-[24px] md:rounded-[40px] p-5 md:p-12 overflow-hidden`}
+              className="relative max-w-lg w-full glass rounded-[24px] md:rounded-[40px] p-5 md:p-12 overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <button 
@@ -597,7 +588,7 @@ function AppContent() {
                 <X className="w-4 h-4 md:w-5 md:h-5" />
               </button>
 
-              <div className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl bg-white/5 flex items-center justify-center mb-6 md:mb-8 ${isIPhone ? 'floating' : ''}`}>
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl bg-white/5 flex items-center justify-center mb-6 md:mb-8">
                 <Globe className="w-6 h-6 md:w-8 md:h-8" />
               </div>
 
@@ -637,7 +628,7 @@ function AppContent() {
                   copiedId === selectedKey.id 
                   ? 'bg-emerald-500 text-white' 
                   : 'bg-white text-black'
-                } ${isIPhone ? 'floating' : ''}`}
+                }`}
               >
                 {copiedId === selectedKey.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 {copiedId === selectedKey.id ? 'Скопировано' : 'Копировать ключ'}
@@ -654,8 +645,8 @@ function AppContent() {
         <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-purple-500/5 blur-[100px] rounded-full" />
       </div>
 
-      <Header scrolled={scrolled} isIPhone={isIPhone} />
-      <BottomNav isIPhone={isIPhone} />
+      <Header scrolled={scrolled} />
+      <BottomNav />
 
       <Routes>
         <Route path="/" element={
@@ -667,10 +658,9 @@ function AppContent() {
             setSelectedKey={setSelectedKey} 
             activeTab={activeTab} 
             setActiveTab={setActiveTab} 
-            isIPhone={isIPhone}
           />
         } />
-        <Route path="/how-to-use" element={<HowToUsePage isIPhone={isIPhone} />} />
+        <Route path="/how-to-use" element={<HowToUsePage />} />
       </Routes>
     </div>
   );
