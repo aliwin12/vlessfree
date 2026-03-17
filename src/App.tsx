@@ -176,10 +176,6 @@ export default function App() {
                 alt="vlessfree logo" 
                 className="w-full h-full object-contain p-1"
                 referrerPolicy="no-referrer"
-                onError={(e) => {
-                  // Fallback if image fails to load
-                  e.currentTarget.src = "https://picsum.photos/seed/vless/100/100";
-                }}
               />
             </div>
             <img 
@@ -187,17 +183,6 @@ export default function App() {
               alt="vlessfree" 
               className="h-8 md:h-10 w-auto object-contain glow-text"
               referrerPolicy="no-referrer"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                // Show text as fallback if image fails
-                const parent = e.currentTarget.parentElement;
-                if (parent && !parent.querySelector('.fallback-text')) {
-                  const span = document.createElement('span');
-                  span.className = 'text-2xl font-bold tracking-tighter glow-text fallback-text';
-                  span.innerText = 'vlessfree';
-                  parent.appendChild(span);
-                }
-              }}
             />
           </motion.div>
         </div>
@@ -305,16 +290,6 @@ export default function App() {
               alt="vlessfree" 
               className="h-4 w-auto object-contain"
               referrerPolicy="no-referrer"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                const parent = e.currentTarget.parentElement;
-                if (parent && !parent.querySelector('.fallback-footer-text')) {
-                  const span = document.createElement('span');
-                  span.className = 'fallback-footer-text';
-                  span.innerText = 'vlessfree';
-                  parent.appendChild(span);
-                }
-              }}
             />
           </div>
         </footer>
