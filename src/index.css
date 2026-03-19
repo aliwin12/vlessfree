@@ -139,3 +139,14 @@
 .glow-text {
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
 }
+
+@keyframes shimmer-bg {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-shimmer-bg {
+  background-size: 200% 200%;
+  animation: shimmer-bg 3s ease infinite;
+}

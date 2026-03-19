@@ -31,7 +31,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://5231b5bb-8fc7-48bb-bf33-72a6b92fa0d3@se-arn-3.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=7SoBLgSMueqCkQCm6c2CeJFWrS9OSYE4Wx1-77zA1h0&security=reality&sid=78c5fac2&sni=se-arn-3.blook.network&spx=%2F&type=tcp#%F0%9F%87%B8%F0%9F%87%AA%20%D0%A8%D0%B2%D0%B5%D1%86%D0%B8%D1%8F%203',
     expiryDate: '20.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'истек срок активности',
   },
   {
     id: 2,
@@ -42,7 +43,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://5b9eb611-8b7b-4d06-8d3f-b7df5c84f9e0@pl-waw-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=q1GJ-cUUd4FGu0ZfsXosBvyzbJmpRHrZYMidWhAqMQI&security=reality&sid=578dc0c4&sni=pl-waw-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B5%F0%9F%87%B1%20%D0%9F%D0%BE%D0%BB%D1%8C%D1%88%D0%B0%201',
     expiryDate: '20.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'истек срок активности',
   },
   {
     id: 3,
@@ -53,7 +55,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://9d1d67f4-8d61-4c45-a42d-5de6aed3d38f@br-gru-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=GYqQl8suX6lgrJZ27CkhMwtxmDGkd45QxKBJGaHUgQM&security=reality&sid=7cc366b3&sni=br-gru-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%A7%F0%9F%87%B7%20%D0%91%D1%80%D0%B0%D0%B7%D0%B8%D0%BB%D0%B8%D1%8F%201',
     expiryDate: '20.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'истек срок активности',
   },
   {
     id: 4,
@@ -73,9 +76,10 @@ const MOCK_KEYS: VlessKey[] = [
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://ef4fecc9-9af1-4b18-8f2c-8e3df89f7ea5@md-kiv-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=rc7lXHj8W1qb-DhJzxTQPJ3TL9IAKkc4kqXCfCsRlXo&security=reality&sid=237e0856&sni=md-kiv-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B2%F0%9F%87%A9%20%D0%9C%D0%BE%D0%BB%D0%B4%D0%BE%D0%B2%D0%B0%201',
+    config: 'vless://ef4fecc9-9af1-4b18-8f2c-8e3df89f7ea5@md-kiv-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=rc7lXHj8W1qb-DhJzxTQPJ3TL9IAKkc4kqXCfCsRlXo&security=reality&sid=237e0856&sni=md-kiv-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B2%F0%9F%87%A9%20%D0%9М%D0%BE%D0%BB%D0%B4%D0%BE%D0%B2%D0%B0%201',
     expiryDate: '20.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'истек срок активности',
   },
   {
     id: 6,
@@ -84,9 +88,10 @@ const MOCK_KEYS: VlessKey[] = [
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://aeed5327-8b56-4089-a18c-fcca6d17d2d6@kz-ala-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=1qOetCE3B75XXzhHHF-0Y2fXEROUWY6gA0REH6tc8FM&security=reality&sid=6966f5d4&sni=kz-ala-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B0%F0%9F%87%BF%20%D0%9A%D0%B0%D0%B7%D0%B0%D1%85%D1%81%D1%82%D0%B0%D0%BD%202',
+    config: 'vless://aeed5327-8b56-4089-a18c-fcca6d17d2d6@kz-ala-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=1qOetCE3B75XXzhHHF-0Y2fXEROUWY6gA0REH6tc8FM&security=reality&sid=6966f5d4&sni=kz-ala-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B0%F0%9F%87%BF%20%D0%9К%D0%B0%D0%B7%D0%B0%D1%85%D1%81%D1%82%D0%B0%D0%BD%202',
     expiryDate: '20.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'истек срок активности',
   },
   {
     id: 7,
@@ -97,7 +102,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://0b27cea6-53e7-46f9-a21d-2eea1f9f607b@ng-los-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=bnOJ_uKtqdg94h0Jt3cGJJAnXhW-UAdWKZBfbiaT9ho&security=reality&sid=3c642112&sni=ng-los-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%AC%20%D0%9D%D0%B8%D0%B3%D0%B5%D1%80%D0%B8%D1%8F%201',
     expiryDate: '20.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'истек срок активности',
   },
   {
     id: 8,
@@ -108,7 +114,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://35e9c5d8-6d91-41d3-9587-585150c50936@uk-lhr-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=p0MkIIxkklgPs4vJJP5Qp9RxdqgMnjmgoIt5t8g6uSU&security=reality&sid=794dbecd&sni=uk-lhr-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%AC%F0%9F%87%A7%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%202',
     expiryDate: '20.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'истек срок активности',
   },
   {
     id: 9,
@@ -119,7 +126,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://ddeb5fc9-aed2-4d59-b6d1-71ead220c878@ru-svo-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=04Kor4UEaxb90YlCNktYu52799Dw5uoYeaagJ-xQ8wA&security=reality&sid=8957cb90&sni=ru-svo-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B7%F0%9F%87%BA%20%D0%A0%D0%BE%D1%81%D1%81%D0%B8%D1%8F%201',
     expiryDate: '20.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'истек срок активности',
   }
 ];
 
@@ -278,13 +286,25 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
             {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} />)}
           </motion.div>
         ) : filteredKeys.length > 0 ? (
-          <motion.div 
-            key={activeTab}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
-          >
+          <div key={activeTab} className="flex flex-col gap-6">
+            {activeTab === 'active' && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 md:p-4 rounded-2xl md:rounded-3xl bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 animate-shimmer-bg flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(251,191,36,0.2)] border border-white/20"
+              >
+                <Info className="w-4 h-4 text-black/60" />
+                <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-black/80 text-center">
+                  Мы сейчас ищем новые актуальные сервера, извините.
+                </p>
+              </motion.div>
+            )}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
+            >
             {filteredKeys.map((key: any, index: number) => (
               <motion.div
                 key={key.id}
@@ -370,7 +390,8 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
               </motion.div>
             ))}
           </motion.div>
-        ) : (
+        </div>
+      ) : (
           <motion.div 
             key="empty"
             initial={{ opacity: 0, y: 20 }}
