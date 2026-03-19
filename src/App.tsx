@@ -222,6 +222,44 @@ function SkeletonCard() {
   );
 }
 
+function Countdown() {
+  const [timeLeft, setTimeLeft] = useState<{ h: number; m: number; s: number } | null>(null);
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      // 19.03.2026 22:30 MSK = 19.03.2026 19:30 UTC
+      const target = new Date(Date.UTC(2026, 2, 19, 19, 30, 0));
+
+      const diff = target.getTime() - now.getTime();
+      
+      if (diff <= 0) return { h: 0, m: 0, s: 0 };
+
+      const h = Math.floor(diff / (1000 * 60 * 60));
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+      return { h, m, s };
+    };
+
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    setTimeLeft(calculateTimeLeft());
+    return () => clearInterval(timer);
+  }, []);
+
+  if (!timeLeft) return null;
+  const pad = (n: number) => n.toString().padStart(2, '0');
+
+  return (
+    <span className="font-mono tabular-nums">
+      {timeLeft.h > 0 && `${pad(timeLeft.h)}:`}{pad(timeLeft.m)}:{pad(timeLeft.s)}
+    </span>
+  );
+}
+
 function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, activeTab, setActiveTab, loading }: any) {
   const filteredKeys = keys.filter((key: any) => {
     if (activeTab === 'active') return key.status === 'online' || key.status === 'unstable';
@@ -291,12 +329,20 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="p-3 md:p-4 rounded-2xl md:rounded-3xl bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 animate-shimmer-bg flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(251,191,36,0.2)] border border-white/20"
+                className="p-4 md:p-6 rounded-2xl md:rounded-[32px] bg-gradient-to-br from-amber-400 via-orange-400 to-amber-500 animate-shimmer-bg flex flex-col items-center justify-center gap-3 shadow-[0_20px_50px_rgba(251,191,36,0.2)] border border-white/30 relative overflow-hidden"
               >
-                <Info className="w-4 h-4 text-black/60" />
-                <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-black/80 text-center">
-                  Мы сейчас ищем новые актуальные сервера, извините.
-                </p>
+                <div className="absolute top-0 left-0 w-full h-full bg-white/10 pointer-events-none" />
+                <div className="flex items-center gap-2 relative z-10">
+                  <Info className="w-4 h-4 text-black/60" />
+                  <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-black/80 text-center">
+                    Мы сейчас ищем новые актуальные сервера, извините.
+                  </p>
+                </div>
+                <div className="px-4 py-2 rounded-full bg-black/10 backdrop-blur-sm border border-black/5 relative z-10">
+                  <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-black/70">
+                    До выпуска серверов осталось: <Countdown />
+                  </p>
+                </div>
               </motion.div>
             )}
             <motion.div 
