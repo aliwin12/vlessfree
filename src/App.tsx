@@ -19,115 +19,109 @@ interface VlessKey {
   expiryDate: string;
   status?: 'online' | 'unstable' | 'offline';
   reason?: string;
+  isSpecial?: boolean;
 }
 
 const MOCK_KEYS: VlessKey[] = [
   {
     id: 1,
-    name: 'Первый сервер',
-    location: '🇸🇪 Швеция',
+    name: 'Server #1',
+    location: '🇳🇱 Нидерланды, Амстердам',
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://5231b5bb-8fc7-48bb-bf33-72a6b92fa0d3@se-arn-3.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=7SoBLgSMueqCkQCm6c2CeJFWrS9OSYE4Wx1-77zA1h0&security=reality&sid=78c5fac2&sni=se-arn-3.blook.network&spx=%2F&type=tcp#%F0%9F%87%B8%F0%9F%87%AA%20%D0%A8%D0%B2%D0%B5%D1%86%D0%B8%D1%8F%203',
-    expiryDate: '20.03.2026',
-    status: 'offline',
-    reason: 'истек срок активности',
+    config: 'vless://1966afa8-66af-4ca3-89fe-f754b614c16b@nl-ams-4.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=_Fp55m3LYD2R2hr-vDJzQ5WQbqKQ6lLiklB5ZRSXeDw&security=reality&sid=8d93d0b7&sni=nl-ams-4.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%204',
+    expiryDate: '22.03.2026',
+    status: 'online',
   },
   {
     id: 2,
     name: 'Server №2',
-    location: '🇵🇱 Польша, Варшава',
+    location: '🇩🇪 Германия, Франкфурт-На-Майне',
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://5b9eb611-8b7b-4d06-8d3f-b7df5c84f9e0@pl-waw-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=q1GJ-cUUd4FGu0ZfsXosBvyzbJmpRHrZYMidWhAqMQI&security=reality&sid=578dc0c4&sni=pl-waw-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B5%F0%9F%87%B1%20%D0%9F%D0%BE%D0%BB%D1%8C%D1%88%D0%B0%201',
-    expiryDate: '20.03.2026',
-    status: 'offline',
-    reason: 'истек срок активности',
+    config: 'vless://5af0e0c9-d857-4a9d-86b5-de4ac3aa6a23@de-fra-8.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=uNyPARTLMtBT6AeOS61GTInVeKAMqXrVwZyR004u9Dg&security=reality&sid=a80ac422&sni=de-fra-8.blook.network&spx=%2F&type=tcp#%F0%9F%87%A9%F0%9F%87%AA%20%D0%93%D0%B5%D1%80%D0%BC%D0%B0%D0%BD%D0%B8%D1%8F%208',
+    expiryDate: '22.03.2026',
+    status: 'online',
   },
   {
     id: 3,
     name: 'Server №3',
-    location: '🇧🇷 Бразилия, Сан-Паулу',
+    location: '🇳🇱 Нидерланды, Амстердам',
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://9d1d67f4-8d61-4c45-a42d-5de6aed3d38f@br-gru-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=GYqQl8suX6lgrJZ27CkhMwtxmDGkd45QxKBJGaHUgQM&security=reality&sid=7cc366b3&sni=br-gru-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%A7%F0%9F%87%B7%20%D0%91%D1%80%D0%B0%D0%B7%D0%B8%D0%BB%D0%B8%D1%8F%201',
-    expiryDate: '20.03.2026',
-    status: 'offline',
-    reason: 'истек срок активности',
-  },
-  {
-    id: 4,
-    name: 'Server №4',
-    location: '🇨🇾 Кипр',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://8dc7722c-2767-4eea-a28b-2f8daacc07e3@pqh29v4.globalfymain.com:8880?encryption=none&security=none&type=grpc#Republic of Cyprus%201089%20/%20VlessKey.com%20/%20t.me/VlessVpnFree',
-    expiryDate: 'Неизвестно',
-    status: 'unstable',
+    config: 'vless://1966afa8-66af-4ca3-89fe-f754b614c16b@nl-ams-4.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=_Fp55m3LYD2R2hr-vDJzQ5WQbqKQ6lLiklB5ZRSXeDw&security=reality&sid=8d93d0b7&sni=nl-ams-4.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%204',
+    expiryDate: '22.03.2026',
+    status: 'online',
   },
   {
     id: 5,
     name: 'Server №5',
-    location: '🇲🇩 Молдова, Кишинёв',
+    location: '🇺🇸 США, Нью-Йорк',
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://ef4fecc9-9af1-4b18-8f2c-8e3df89f7ea5@md-kiv-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=rc7lXHj8W1qb-DhJzxTQPJ3TL9IAKkc4kqXCfCsRlXo&security=reality&sid=237e0856&sni=md-kiv-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B2%F0%9F%87%A9%20%D0%9М%D0%BE%D0%BB%D0%B4%D0%BE%D0%B2%D0%B0%201',
-    expiryDate: '20.03.2026',
-    status: 'offline',
-    reason: 'истек срок активности',
+    config: 'vless://554d798d-79b8-41c5-a84e-52abb0418ddf@us-jfk-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=HQU7RO0Q0M1z8r_sNeT1kbNBbEGk3-ZShzPfCC5GbBU&security=reality&sid=61c86959&sni=us-jfk-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%BA%F0%9F%87%B8%20%D0%A1%D0%A8%D0%90%202',
+    expiryDate: '22.03.2026',
+    status: 'online',
   },
   {
     id: 6,
     name: 'Server №6',
-    location: '🇰🇿 Казахстан, Алматы',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://aeed5327-8b56-4089-a18c-fcca6d17d2d6@kz-ala-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=1qOetCE3B75XXzhHHF-0Y2fXEROUWY6gA0REH6tc8FM&security=reality&sid=6966f5d4&sni=kz-ala-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B0%F0%9F%87%BF%20%D0%9К%D0%B0%D0%B7%D0%B0%D1%85%D1%81%D1%82%D0%B0%D0%BD%202',
-    expiryDate: '20.03.2026',
-    status: 'offline',
-    reason: 'истек срок активности',
-  },
-  {
-    id: 7,
-    name: 'Server №7',
-    location: '🇳🇬 Нигерия, Лагос',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://0b27cea6-53e7-46f9-a21d-2eea1f9f607b@ng-los-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=bnOJ_uKtqdg94h0Jt3cGJJAnXhW-UAdWKZBfbiaT9ho&security=reality&sid=3c642112&sni=ng-los-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%AC%20%D0%9D%D0%B8%D0%B3%D0%B5%D1%80%D0%B8%D1%8F%201',
-    expiryDate: '20.03.2026',
-    status: 'offline',
-    reason: 'истек срок активности',
-  },
-  {
-    id: 8,
-    name: 'Server №8',
     location: '🇬🇧 Великобритания, Лондон',
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://35e9c5d8-6d91-41d3-9587-585150c50936@uk-lhr-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=p0MkIIxkklgPs4vJJP5Qp9RxdqgMnjmgoIt5t8g6uSU&security=reality&sid=794dbecd&sni=uk-lhr-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%AC%F0%9F%87%A7%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%202',
-    expiryDate: '20.03.2026',
-    status: 'offline',
-    reason: 'истек срок активности',
+    config: 'vless://928ee856-e924-40c6-be66-dd7bfcde1242@uk-lhr-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=jfQ43JU-FeRkFdHGJT5NBCX0GZaWTZjC7N23Z2POsh8&security=reality&sid=97e4b5f5&sni=uk-lhr-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%AC%F0%9F%87%A7%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%201',
+    expiryDate: '22.03.2026',
+    status: 'online',
+  },
+  {
+    id: 7,
+    name: 'Server №7',
+    location: '🇸🇬 Сингапур',
+    protocol: 'VLESS',
+    latency: '0ms',
+    load: 0,
+    config: 'vless://6c245c60-1213-4a47-abcd-7a78fa22ced6@sg-sin-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=eLJZDr57FFoNrBKhF3Lx5aZBoqc_1sVRrPMZLgy3Kgk&security=reality&sid=a0be6214&sni=sg-sin-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B8%F0%9F%87%AC%20%D0%A1%D0%B8%D0%BD%D0%B3%D0%B0%D0%BF%D1%83%D1%80%202',
+    expiryDate: '22.03.2026',
+    status: 'online',
+  },
+  {
+    id: 8,
+    name: 'Server №8',
+    location: '🇮🇳 Индия, Бангалор',
+    protocol: 'VLESS',
+    latency: '0ms',
+    load: 0,
+    config: 'vless://5567bc21-a6a8-4b3b-ab42-05f7b5c48989@in-blr-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=4hgbGo2EFMD_G-67IL4UrPtBri0Dh-l_SFafynnVHm8&security=reality&sid=dd0d7f6b&sni=in-blr-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%AE%F0%9F%87%B3%20%D0%98%D0%BD%D0%B4%D0%B8%D1%8F%202',
+    expiryDate: '22.03.2026',
+    status: 'online',
   },
   {
     id: 9,
     name: 'Server №9',
-    location: '🇷🇺 Россия, Москва',
+    location: '🇰🇿 Казахстан, Алматы',
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://ddeb5fc9-aed2-4d59-b6d1-71ead220c878@ru-svo-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=04Kor4UEaxb90YlCNktYu52799Dw5uoYeaagJ-xQ8wA&security=reality&sid=8957cb90&sni=ru-svo-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B7%F0%9F%87%BA%20%D0%A0%D0%BE%D1%81%D1%81%D0%B8%D1%8F%201',
-    expiryDate: '20.03.2026',
-    status: 'offline',
-    reason: 'истек срок активности',
+    config: 'vless://bd13dfce-f331-4059-a9a6-791c4fb0c60f@kz-ala-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=1qOetCE3B75XXzhHHF-0Y2fXEROUWY6gA0REH6tc8FM&security=reality&sid=6966f5d4&sni=kz-ala-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B0%F0%9F%87%BF%20%D0%9A%D0%B0%D0%B7%D0%B0%D1%85%D1%81%D1%82%D0%B0%D0%BD%202',
+    expiryDate: '22.03.2026',
+    status: 'online',
+  },
+  {
+    id: 10,
+    name: 'Сервер для WinCore и Майонезес',
+    location: '🇫🇷 Франция, Париж',
+    protocol: 'VLESS',
+    latency: '0ms',
+    load: 0,
+    config: 'vless://865effa1-951e-4ff6-8748-4428441faa60@fr-cdg-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=CL5aeP6smcd4ie9upZlYVEvuHDwLAt46BOIfHOjkMis&security=reality&sid=cae7fcef&sni=fr-cdg-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%AB%F0%9F%87%B7%20%D0%A4%D1%80%D0%B0%D0%BD%D1%86%D0%B8%D1%8F%201',
+    expiryDate: '22.03.2026',
+    status: 'online',
+    isSpecial: true,
   }
 ];
 
@@ -260,7 +254,26 @@ function Countdown() {
   );
 }
 
-function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, activeTab, setActiveTab, loading }: any) {
+function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, activeTab, setActiveTab, loading, unlockedSpecial, onUnlockSpecial }: any) {
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
+
+  const handleSpecialClick = (key: any) => {
+    setShowPasswordPrompt(true);
+  };
+
+  const checkPassword = () => {
+    if (password === 'XeonLonghornBurgeredCS2DetroitMafia3') {
+      onUnlockSpecial();
+      setShowPasswordPrompt(false);
+      setPassword('');
+      setPasswordError(false);
+    } else {
+      setPasswordError(true);
+    }
+  };
+
   const filteredKeys = keys.filter((key: any) => {
     if (activeTab === 'active') return key.status === 'online' || key.status === 'unstable';
     return key.status === 'offline';
@@ -325,26 +338,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
           </motion.div>
         ) : filteredKeys.length > 0 ? (
           <div key={activeTab} className="flex flex-col gap-6">
-            {activeTab === 'active' && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="p-4 md:p-6 rounded-2xl md:rounded-[32px] bg-gradient-to-br from-amber-400 via-orange-400 to-amber-500 animate-shimmer-bg flex flex-col items-center justify-center gap-3 shadow-[0_20px_50px_rgba(251,191,36,0.2)] border border-white/30 relative overflow-hidden"
-              >
-                <div className="absolute top-0 left-0 w-full h-full bg-white/10 pointer-events-none" />
-                <div className="flex items-center gap-2 relative z-10">
-                  <Info className="w-4 h-4 text-black/60" />
-                  <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-black/80 text-center">
-                    Мы сейчас ищем новые актуальные сервера, извините.
-                  </p>
-                </div>
-                <div className="px-4 py-2 rounded-full bg-black/10 backdrop-blur-sm border border-black/5 relative z-10">
-                  <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-black/70">
-                    До выпуска серверов осталось: <Countdown />
-                  </p>
-                </div>
-              </motion.div>
-            )}
+
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -357,21 +351,32 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 + index * 0.05 }}
-                className={`glass rounded-[20px] md:rounded-[32px] p-4 md:p-8 group hover:border-white/30 transition-all duration-500 ${key.status === 'offline' ? 'opacity-60 grayscale' : ''}`}
+                className={`glass rounded-[20px] md:rounded-[32px] p-4 md:p-8 group hover:border-white/30 transition-all duration-500 ${key.status === 'offline' ? 'opacity-60 grayscale' : ''} relative overflow-hidden`}
               >
-                <div className="flex justify-between items-start mb-4 md:mb-8">
+                {key.isSpecial && !unlockedSpecial && (
+                  <div className="absolute inset-0 z-10 backdrop-blur-md bg-black/20 pointer-events-none" />
+                )}
+                
+                <div className="flex justify-between items-start mb-4 md:mb-8 relative z-20">
                   <div className={`w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-colors duration-500 ${key.status === 'offline' ? 'bg-rose-500/10 text-rose-500' : ''}`}>
                     <Globe className="w-4 h-4 md:w-6 md:h-6" />
                   </div>
-                  <button 
-                    onClick={() => setSelectedKey(key)}
-                    className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 hover:opacity-100 transition-opacity"
-                  >
-                    Подробнее
-                  </button>
+                  <div className="flex gap-2">
+                    {key.isSpecial && (
+                      <span className="px-2 py-1 rounded-lg bg-amber-500 text-black text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+                        SPECIAL
+                      </span>
+                    )}
+                    <button 
+                      onClick={() => key.isSpecial && !unlockedSpecial ? handleSpecialClick(key) : setSelectedKey(key)}
+                      className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 hover:opacity-100 transition-opacity"
+                    >
+                      Подробнее
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2 mb-1 md:mb-2">
+                <div className="flex items-center gap-2 mb-1 md:mb-2 relative z-20">
                   <h3 className="text-xl md:text-2xl font-serif italic tracking-tight selectable">{key.name}</h3>
                   {key.status === 'unstable' && (
                     <span className="px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-[7px] md:text-[8px] uppercase tracking-widest font-bold border border-amber-500/20">
@@ -384,54 +389,71 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
                     </span>
                   )}
                 </div>
-                <p className="text-xs md:text-sm text-white/40 mb-4 md:mb-6 selectable">{key.location}</p>
+                
+                <div className={key.isSpecial && !unlockedSpecial ? 'blur-sm select-none pointer-events-none' : ''}>
+                  <p className="text-xs md:text-sm text-white/40 mb-4 md:mb-6 selectable">{key.location}</p>
 
-                {key.reason && (
-                  <div className="bg-rose-500/5 border border-rose-500/10 rounded-lg md:rounded-xl p-3 md:p-4 mb-4 md:mb-6">
-                    <p className="text-[9px] md:text-[10px] text-rose-500/60 uppercase tracking-widest font-bold mb-1">Причина:</p>
-                    <p className="text-[11px] md:text-xs text-rose-500/80">{key.reason}</p>
+                  {key.reason && (
+                    <div className="bg-rose-500/5 border border-rose-500/10 rounded-lg md:rounded-xl p-3 md:p-4 mb-4 md:mb-6">
+                      <p className="text-[9px] md:text-[10px] text-rose-500/60 uppercase tracking-widest font-bold mb-1">Причина:</p>
+                      <p className="text-[11px] md:text-xs text-rose-500/80">{key.reason}</p>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 mb-6 md:mb-8">
+                    <Calendar className="w-3 h-3" />
+                    <span>До: {key.expiryDate}</span>
                   </div>
-                )}
-
-                <div className="flex items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 mb-6 md:mb-8">
-                  <Calendar className="w-3 h-3" />
-                  <span>До: {key.expiryDate}</span>
                 </div>
 
                 <button
-                  onClick={() => handleCopy(key.id, key.config)}
+                  onClick={() => {
+                    if (key.isSpecial && !unlockedSpecial) {
+                      handleSpecialClick(key);
+                    } else {
+                      handleCopy(key.id, key.config);
+                    }
+                  }}
                   disabled={key.status === 'offline'}
-                  className={`w-full py-3.5 md:py-4 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${
+                  className={`w-full py-3.5 md:py-4 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 relative z-20 ${
                     key.status === 'offline'
                     ? 'bg-white/5 text-white/20 cursor-not-allowed'
                     : copiedId === key.id 
                     ? 'bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
+                    : key.isSpecial && !unlockedSpecial
+                    ? 'bg-amber-500 text-black hover:bg-amber-400'
                     : 'bg-white/5 hover:bg-white hover:text-black'
                   }`}
                 >
-                  <AnimatePresence mode="wait">
-                    {copiedId === key.id ? (
-                      <motion.div
-                        key="check"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="flex items-center gap-2"
-                      >
-                        <Check className="w-4 h-4" /> Скопировано!
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="copy"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="flex items-center gap-2"
-                      >
-                        <Copy className="w-4 h-4" /> Копировать конфигурацию
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  {key.isSpecial && !unlockedSpecial ? (
+                    <div className="flex items-center gap-2">
+                      <Lock className="w-4 h-4" /> Разблокировать
+                    </div>
+                  ) : (
+                    <AnimatePresence mode="wait">
+                      {copiedId === key.id ? (
+                        <motion.div
+                          key="check"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="flex items-center gap-2"
+                        >
+                          <Check className="w-4 h-4" /> Скопировано!
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="copy"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="flex items-center gap-2"
+                        >
+                          <Copy className="w-4 h-4" /> Копировать конфигурацию
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  )}
                 </button>
               </motion.div>
             ))}
@@ -454,6 +476,83 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
             <p className="text-white/30 text-sm">
               {activeTab === 'active' ? 'Пожалуйста, подождите обновления списка.' : 'Все доступные узлы работают в штатном режиме.'}
             </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Password Prompt Modal */}
+      <AnimatePresence>
+        {showPasswordPrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="glass p-8 rounded-[32px] max-w-md w-full border border-white/10 relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-500" />
+              
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                    <Lock className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-xl font-serif italic tracking-tight">Доступ ограничен</h3>
+                </div>
+                <button 
+                  onClick={() => {
+                    setShowPasswordPrompt(false);
+                    setPassword('');
+                    setPasswordError(false);
+                  }}
+                  className="p-2 rounded-full hover:bg-white/5 transition-colors"
+                >
+                  <X className="w-5 h-5 text-white/40" />
+                </button>
+              </div>
+
+              <p className="text-sm text-white/40 mb-6 leading-relaxed">
+                Этот сервер является специальным. Для получения доступа к конфигурации необходимо ввести пароль.
+              </p>
+
+              <div className="space-y-4">
+                <div className="relative">
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setPasswordError(false);
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && checkPassword()}
+                    placeholder="Введите пароль..."
+                    className={`w-full bg-white/5 border ${passwordError ? 'border-rose-500/50' : 'border-white/10'} rounded-2xl px-5 py-4 text-sm focus:outline-none focus:border-amber-500/50 transition-colors`}
+                    autoFocus
+                  />
+                  {passwordError && (
+                    <motion.p 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-[10px] text-rose-500 mt-2 font-bold uppercase tracking-widest"
+                    >
+                      Неверный пароль
+                    </motion.p>
+                  )}
+                </div>
+
+                <button
+                  onClick={checkPassword}
+                  className="w-full py-4 rounded-2xl bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-amber-500 transition-colors duration-300"
+                >
+                  Разблокировать
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -594,6 +693,7 @@ function AppContent() {
   const [selectedKey, setSelectedKey] = useState<VlessKey | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
   const [loading, setLoading] = useState(true);
+  const [unlockedSpecial, setUnlockedSpecial] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -769,6 +869,8 @@ function AppContent() {
             activeTab={activeTab} 
             setActiveTab={setActiveTab} 
             loading={loading}
+            unlockedSpecial={unlockedSpecial}
+            onUnlockSpecial={() => setUnlockedSpecial(true)}
           />
         } />
         <Route path="/how-to-use" element={<HowToUsePage />} />
