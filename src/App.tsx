@@ -57,6 +57,17 @@ const MOCK_KEYS: VlessKey[] = [
     status: 'online',
   },
   {
+    id: 4,
+    name: 'Server №4',
+    location: '🇨🇾 Кипр',
+    protocol: 'VLESS',
+    latency: '0ms',
+    load: 0,
+    config: 'vless://8dc7722c-2767-4eea-a28b-2f8daacc07e3@pqh29v4.globalfymain.com:8880?encryption=none&security=none&type=grpc#Republic of Cyprus%201089%20/%20VlessKey.com%20/%20t.me/VlessVpnFree',
+    expiryDate: 'неизвестно',
+    status: 'online',
+  },
+  {
     id: 5,
     name: 'Server №5',
     location: '🇺🇸 США, Нью-Йорк',
