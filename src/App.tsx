@@ -1165,6 +1165,104 @@ function SpecialFolderPage({ keys, handleCopy, copiedId, unlockedSpecial }: any)
   );
 }
 
+function MirrorScreen() {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="fixed inset-0 z-[300] bg-[#050505] flex flex-col items-center justify-center p-6 text-center"
+    >
+      <div className="text-6xl mb-8">⏳</div>
+      <h1 className="text-3xl md:text-4xl font-serif italic mb-4 tracking-tighter">
+        Не загружается?
+      </h1>
+      <p className="text-white/50 mb-10 text-sm md:text-base max-w-xs">
+        Попробуй тогда это зеркало
+      </p>
+      <a 
+        href="https://vlessfree-djif23janskdq21.vercel.app/"
+        className="px-10 py-4 rounded-2xl bg-white text-black font-bold uppercase tracking-widest text-xs hover:scale-105 transition-transform"
+      >
+        Зеркало
+      </a>
+    </motion.div>
+  );
+}
+
+function LoadingScreen() {
+  return (
+    <motion.div
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed inset-0 z-[200] bg-[#050505] flex flex-col items-center justify-center overflow-hidden"
+    >
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-amber-500/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 flex flex-col items-center"
+      >
+        <div className="relative mb-8">
+          <motion.div
+            animate={{ 
+              rotate: 360,
+              scale: [1, 1.1, 1],
+            }}
+            transition={{ 
+              rotate: { duration: 3, repeat: Infinity, ease: "linear" },
+              scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+            }}
+            className="w-20 h-20 md:w-24 md:h-24 rounded-3xl border-2 border-white/10 flex items-center justify-center glass relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/20 to-transparent animate-pulse" />
+            <Zap className="w-10 h-10 md:w-12 md:h-12 text-white glow-text" />
+          </motion.div>
+          
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: "100%" }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
+            className="absolute -bottom-4 left-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent"
+          />
+        </div>
+
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.8 }}
+          className="flex flex-col items-center gap-2"
+        >
+          <h1 className="text-2xl md:text-3xl font-serif italic tracking-tighter text-white">
+            VlessFree
+          </h1>
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-1 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '0s' }} />
+            <div className="w-1 h-1 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '0.2s' }} />
+            <div className="w-1 h-1 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '0.4s' }} />
+          </div>
+        </motion.div>
+      </motion.div>
+
+      <div className="absolute bottom-12 left-0 right-0 flex justify-center">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.3 }}
+          transition={{ delay: 0.8, duration: 1 }}
+          className="text-[10px] uppercase tracking-[0.3em] font-bold text-white"
+        >
+          Загрузка конфигураций...
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}
+
 function AppContent() {
   const [keys] = useState<VlessKey[]>(MOCK_KEYS);
   const [copiedId, setCopiedId] = useState<any>(null);
@@ -1173,10 +1271,14 @@ function AppContent() {
   const [selectedKey, setSelectedKey] = useState<VlessKey | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
   const [loading, setLoading] = useState(true);
+  const [showMirror, setShowMirror] = useState(false);
   const [unlockedSpecial, setUnlockedSpecial] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
+    // Mark app as loaded for the index.html failsafe
+    (window as any).appLoaded = true;
+
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     
@@ -1190,11 +1292,22 @@ function AppContent() {
     const timer = setTimeout(() => {
       setLoading(false);
     }, 1500);
+
+    // Show mirror suggestion if loading takes too long (e.g. 10 seconds)
+    const mirrorTimer = setTimeout(() => {
+      setLoading(prev => {
+        if (prev) {
+          setShowMirror(true);
+        }
+        return prev;
+      });
+    }, 10000);
     
     return () => {
       window.removeEventListener('scroll', handleScroll);
       document.body.classList.remove('is-iphone');
       clearTimeout(timer);
+      clearTimeout(mirrorTimer);
     };
   }, []);
 
@@ -1210,6 +1323,14 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-[#050505] selection:bg-white selection:text-black pt-safe pb-safe">
+      <AnimatePresence mode="wait">
+        {showMirror ? (
+          <MirrorScreen key="mirror" />
+        ) : loading ? (
+          <LoadingScreen key="loader" />
+        ) : null}
+      </AnimatePresence>
+
       <AnimatePresence>
         {showModal && location.pathname === '/' && (
           <motion.div 

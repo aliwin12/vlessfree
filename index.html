@@ -12,6 +12,24 @@
   </head>
   <body>
     <div id="root"></div>
+    
+    <!-- Failsafe Mirror Suggestion -->
+    <div id="mirror-failsafe" style="display: none; position: fixed; inset: 0; z-index: 9999; background: #050505; color: white; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2rem; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+      <div style="font-size: 4rem; margin-bottom: 1.5rem;">⏳</div>
+      <h1 style="font-size: 2rem; margin-bottom: 1rem; font-weight: 700; letter-spacing: -0.02em;">Не загружается?</h1>
+      <p style="opacity: 0.5; margin-bottom: 2rem; font-size: 1.125rem;">Попробуй тогда это зеркало</p>
+      <a href="https://vlessfree-djif23janskdq21.vercel.app/" style="background: white; color: black; padding: 1rem 2.5rem; border-radius: 1rem; text-decoration: none; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.875rem; transition: transform 0.2s ease;">Зеркало</a>
+    </div>
+
+    <script>
+      // Show mirror suggestion after 12 seconds if app hasn't loaded
+      setTimeout(function() {
+        if (!window.appLoaded) {
+          document.getElementById('mirror-failsafe').style.display = 'flex';
+        }
+      }, 12000);
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
