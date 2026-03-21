@@ -32,7 +32,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://1966afa8-66af-4ca3-89fe-f754b614c16b@nl-ams-4.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=_Fp55m3LYD2R2hr-vDJzQ5WQbqKQ6lLiklB5ZRSXeDw&security=reality&sid=8d93d0b7&sni=nl-ams-4.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%204',
     expiryDate: '22.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'Больше неактивны по дате',
   },
   {
     id: 2,
@@ -43,7 +44,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://5af0e0c9-d857-4a9d-86b5-de4ac3aa6a23@de-fra-8.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=uNyPARTLMtBT6AeOS61GTInVeKAMqXrVwZyR004u9Dg&security=reality&sid=a80ac422&sni=de-fra-8.blook.network&spx=%2F&type=tcp#%F0%9F%87%A9%F0%9F%87%AA%20%D0%93%D0%B5%D1%80%D0%BC%D0%B0%D0%BD%D0%B8%D1%8F%208',
     expiryDate: '22.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'Больше неактивны по дате',
   },
   {
     id: 3,
@@ -54,7 +56,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://1966afa8-66af-4ca3-89fe-f754b614c16b@nl-ams-4.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=_Fp55m3LYD2R2hr-vDJzQ5WQbqKQ6lLiklB5ZRSXeDw&security=reality&sid=8d93d0b7&sni=nl-ams-4.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%204',
     expiryDate: '22.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'Больше неактивны по дате',
   },
   {
     id: 4,
@@ -76,7 +79,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://554d798d-79b8-41c5-a84e-52abb0418ddf@us-jfk-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=HQU7RO0Q0M1z8r_sNeT1kbNBbEGk3-ZShzPfCC5GbBU&security=reality&sid=61c86959&sni=us-jfk-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%BA%F0%9F%87%B8%20%D0%A1%D0%A8%D0%90%202',
     expiryDate: '22.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'Больше неактивны по дате',
   },
   {
     id: 6,
@@ -87,7 +91,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://928ee856-e924-40c6-be66-dd7bfcde1242@uk-lhr-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=jfQ43JU-FeRkFdHGJT5NBCX0GZaWTZjC7N23Z2POsh8&security=reality&sid=97e4b5f5&sni=uk-lhr-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%AC%F0%9F%87%A7%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%201',
     expiryDate: '22.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'Больше неактивны по дате',
   },
   {
     id: 7,
@@ -98,7 +103,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://6c245c60-1213-4a47-abcd-7a78fa22ced6@sg-sin-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=eLJZDr57FFoNrBKhF3Lx5aZBoqc_1sVRrPMZLgy3Kgk&security=reality&sid=a0be6214&sni=sg-sin-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B8%F0%9F%87%AC%20%D0%A1%D0%B8%D0%BD%D0%B3%D0%B0%D0%BF%D1%83%D1%80%202',
     expiryDate: '22.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'Больше неактивны по дате',
   },
   {
     id: 8,
@@ -109,7 +115,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://5567bc21-a6a8-4b3b-ab42-05f7b5c48989@in-blr-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=4hgbGo2EFMD_G-67IL4UrPtBri0Dh-l_SFafynnVHm8&security=reality&sid=dd0d7f6b&sni=in-blr-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%AE%F0%9F%87%B3%20%D0%98%D0%BD%D0%B4%D0%B8%D1%8F%202',
     expiryDate: '22.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'Больше неактивны по дате',
   },
   {
     id: 9,
@@ -120,10 +127,23 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://bd13dfce-f331-4059-a9a6-791c4fb0c60f@kz-ala-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=1qOetCE3B75XXzhHHF-0Y2fXEROUWY6gA0REH6tc8FM&security=reality&sid=6966f5d4&sni=kz-ala-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B0%F0%9F%87%BF%20%D0%9A%D0%B0%D0%B7%D0%B0%D1%85%D1%81%D1%82%D0%B0%D0%BD%202',
     expiryDate: '22.03.2026',
-    status: 'online',
+    status: 'offline',
+    reason: 'Больше неактивны по дате',
   },
   {
     id: 10,
+    name: 'Server №10',
+    location: '🇳🇱 Нидерланды, Амстердам',
+    protocol: 'VLESS',
+    latency: '0ms',
+    load: 0,
+    config: 'vless://b059a169-d85c-45ad-b04a-b344eb3e7ba0@nl-ams-4.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=_Fp55m3LYD2R2hr-vDJzQ5WQbqKQ6lLiklB5ZRSXeDw&security=reality&sid=8d93d0b7&sni=nl-ams-4.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%204',
+    expiryDate: '23.03.2026',
+    status: 'offline',
+    reason: 'Больше неактивны по дате',
+  },
+  {
+    id: 11,
     name: 'Сервер для WinCore и Майонезес',
     location: '🇫🇷 Франция, Париж',
     protocol: 'VLESS',
@@ -136,36 +156,97 @@ const MOCK_KEYS: VlessKey[] = [
   }
 ];
 
+const UPDATES = [
+  {
+    version: '0.4',
+    date: '21.03.2026',
+    changes: [
+      'Большинство серверов переведены в неактивный режим по истечении срока.',
+      'Добавлен информационный баннер о новых серверах.',
+      'Обновлен дизайн заголовка.'
+    ]
+  },
+  {
+    version: '0.3',
+    date: '20.03.2026',
+    changes: [
+      'Удалены тестовые серверы №11, №12 и №13.'
+    ]
+  },
+  {
+    version: '0.2',
+    date: '20.03.2026',
+    changes: [
+      'Добавлена пагинация: теперь на одной странице отображается не более 12 серверов.',
+      'Добавлен новый Server №10 (Нидерланды).',
+      'Создана страница "Обновления" для отслеживания изменений на сайте.',
+      'Добавлена кнопка "Обновления" в верхнюю панель навигации.'
+    ]
+  },
+  {
+    version: '0.1',
+    date: '19.03.2026',
+    changes: [
+      'Оптимизация интерфейса для мобильных устройств.'
+    ]
+  }
+];
+
 function Header({ scrolled }: { scrolled: boolean }) {
   return (
     <header className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-500 ${
       scrolled ? 'py-2 md:py-4 glass border-b' : 'py-3 md:py-8 bg-transparent md:bg-transparent glass md:glass-none border-b md:border-none'
     }`}>
-      <div className="max-w-7xl mx-auto px-4 md:px-6 relative flex justify-center items-center">
-        <Link to="/" className="flex items-center gap-2 md:gap-3">
-          <div className="w-8 h-8 md:w-10 md:h-10 bg-white/10 flex items-center justify-center rounded-lg md:rounded-xl overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 relative flex flex-col items-center gap-4">
+        <div className="w-full flex justify-center items-center relative">
+          {/* Left Updates Button */}
+          <Link 
+            to="/updates" 
+            className="hidden md:flex absolute left-0 items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white hover:text-black text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Обновления
+          </Link>
+
+          <Link to="/" className="flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-white/10 flex items-center justify-center rounded-lg md:rounded-xl overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+              <img 
+                src="https://s10.iimage.su/s/17/gzMssIvxlmD4o7bBXdXbwchG1mLsp8EHi8CdMFJ2o.png" 
+                alt="vlessfree logo" 
+                className="w-full h-full object-contain p-1"
+                referrerPolicy="no-referrer"
+              />
+            </div>
             <img 
-              src="https://s10.iimage.su/s/17/gzMssIvxlmD4o7bBXdXbwchG1mLsp8EHi8CdMFJ2o.png" 
-              alt="vlessfree logo" 
-              className="w-full h-full object-contain p-1"
+              src="https://s10.iimage.su/s/17/gW7gsFfxcyoojRD4cNLejI21W6YZc62Ieh9AfziAL.png" 
+              alt="vlessfree" 
+              className="h-6 md:h-10 w-auto object-contain glow-text"
               referrerPolicy="no-referrer"
             />
-          </div>
-          <img 
-            src="https://s10.iimage.su/s/17/gW7gsFfxcyoojRD4cNLejI21W6YZc62Ieh9AfziAL.png" 
-            alt="vlessfree" 
-            className="h-6 md:h-10 w-auto object-contain glow-text"
-            referrerPolicy="no-referrer"
-          />
-        </Link>
-        
-        {/* Desktop Button */}
-        <Link 
-          to="/how-to-use" 
-          className="hidden md:block absolute right-6 px-4 py-2 rounded-xl bg-white/5 hover:bg-white hover:text-black text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10"
+          </Link>
+          
+          {/* Desktop Button */}
+          <Link 
+            to="/how-to-use" 
+            className="hidden md:block absolute right-0 px-4 py-2 rounded-xl bg-white/5 hover:bg-white hover:text-black text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10"
+          >
+            Как установить VPN
+          </Link>
+        </div>
+
+        {/* Banner */}
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-2xl px-4 py-2 rounded-xl md:rounded-2xl bg-gradient-to-r from-amber-500 via-orange-600 to-amber-500 animate-shimmer-bg border border-amber-400/20 shadow-[0_0_30px_rgba(245,158,11,0.2)] flex flex-col items-center justify-center"
         >
-          Как установить VPN
-        </Link>
+          <div className="text-[10px] md:text-xs font-black text-black uppercase tracking-[0.2em] text-center">
+            Скоро будут новые сервера
+          </div>
+          <div className="text-[8px] md:text-[10px] text-black/90 font-bold mt-0.5 text-center leading-tight">
+            Неактивные сервера еще могут работать до дня 22.03.2026, новые сервера скоро будут добавлены.
+          </div>
+        </motion.div>
       </div>
     </header>
   );
@@ -183,6 +264,18 @@ function BottomNav() {
       className="md:hidden fixed bottom-0 left-0 right-0 z-[60] glass border-t pb-safe backdrop-blur-2xl"
     >
       <div className="flex justify-around items-center h-14 md:h-16">
+        <Link 
+          to="/updates" 
+          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/updates') ? 'text-white' : 'text-white/30'}`}
+        >
+          <motion.div 
+            whileTap={{ scale: 0.9 }}
+            className={`p-1.5 rounded-xl transition-all duration-300 ${isActive('/updates') ? 'bg-white/10' : ''}`}
+          >
+            <RefreshCw className={`w-5 h-5 ${isActive('/updates') ? 'glow-text' : ''}`} />
+          </motion.div>
+          <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/updates') ? 'opacity-100' : 'opacity-60'}`}>Обновы</span>
+        </Link>
         <Link 
           to="/" 
           className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/') ? 'text-white' : 'text-white/30'}`}
@@ -269,6 +362,8 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
 
   const handleSpecialClick = (key: any) => {
     setShowPasswordPrompt(true);
@@ -290,8 +385,18 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
     return key.status === 'offline';
   });
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredKeys.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredKeys.slice(indexOfFirstItem, indexOfLastItem);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
   return (
-    <main className="relative pt-20 md:pt-40 pb-28 md:pb-20 px-4 md:px-6 max-w-7xl mx-auto min-h-screen flex flex-col">
+    <main className="relative pt-32 md:pt-56 pb-28 md:pb-20 px-4 md:px-6 max-w-7xl mx-auto min-h-screen flex flex-col">
       {/* Hero Section */}
       <section className="mb-8 md:mb-24 text-center shrink-0">
         <motion.div
@@ -356,7 +461,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
               exit={{ opacity: 0, y: -20 }}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
             >
-            {filteredKeys.map((key: any, index: number) => (
+            {currentItems.map((key: any, index: number) => (
               <motion.div
                 key={key.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -468,8 +573,47 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
                 </button>
               </motion.div>
             ))}
-          </motion.div>
-        </div>
+            </motion.div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-8 md:mt-12">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className={`p-3 rounded-xl border border-white/10 transition-all duration-300 ${
+                    currentPage === 1 ? 'opacity-20 cursor-not-allowed' : 'hover:bg-white hover:text-black'
+                  }`}
+                >
+                  <ChevronRight className="w-5 h-5 rotate-180" />
+                </button>
+                
+                <div className="flex gap-2">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-10 h-10 rounded-xl border border-white/10 text-[10px] font-bold transition-all duration-300 ${
+                        currentPage === page ? 'bg-white text-black' : 'hover:bg-white/5'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className={`p-3 rounded-xl border border-white/10 transition-all duration-300 ${
+                    currentPage === totalPages ? 'opacity-20 cursor-not-allowed' : 'hover:bg-white hover:text-black'
+                  }`}
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
+          </div>
       ) : (
           <motion.div 
             key="empty"
@@ -615,7 +759,7 @@ function HowToUsePage() {
   ];
 
   return (
-    <main className="relative pt-20 md:pt-40 pb-28 md:pb-20 px-4 md:px-6 max-w-5xl mx-auto min-h-screen flex flex-col">
+    <main className="relative pt-32 md:pt-56 pb-28 md:pb-20 px-4 md:px-6 max-w-5xl mx-auto min-h-screen flex flex-col">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -692,6 +836,53 @@ function HowToUsePage() {
           Вернуться к списку серверов <ChevronRight className="w-4 h-4" />
         </Link>
       </div>
+    </main>
+  );
+}
+
+function UpdatesPage() {
+  return (
+    <main className="relative pt-32 md:pt-56 pb-28 md:pb-20 px-4 md:px-6 max-w-3xl mx-auto min-h-screen">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-12 md:mb-20 text-center"
+      >
+        <h2 className="text-4xl md:text-6xl font-serif italic mb-4 tracking-tighter glow-text-iphone">Обновления</h2>
+        <p className="text-white/40 font-serif italic">История изменений проекта VLESSFREE</p>
+      </motion.div>
+
+      <div className="space-y-8 md:space-y-12">
+        {UPDATES.map((update, index) => (
+          <motion.div
+            key={update.version}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="relative pl-8 md:pl-12 border-l border-white/10"
+          >
+            <div className="absolute left-[-5px] top-0 w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+            
+            <div className="flex items-baseline gap-4 mb-4">
+              <h3 className="text-2xl md:text-3xl font-serif italic text-white">v{update.version}</h3>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-white/20">{update.date}</span>
+            </div>
+
+            <ul className="space-y-3">
+              {update.changes.map((change, i) => (
+                <li key={i} className="flex items-start gap-3 text-sm md:text-base text-white/60 leading-relaxed">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 shrink-0" />
+                  {change}
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        ))}
+      </div>
+
+      <footer className="mt-24 md:mt-32 py-10 md:py-12 border-t border-white/10 opacity-40 text-[10px] uppercase tracking-[0.2em] font-bold text-center">
+        <p>© 2026 VLESSFREE</p>
+      </footer>
     </main>
   );
 }
@@ -885,6 +1076,7 @@ function AppContent() {
           />
         } />
         <Route path="/how-to-use" element={<HowToUsePage />} />
+        <Route path="/updates" element={<UpdatesPage />} />
       </Routes>
     </div>
   );
