@@ -4,12 +4,12 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, Calendar, X, AlertTriangle, Monitor, Smartphone, Terminal, Info, ChevronRight, Download, ExternalLink, Menu, Share2 } from 'lucide-react';
+import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, Calendar, X, AlertTriangle, Monitor, Smartphone, Terminal, Info, ChevronRight, Download, ExternalLink, Menu, Share2, Folder } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 
 interface VlessKey {
-  id: number;
+  id: number | string;
   name: string;
   location: string;
   protocol: string;
@@ -20,20 +20,21 @@ interface VlessKey {
   status?: 'online' | 'unstable' | 'offline';
   reason?: string;
   isSpecial?: boolean;
+  subKeys?: { name: string; config: string; location: string }[];
+  showMiniBanner?: boolean;
 }
 
 const MOCK_KEYS: VlessKey[] = [
   {
     id: 1,
-    name: 'Server #1',
+    name: 'Server №1',
     location: '🇳🇱 Нидерланды, Амстердам',
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://1966afa8-66af-4ca3-89fe-f754b614c16b@nl-ams-4.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=_Fp55m3LYD2R2hr-vDJzQ5WQbqKQ6lLiklB5ZRSXeDw&security=reality&sid=8d93d0b7&sni=nl-ams-4.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%204',
-    expiryDate: '22.03.2026',
-    status: 'offline',
-    reason: 'Больше неактивны по дате',
+    config: 'vless://c3f4f0de-5245-49cf-8c33-19abdaf24f1f@nl-ams-5.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=VcBxJnmuJ3mlh8SqOEncKIFdAlIxhjlfIa252CPcm1w&security=reality&sid=a72771b7&sni=nl-ams-5.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%205',
+    expiryDate: '24.03.2026',
+    status: 'online',
   },
   {
     id: 2,
@@ -42,22 +43,20 @@ const MOCK_KEYS: VlessKey[] = [
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://5af0e0c9-d857-4a9d-86b5-de4ac3aa6a23@de-fra-8.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=uNyPARTLMtBT6AeOS61GTInVeKAMqXrVwZyR004u9Dg&security=reality&sid=a80ac422&sni=de-fra-8.blook.network&spx=%2F&type=tcp#%F0%9F%87%A9%F0%9F%87%AA%20%D0%93%D0%B5%D1%80%D0%BC%D0%B0%D0%BD%D0%B8%D1%8F%208',
-    expiryDate: '22.03.2026',
-    status: 'offline',
-    reason: 'Больше неактивны по дате',
+    config: 'vless://33c7ebc2-7f5f-4a66-b570-1c0f505d9d84@de-fra-8.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=uNyPARTLMtBT6AeOS61GTInVeKAMqXrVwZyR004u9Dg&security=reality&sid=a80ac422&sni=de-fra-8.blook.network&spx=%2F&type=tcp#%F0%9F%87%A9%F0%9F%87%AA%20%D0%93%D0%B5%D1%80%D0%BC%D0%B0%D0%BD%D0%B8%D1%8F%208',
+    expiryDate: '24.03.2026',
+    status: 'online',
   },
   {
     id: 3,
     name: 'Server №3',
-    location: '🇳🇱 Нидерланды, Амстердам',
+    location: '🇫🇮 Финляндия, Хельсинки',
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://1966afa8-66af-4ca3-89fe-f754b614c16b@nl-ams-4.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=_Fp55m3LYD2R2hr-vDJzQ5WQbqKQ6lLiklB5ZRSXeDw&security=reality&sid=8d93d0b7&sni=nl-ams-4.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%204',
-    expiryDate: '22.03.2026',
-    status: 'offline',
-    reason: 'Больше неактивны по дате',
+    config: 'vless://a1bf8635-4c92-47f4-8a01-e076fefa30fe@fi-hel-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=qTokRYlMp5lS9KOJp8fjXMXy2XQ55kcDG9qg8Ke-mXE&security=reality&sid=0fe26a66&sni=fi-hel-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%AB%F0%9F%87%AE%20%D0%A4%D0%B8%D0%BD%D0%BB%D1%8F%D0%BD%D0%B4%D0%B8%D1%8F%202',
+    expiryDate: '24.03.2026',
+    status: 'online',
   },
   {
     id: 4,
@@ -73,50 +72,46 @@ const MOCK_KEYS: VlessKey[] = [
   {
     id: 5,
     name: 'Server №5',
-    location: '🇺🇸 США, Нью-Йорк',
+    location: '🇷🇺 Россия, Москва',
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://554d798d-79b8-41c5-a84e-52abb0418ddf@us-jfk-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=HQU7RO0Q0M1z8r_sNeT1kbNBbEGk3-ZShzPfCC5GbBU&security=reality&sid=61c86959&sni=us-jfk-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%BA%F0%9F%87%B8%20%D0%A1%D0%A8%D0%90%202',
-    expiryDate: '22.03.2026',
-    status: 'offline',
-    reason: 'Больше неактивны по дате',
+    config: 'vless://7a5d312a-8d12-4311-a878-9813e4a073c8@ru-svo-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=04Kor4UEaxb90YlCNktYu52799Dw5uoYeaagJ-xQ8wA&security=reality&sid=8957cb90&sni=ru-svo-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B7%F0%9F%87%BA%20%D0%A0%D0%BE%D1%81%D1%81%D0%B8%D1%8F%201',
+    expiryDate: '24.03.2026',
+    status: 'online',
   },
   {
     id: 6,
     name: 'Server №6',
-    location: '🇬🇧 Великобритания, Лондон',
+    location: '🇳🇬 Нигерия, Лагос',
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://928ee856-e924-40c6-be66-dd7bfcde1242@uk-lhr-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=jfQ43JU-FeRkFdHGJT5NBCX0GZaWTZjC7N23Z2POsh8&security=reality&sid=97e4b5f5&sni=uk-lhr-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%AC%F0%9F%87%A7%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%201',
-    expiryDate: '22.03.2026',
-    status: 'offline',
-    reason: 'Больше неактивны по дате',
+    config: 'vless://ebb88de6-68a7-4e37-b614-3b72fcfdf8a5@ng-los-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=bnOJ_uKtqdg94h0Jt3cGJJAnXhW-UAdWKZBfbiaT9ho&security=reality&sid=3c642112&sni=ng-los-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%AC%20%D0%9D%D0%B8%D0%B3%D0%B5%D1%80%D0%B8%D1%8F%201',
+    expiryDate: '24.03.2026',
+    status: 'online',
   },
   {
     id: 7,
     name: 'Server №7',
-    location: '🇸🇬 Сингапур',
+    location: '🇫🇷 Франция, Париж',
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://6c245c60-1213-4a47-abcd-7a78fa22ced6@sg-sin-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=eLJZDr57FFoNrBKhF3Lx5aZBoqc_1sVRrPMZLgy3Kgk&security=reality&sid=a0be6214&sni=sg-sin-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B8%F0%9F%87%AC%20%D0%A1%D0%B8%D0%BD%D0%B3%D0%B0%D0%BF%D1%83%D1%80%202',
-    expiryDate: '22.03.2026',
-    status: 'offline',
-    reason: 'Больше неактивны по дате',
+    config: 'vless://70924395-41fc-423a-a3dd-1f99ac295c5e@fr-cdg-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=CL5aeP6smcd4ie9upZlYVEvuHDwLAt46BOIfHOjkMis&security=reality&sid=cae7fcef&sni=fr-cdg-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%AB%F0%9F%87%B7%20%D0%A4%D1%80%D0%B0%D0%BD%D1%86%D0%B8%D1%8F%201',
+    expiryDate: '24.03.2026',
+    status: 'online',
   },
   {
     id: 8,
     name: 'Server №8',
-    location: '🇮🇳 Индия, Бангалор',
+    location: '🇰🇿 Казахстан, Алматы',
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://5567bc21-a6a8-4b3b-ab42-05f7b5c48989@in-blr-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=4hgbGo2EFMD_G-67IL4UrPtBri0Dh-l_SFafynnVHm8&security=reality&sid=dd0d7f6b&sni=in-blr-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%AE%F0%9F%87%B3%20%D0%98%D0%BD%D0%B4%D0%B8%D1%8F%202',
-    expiryDate: '22.03.2026',
-    status: 'offline',
-    reason: 'Больше неактивны по дате',
+    config: 'vless://1a70f5b7-82ef-4bcd-a049-93bd0c78562d@kz-ala-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=cEKfInbAE2ZWB3RH-MYQiIfA2aAPO6wZT_TNCPgh7TE&security=reality&sid=85b45f16&sni=kz-ala-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B0%F0%9F%87%BF%20%D0%9A%D0%B0%D0%B7%D0%B0%D1%85%D1%81%D1%82%D0%B0%D0%BD%201',
+    expiryDate: '24.03.2026',
+    status: 'online',
   },
   {
     id: 9,
@@ -125,38 +120,176 @@ const MOCK_KEYS: VlessKey[] = [
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://bd13dfce-f331-4059-a9a6-791c4fb0c60f@kz-ala-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=1qOetCE3B75XXzhHHF-0Y2fXEROUWY6gA0REH6tc8FM&security=reality&sid=6966f5d4&sni=kz-ala-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B0%F0%9F%87%BF%20%D0%9A%D0%B0%D0%B7%D0%B0%D1%85%D1%81%D1%82%D0%B0%D0%BD%202',
-    expiryDate: '22.03.2026',
-    status: 'offline',
-    reason: 'Больше неактивны по дате',
+    config: 'vless://bb89590a-0161-41fd-9eb7-fae3a0beef17@br-gru-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=GYqQl8suX6lgrJZ27CkhMwtxmDGkd45QxKBJGaHUgQM&security=reality&sid=7cc366b3&sni=br-gru-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%A7%F0%9F%87%B7%20%D0%91%D1%80%D0%B0%D0%B7%D0%B8%D0%BB%D0%B8%D1%8F%201',
+    expiryDate: '24.03.2026',
+    status: 'online',
   },
   {
     id: 10,
     name: 'Server №10',
+    location: '🇹🇷 Турция, Стамбул',
+    protocol: 'VLESS',
+    latency: '0ms',
+    load: 0,
+    config: 'vless://e63e881a-74a4-42dd-b9ea-f6d97977e5c7@tr-ist-11-x.blook.network:443?allowInsecure=1&alpn=h2&extra=%7B%22noGRPCHeader%22%3Atrue%2C%22scMaxConcurrentPosts%22%3A100%2C%22scMaxEachPostBytes%22%3A1000000%2C%22scMinPostsIntervalMs%22%3A30%2C%22xPaddingBytes%22%3A%22100-1000%22%7D&fp=chrome&headerType=&mode=auto&path=%2FVLSpdG9k&security=tls&sni=tr-ist-11-x.blook.network&type=xhttp#%F0%9F%87%B9%F0%9F%87%B7%20%D0%A2%D1%83%D1%80%D1%86%D0%B8%D1%8F%2011',
+    expiryDate: '24.03.2026',
+    status: 'online',
+  },
+  {
+    id: 11,
+    name: 'Server №11',
     location: '🇳🇱 Нидерланды, Амстердам',
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
     config: 'vless://b059a169-d85c-45ad-b04a-b344eb3e7ba0@nl-ams-4.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=_Fp55m3LYD2R2hr-vDJzQ5WQbqKQ6lLiklB5ZRSXeDw&security=reality&sid=8d93d0b7&sni=nl-ams-4.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%204',
-    expiryDate: '23.03.2026',
-    status: 'offline',
-    reason: 'Больше неактивны по дате',
+    expiryDate: '24.03.2026',
+    status: 'online',
   },
   {
-    id: 11,
-    name: 'Сервер для WinCore и Майонезес',
-    location: '🇫🇷 Франция, Париж',
+    id: 'special',
+    name: 'Special Server Folder',
+    location: 'Multi-location',
     protocol: 'VLESS',
     latency: '0ms',
     load: 0,
-    config: 'vless://865effa1-951e-4ff6-8748-4428441faa60@fr-cdg-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=CL5aeP6smcd4ie9upZlYVEvuHDwLAt46BOIfHOjkMis&security=reality&sid=cae7fcef&sni=fr-cdg-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%AB%F0%9F%87%B7%20%D0%A4%D1%80%D0%B0%D0%BD%D1%86%D0%B8%D1%8F%201',
-    expiryDate: '22.03.2026',
+    config: '',
+    expiryDate: '24.03.2026',
     status: 'online',
     isSpecial: true,
+    subKeys: [
+      {
+        name: 'Special Server №1',
+        location: '🇳🇱 Нидерланды, Амстердам',
+        config: 'vless://c0b01050-5202-4ed5-a36f-ac9719657a91@nl-ams-5.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=VcBxJnmuJ3mlh8SqOEncKIFdAlIxhjlfIa252CPcm1w&security=reality&sid=a72771b7&sni=nl-ams-5.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%205'
+      },
+      {
+        name: 'Special Server №2',
+        location: '🇩🇪 Германия, Франкфурт-На-Майне',
+        config: 'vless://329bc28d-2e57-4526-9d39-a54e6230de8b@de-fra-8.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=uNyPARTLMtBT6AeOS61GTInVeKAMqXrVwZyR004u9Dg&security=reality&sid=a80ac422&sni=de-fra-8.blook.network&spx=%2F&type=tcp#%F0%9F%87%A9%F0%9F%87%AA%20%D0%93%D0%B5%D1%80%D0%BC%D0%B0%D0%BD%D0%B8%D1%8F%208'
+      },
+      {
+        name: 'Special Server №3',
+        location: '🇫🇮 Финляндия, Хельсинки',
+        config: 'vless://fe058017-5f9f-48ff-ad2e-35f0a77208a6@fi-hel-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=qTokRYlMp5lS9KOJp8fjXMXy2XQ55kcDG9qg8Ke-mXE&security=reality&sid=0fe26a66&sni=fi-hel-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%AB%F0%9F%87%AE%20%D0%A4%D0%B8%D0%BD%D0%BB%D1%8F%D0%BD%D0%B4%D0%B8%D1%8F%202'
+      }
+    ],
+    showMiniBanner: true
+  },
+  {
+    id: 101,
+    name: 'Server №12',
+    location: '🇳🇱 Нидерланды, Амстердам',
+    protocol: 'VLESS',
+    latency: '0ms',
+    load: 0,
+    config: 'vless://1966afa8-66af-4ca3-89fe-f754b614c16b@nl-ams-4.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=_Fp55m3LYD2R2hr-vDJzQ5WQbqKQ6lLiklB5ZRSXeDw&security=reality&sid=8d93d0b7&sni=nl-ams-4.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%204',
+    expiryDate: '22.03.2026 15:00',
+    status: 'online',
+  },
+  {
+    id: 102,
+    name: 'Server №13',
+    location: '🇩🇪 Германия, Франкфурт-На-Майне',
+    protocol: 'VLESS',
+    latency: '0ms',
+    load: 0,
+    config: 'vless://5af0e0c9-d857-4a9d-86b5-de4ac3aa6a23@de-fra-8.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=uNyPARTLMtBT6AeOS61GTInVeKAMqXrVwZyR004u9Dg&security=reality&sid=a80ac422&sni=de-fra-8.blook.network&spx=%2F&type=tcp#%F0%9F%87%A9%F0%9F%87%AA%20%D0%93%D0%B5%D1%80%D0%BC%D0%B0%D0%BD%D0%B8%D1%8F%208',
+    expiryDate: '22.03.2026 15:00',
+    status: 'online',
+  },
+  {
+    id: 103,
+    name: 'Server №14',
+    location: '🇳🇱 Нидерланды, Амстердам',
+    protocol: 'VLESS',
+    latency: '0ms',
+    load: 0,
+    config: 'vless://1966afa8-66af-4ca3-89fe-f754b614c16b@nl-ams-4.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=_Fp55m3LYD2R2hr-vDJzQ5WQbqKQ6lLiklB5ZRSXeDw&security=reality&sid=8d93d0b7&sni=nl-ams-4.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%204',
+    expiryDate: '22.03.2026 15:00',
+    status: 'online',
+  },
+  {
+    id: 105,
+    name: 'Server №15',
+    location: '🇺🇸 США, Нью-Йорк',
+    protocol: 'VLESS',
+    latency: '0ms',
+    load: 0,
+    config: 'vless://554d798d-79b8-41c5-a84e-52abb0418ddf@us-jfk-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=HQU7RO0Q0M1z8r_sNeT1kbNBbEGk3-ZShzPfCC5GbBU&security=reality&sid=61c86959&sni=us-jfk-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%BA%F0%9F%87%B8%20%D0%A1%D0%A8%D0%90%202',
+    expiryDate: '22.03.2026 15:00',
+    status: 'online',
+  },
+  {
+    id: 106,
+    name: 'Server №16',
+    location: '🇬🇧 Великобритания, Лондон',
+    protocol: 'VLESS',
+    latency: '0ms',
+    load: 0,
+    config: 'vless://928ee856-e924-40c6-be66-dd7bfcde1242@uk-lhr-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=jfQ43JU-FeRkFdHGJT5NBCX0GZaWTZjC7N23Z2POsh8&security=reality&sid=97e4b5f5&sni=uk-lhr-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%AC%F0%9F%87%A7%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%201',
+    expiryDate: '22.03.2026 15:00',
+    status: 'online',
+  },
+  {
+    id: 107,
+    name: 'Server №17',
+    location: '🇸🇬 Сингапур',
+    protocol: 'VLESS',
+    latency: '0ms',
+    load: 0,
+    config: 'vless://6c245c60-1213-4a47-abcd-7a78fa22ced6@sg-sin-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=eLJZDr57FFoNrBKhF3Lx5aZBoqc_1sVRrPMZLgy3Kgk&security=reality&sid=a0be6214&sni=sg-sin-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B8%F0%9F%87%AC%20%D0%A1%D0%B8%D0%BD%D0%B3%D0%B0%D0%BF%D1%83%D1%80%202',
+    expiryDate: '22.03.2026 15:00',
+    status: 'online',
+  },
+  {
+    id: 108,
+    name: 'Server №18',
+    location: '🇮🇳 Индия, Бангалор',
+    protocol: 'VLESS',
+    latency: '0ms',
+    load: 0,
+    config: 'vless://5567bc21-a6a8-4b3b-ab42-05f7b5c48989@in-blr-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=4hgbGo2EFMD_G-67IL4UrPtBri0Dh-l_SFafynnVHm8&security=reality&sid=dd0d7f6b&sni=in-blr-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%AE%F0%9F%87%B3%20%D0%98%D0%BD%D0%B4%D0%B8%D1%8F%202',
+    expiryDate: '22.03.2026 15:00',
+    status: 'online',
+  },
+  {
+    id: 109,
+    name: 'Server №19',
+    location: '🇰🇿 Казахстан, Алматы',
+    protocol: 'VLESS',
+    latency: '0ms',
+    load: 0,
+    config: 'vless://bd13dfce-f331-4059-a9a6-791c4fb0c60f@kz-ala-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=1qOetCE3B75XXzhHHF-0Y2fXEROUWY6gA0REH6tc8FM&security=reality&sid=6966f5d4&sni=kz-ala-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B0%F0%9F%87%BF%20%D0%9A%D0%B0%D0%B7%D0%B0%D1%85%D1%81%D1%82%D0%B0%D0%BD%202',
+    expiryDate: '22.03.2026 15:00',
+    status: 'online',
   }
 ];
 
 const UPDATES = [
+  {
+    version: '0.6',
+    date: '21.03.2026',
+    changes: [
+      'Серверы на второй странице переименованы в Server №12 - Server №19.',
+      'Все возвращенные серверы теперь имеют сквозную нумерацию.'
+    ]
+  },
+  {
+    version: '0.5',
+    date: '21.03.2026',
+    changes: [
+      'Добавлен новый список серверов (№1, №2, №3, №5-№10).',
+      'Спец сервер теперь работает как "Папка" с несколькими конфигурациями.',
+      'Добавлен мини-баннер "Скоро будут ещё сервера" в раздел спец серверов.',
+      'Добавлена возможность делиться конфигурациями отдельных серверов из папки.',
+      'Удален информационный баннер о новых серверах в верхней панели.',
+      'Восстановлен список неактивных серверов во вкладке "Неактивные".',
+      'Server №10 (Old) переименован в Server №11 и снова активен.',
+      'Спец папка теперь открывается на отдельной странице.',
+      'Все неактивные сервера (№1-№9) возвращены в строй и активны до 22.03.2026 15:00.'
+    ]
+  },
   {
     version: '0.4',
     date: '21.03.2026',
@@ -233,20 +366,6 @@ function Header({ scrolled }: { scrolled: boolean }) {
             Как установить VPN
           </Link>
         </div>
-
-        {/* Banner */}
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-2xl px-4 py-2 rounded-xl md:rounded-2xl bg-gradient-to-r from-amber-500 via-orange-600 to-amber-500 animate-shimmer-bg border border-amber-400/20 shadow-[0_0_30px_rgba(245,158,11,0.2)] flex flex-col items-center justify-center"
-        >
-          <div className="text-[10px] md:text-xs font-black text-black uppercase tracking-[0.2em] text-center">
-            Скоро будут новые сервера
-          </div>
-          <div className="text-[8px] md:text-[10px] text-black/90 font-bold mt-0.5 text-center leading-tight">
-            Неактивные сервера еще могут работать до дня 22.03.2026, новые сервера скоро будут добавлены.
-          </div>
-        </motion.div>
       </div>
     </header>
   );
@@ -363,10 +482,15 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
   const itemsPerPage = 12;
 
   const handleSpecialClick = (key: any) => {
-    setShowPasswordPrompt(true);
+    if (unlockedSpecial) {
+      navigate('/special');
+    } else {
+      setShowPasswordPrompt(true);
+    }
   };
 
   const checkPassword = () => {
@@ -375,6 +499,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
       setShowPasswordPrompt(false);
       setPassword('');
       setPasswordError(false);
+      navigate('/special');
     } else {
       setPasswordError(true);
     }
@@ -545,7 +670,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
                 <div className="flex flex-col gap-3 relative z-20">
                   <button
                     onClick={() => {
-                      if (key.isSpecial && !unlockedSpecial) {
+                      if (key.isSpecial) {
                         handleSpecialClick(key);
                       } else {
                         handleCopy(key.id, key.config);
@@ -559,12 +684,18 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
                       ? 'bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
                       : key.isSpecial && !unlockedSpecial
                       ? 'bg-amber-500 text-black hover:bg-amber-400'
+                      : key.isSpecial && unlockedSpecial
+                      ? 'bg-white/10 hover:bg-white hover:text-black'
                       : 'bg-white/5 hover:bg-white hover:text-black'
                     }`}
                   >
                     {key.isSpecial && !unlockedSpecial ? (
                       <div className="flex items-center gap-2">
                         <Lock className="w-4 h-4" /> Разблокировать
+                      </div>
+                    ) : key.isSpecial && unlockedSpecial ? (
+                      <div className="flex items-center gap-2">
+                        <Folder className="w-4 h-4" /> Открыть папку
                       </div>
                     ) : (
                       <AnimatePresence mode="wait">
@@ -595,7 +726,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
 
                   <button
                     onClick={() => {
-                      if (key.isSpecial && !unlockedSpecial) {
+                      if (key.isSpecial) {
                         handleSpecialClick(key);
                       } else {
                         handleShare(key);
@@ -608,7 +739,8 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
                       : 'bg-white/5 hover:bg-white/10'
                     }`}
                   >
-                    <Share2 className="w-3.5 h-3.5" /> Поделиться
+                    {key.isSpecial ? <Folder className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
+                    {key.isSpecial ? 'Просмотреть содержимое' : 'Поделиться'}
                   </button>
                 </div>
               </motion.div>
@@ -927,9 +1059,115 @@ function UpdatesPage() {
   );
 }
 
+function SpecialFolderPage({ keys, handleCopy, copiedId, unlockedSpecial }: any) {
+  const navigate = useNavigate();
+  const specialFolder = keys.find((k: any) => k.isSpecial);
+
+  useEffect(() => {
+    if (!unlockedSpecial) {
+      navigate('/');
+    }
+  }, [unlockedSpecial, navigate]);
+
+  if (!specialFolder) return null;
+
+  const handleShare = async (key: any) => {
+    const shareData = {
+      title: `VLESSFREE - ${key.name}`,
+      text: `Конфигурация для ${key.name} (${key.location}):\n\n${key.config}\n\nПолучено через VLESSFREE`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(shareData.text);
+        alert('Ссылка на конфигурацию скопирована в буфер обмена для отправки.');
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
+    }
+  };
+
+  return (
+    <main className="relative pt-32 md:pt-56 pb-28 md:pb-20 px-4 md:px-6 max-w-5xl mx-auto min-h-screen">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-12 md:mb-20"
+      >
+        <Link 
+          to="/" 
+          className="inline-flex items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-40 hover:opacity-100 transition-opacity mb-8"
+        >
+          <ChevronRight className="w-4 h-4 rotate-180" /> Назад к серверам
+        </Link>
+        <h2 className="text-4xl md:text-6xl font-serif italic mb-4 tracking-tighter glow-text-iphone">Спец Папка</h2>
+        <p className="text-white/40 font-serif italic">Эксклюзивные конфигурации VLESS</p>
+      </motion.div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {specialFolder.subKeys.map((sub: any, idx: number) => (
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: idx * 0.1 }}
+            className="glass rounded-[32px] p-8 border-white/10 hover:border-white/20 transition-all group"
+          >
+            <div className="flex justify-between items-start mb-8">
+              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-colors duration-500">
+                <Globe className="w-6 h-6" />
+              </div>
+              <div className="px-3 py-1 rounded-lg bg-amber-500 text-black text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+                PREMIUM
+              </div>
+            </div>
+
+            <h3 className="text-2xl font-serif italic mb-2 tracking-tight">{sub.name}</h3>
+            <p className="text-sm text-white/40 mb-8">{sub.location}</p>
+
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => handleCopy(`special-${idx}`, sub.config)}
+                className={`w-full py-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                  copiedId === `special-${idx}` ? 'bg-emerald-500 text-white' : 'bg-white/5 hover:bg-white hover:text-black'
+                }`}
+              >
+                {copiedId === `special-${idx}` ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                {copiedId === `special-${idx}` ? 'Скопировано' : 'Копировать ключ'}
+              </button>
+              <button
+                onClick={() => handleShare(sub)}
+                className="w-full py-3.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-white/10 bg-white/5 hover:bg-white/10"
+              >
+                <Share2 className="w-4 h-4" /> Поделиться
+              </button>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {specialFolder.showMiniBanner && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-12 p-8 rounded-[32px] bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-transparent border border-amber-500/20 text-center"
+        >
+          <p className="text-xs md:text-sm font-bold uppercase tracking-[0.3em] text-amber-500 animate-pulse">
+            Скоро будут добавлены новые локации
+          </p>
+        </motion.div>
+      )}
+    </main>
+  );
+}
+
 function AppContent() {
   const [keys] = useState<VlessKey[]>(MOCK_KEYS);
-  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [copiedId, setCopiedId] = useState<any>(null);
   const [scrolled, setScrolled] = useState(false);
   const [showModal, setShowModal] = useState(true);
   const [selectedKey, setSelectedKey] = useState<VlessKey | null>(null);
@@ -964,7 +1202,7 @@ function AppContent() {
     window.scrollTo(0, 0);
   }, [location]);
 
-  const handleCopy = (id: number, config: string) => {
+  const handleCopy = (id: any, config: string) => {
     navigator.clipboard.writeText(config);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -1117,6 +1355,14 @@ function AppContent() {
         } />
         <Route path="/how-to-use" element={<HowToUsePage />} />
         <Route path="/updates" element={<UpdatesPage />} />
+        <Route path="/special" element={
+          <SpecialFolderPage 
+            keys={keys} 
+            handleCopy={handleCopy} 
+            copiedId={copiedId} 
+            unlockedSpecial={unlockedSpecial} 
+          />
+        } />
       </Routes>
     </div>
   );
