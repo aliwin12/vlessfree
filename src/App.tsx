@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, Calendar, X, AlertTriangle, Monitor, Smartphone, Terminal, Info, ChevronRight, Download, ExternalLink, Menu } from 'lucide-react';
+import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, Calendar, X, AlertTriangle, Monitor, Smartphone, Terminal, Info, ChevronRight, Download, ExternalLink, Menu, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 
@@ -380,6 +380,26 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
     }
   };
 
+  const handleShare = async (key: any) => {
+    const shareData = {
+      title: `VLESSFREE - ${key.name}`,
+      text: `Конфигурация для ${key.name} (${key.location}):\n\n${key.config}\n\nПолучено через VLESSFREE`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback: copy to clipboard and show alert
+        await navigator.clipboard.writeText(shareData.text);
+        alert('Ссылка на конфигурацию скопирована в буфер обмена для отправки.');
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
+    }
+  };
+
   const filteredKeys = keys.filter((key: any) => {
     if (activeTab === 'active') return key.status === 'online' || key.status === 'unstable';
     return key.status === 'offline';
@@ -522,55 +542,75 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
                   </div>
                 </div>
 
-                <button
-                  onClick={() => {
-                    if (key.isSpecial && !unlockedSpecial) {
-                      handleSpecialClick(key);
-                    } else {
-                      handleCopy(key.id, key.config);
-                    }
-                  }}
-                  disabled={key.status === 'offline'}
-                  className={`w-full py-3.5 md:py-4 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 relative z-20 ${
-                    key.status === 'offline'
-                    ? 'bg-white/5 text-white/20 cursor-not-allowed'
-                    : copiedId === key.id 
-                    ? 'bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
-                    : key.isSpecial && !unlockedSpecial
-                    ? 'bg-amber-500 text-black hover:bg-amber-400'
-                    : 'bg-white/5 hover:bg-white hover:text-black'
-                  }`}
-                >
-                  {key.isSpecial && !unlockedSpecial ? (
-                    <div className="flex items-center gap-2">
-                      <Lock className="w-4 h-4" /> Разблокировать
-                    </div>
-                  ) : (
-                    <AnimatePresence mode="wait">
-                      {copiedId === key.id ? (
-                        <motion.div
-                          key="check"
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          className="flex items-center gap-2"
-                        >
-                          <Check className="w-4 h-4" /> Скопировано!
-                        </motion.div>
-                      ) : (
-                        <motion.div
-                          key="copy"
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          className="flex items-center gap-2"
-                        >
-                          <Copy className="w-4 h-4" /> Копировать конфигурацию
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  )}
-                </button>
+                <div className="flex flex-col gap-3 relative z-20">
+                  <button
+                    onClick={() => {
+                      if (key.isSpecial && !unlockedSpecial) {
+                        handleSpecialClick(key);
+                      } else {
+                        handleCopy(key.id, key.config);
+                      }
+                    }}
+                    disabled={key.status === 'offline'}
+                    className={`w-full py-3.5 md:py-4 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${
+                      key.status === 'offline'
+                      ? 'bg-white/5 text-white/20 cursor-not-allowed'
+                      : copiedId === key.id 
+                      ? 'bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
+                      : key.isSpecial && !unlockedSpecial
+                      ? 'bg-amber-500 text-black hover:bg-amber-400'
+                      : 'bg-white/5 hover:bg-white hover:text-black'
+                    }`}
+                  >
+                    {key.isSpecial && !unlockedSpecial ? (
+                      <div className="flex items-center gap-2">
+                        <Lock className="w-4 h-4" /> Разблокировать
+                      </div>
+                    ) : (
+                      <AnimatePresence mode="wait">
+                        {copiedId === key.id ? (
+                          <motion.div
+                            key="check"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            className="flex items-center gap-2"
+                          >
+                            <Check className="w-4 h-4" /> Скопировано!
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="copy"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            className="flex items-center gap-2"
+                          >
+                            <Copy className="w-4 h-4" /> Копировать конфигурацию
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (key.isSpecial && !unlockedSpecial) {
+                        handleSpecialClick(key);
+                      } else {
+                        handleShare(key);
+                      }
+                    }}
+                    disabled={key.status === 'offline'}
+                    className={`w-full py-3 md:py-3.5 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 border border-white/10 ${
+                      key.status === 'offline'
+                      ? 'opacity-20 cursor-not-allowed'
+                      : 'bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    <Share2 className="w-3.5 h-3.5" /> Поделиться
+                  </button>
+                </div>
               </motion.div>
             ))}
             </motion.div>
