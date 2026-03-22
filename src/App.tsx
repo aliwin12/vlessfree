@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
-import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, Calendar, X, AlertTriangle, Monitor, Smartphone, Terminal, Info, ChevronRight, Download, ExternalLink, Menu, Share2, Folder } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, Calendar, X, AlertTriangle, Monitor, Smartphone, Terminal, Info, ChevronRight, Download, ExternalLink, Menu, Share2, Folder, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -185,7 +185,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://1966afa8-66af-4ca3-89fe-f754b614c16b@nl-ams-4.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=_Fp55m3LYD2R2hr-vDJzQ5WQbqKQ6lLiklB5ZRSXeDw&security=reality&sid=8d93d0b7&sni=nl-ams-4.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%204',
     expiryDate: '22.03.2026 15:00',
-    status: 'online',
+    status: 'offline',
+    reason: 'Истек срок активности',
   },
   {
     id: 102,
@@ -196,7 +197,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://5af0e0c9-d857-4a9d-86b5-de4ac3aa6a23@de-fra-8.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=uNyPARTLMtBT6AeOS61GTInVeKAMqXrVwZyR004u9Dg&security=reality&sid=a80ac422&sni=de-fra-8.blook.network&spx=%2F&type=tcp#%F0%9F%87%A9%F0%9F%87%AA%20%D0%93%D0%B5%D1%80%D0%BC%D0%B0%D0%BD%D0%B8%D1%8F%208',
     expiryDate: '22.03.2026 15:00',
-    status: 'online',
+    status: 'offline',
+    reason: 'Истек срок активности',
   },
   {
     id: 103,
@@ -207,7 +209,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://1966afa8-66af-4ca3-89fe-f754b614c16b@nl-ams-4.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=_Fp55m3LYD2R2hr-vDJzQ5WQbqKQ6lLiklB5ZRSXeDw&security=reality&sid=8d93d0b7&sni=nl-ams-4.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%204',
     expiryDate: '22.03.2026 15:00',
-    status: 'online',
+    status: 'offline',
+    reason: 'Истек срок активности',
   },
   {
     id: 105,
@@ -218,7 +221,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://554d798d-79b8-41c5-a84e-52abb0418ddf@us-jfk-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=HQU7RO0Q0M1z8r_sNeT1kbNBbEGk3-ZShzPfCC5GbBU&security=reality&sid=61c86959&sni=us-jfk-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%BA%F0%9F%87%B8%20%D0%A1%D0%A8%D0%90%202',
     expiryDate: '22.03.2026 15:00',
-    status: 'online',
+    status: 'offline',
+    reason: 'Истек срок активности',
   },
   {
     id: 106,
@@ -229,7 +233,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://928ee856-e924-40c6-be66-dd7bfcde1242@uk-lhr-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=jfQ43JU-FeRkFdHGJT5NBCX0GZaWTZjC7N23Z2POsh8&security=reality&sid=97e4b5f5&sni=uk-lhr-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%AC%F0%9F%87%A7%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%201',
     expiryDate: '22.03.2026 15:00',
-    status: 'online',
+    status: 'offline',
+    reason: 'Истек срок активности',
   },
   {
     id: 107,
@@ -240,7 +245,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://6c245c60-1213-4a47-abcd-7a78fa22ced6@sg-sin-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=eLJZDr57FFoNrBKhF3Lx5aZBoqc_1sVRrPMZLgy3Kgk&security=reality&sid=a0be6214&sni=sg-sin-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B8%F0%9F%87%AC%20%D0%A1%D0%B8%D0%BD%D0%B3%D0%B0%D0%BF%D1%83%D1%80%202',
     expiryDate: '22.03.2026 15:00',
-    status: 'online',
+    status: 'offline',
+    reason: 'Истек срок активности',
   },
   {
     id: 108,
@@ -251,7 +257,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://5567bc21-a6a8-4b3b-ab42-05f7b5c48989@in-blr-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=4hgbGo2EFMD_G-67IL4UrPtBri0Dh-l_SFafynnVHm8&security=reality&sid=dd0d7f6b&sni=in-blr-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%AE%F0%9F%87%B3%20%D0%98%D0%BD%D0%B4%D0%B8%D1%8F%202',
     expiryDate: '22.03.2026 15:00',
-    status: 'online',
+    status: 'offline',
+    reason: 'Истек срок активности',
   },
   {
     id: 109,
@@ -262,7 +269,8 @@ const MOCK_KEYS: VlessKey[] = [
     load: 0,
     config: 'vless://bd13dfce-f331-4059-a9a6-791c4fb0c60f@kz-ala-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=1qOetCE3B75XXzhHHF-0Y2fXEROUWY6gA0REH6tc8FM&security=reality&sid=6966f5d4&sni=kz-ala-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B0%F0%9F%87%BF%20%D0%9A%D0%B0%D0%B7%D0%B0%D1%85%D1%81%D1%82%D0%B0%D0%BD%202',
     expiryDate: '22.03.2026 15:00',
-    status: 'online',
+    status: 'offline',
+    reason: 'Истек срок активности',
   }
 ];
 
@@ -271,6 +279,7 @@ const UPDATES = [
     version: '0.6',
     date: '21.03.2026',
     changes: [
+      'Добавлена фильтрация серверов по странам через удобное выпадающее меню.',
       'Серверы на второй странице переименованы в Server №12 - Server №19.',
       'Все возвращенные серверы теперь имеют сквозную нумерацию.'
     ]
@@ -482,6 +491,8 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const navigate = useNavigate();
   const itemsPerPage = 12;
 
@@ -525,9 +536,18 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
     }
   };
 
+  const countries = useMemo(() => {
+    return Array.from(new Set(keys.map((key: any) => key.location.split(',')[0].trim())));
+  }, [keys]);
+
   const filteredKeys = keys.filter((key: any) => {
-    if (activeTab === 'active') return key.status === 'online' || key.status === 'unstable';
-    return key.status === 'offline';
+    const matchesTab = activeTab === 'active' 
+      ? (key.status === 'online' || key.status === 'unstable')
+      : (key.status === 'offline');
+    
+    const matchesCountry = !selectedCountry || key.location.startsWith(selectedCountry);
+    
+    return matchesTab && matchesCountry;
   });
 
   // Pagination logic
@@ -538,7 +558,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab]);
+  }, [activeTab, selectedCountry]);
 
   return (
     <main className="relative pt-32 md:pt-56 pb-28 md:pb-20 px-4 md:px-6 max-w-7xl mx-auto min-h-screen flex flex-col">
@@ -582,6 +602,72 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
           >
             Неактивные
           </button>
+        </div>
+      </div>
+
+      {/* Country Filter Dropdown */}
+      <div className="flex justify-center mb-8 md:mb-12 relative z-[60]">
+        <div className="relative">
+          <button
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className="glass px-6 py-3 rounded-2xl flex items-center gap-3 text-[10px] uppercase tracking-[0.2em] font-bold transition-all hover:border-white/30"
+          >
+            <Globe className="w-4 h-4 text-white/40" />
+            <span>{selectedCountry || 'Все страны'}</span>
+            <ChevronDown className={`w-4 h-4 text-white/40 transition-transform duration-300 ${isFilterOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          <AnimatePresence>
+            {isFilterOpen && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setIsFilterOpen(false)}
+                  className="fixed inset-0 z-[-1]"
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 glass rounded-3xl overflow-hidden shadow-2xl z-50 border-white/20"
+                >
+                  <div className="p-2 flex flex-col gap-1 max-h-80 overflow-y-auto no-scrollbar">
+                    <button
+                      onClick={() => {
+                        setSelectedCountry(null);
+                        setIsFilterOpen(false);
+                      }}
+                      className={`px-4 py-3 rounded-2xl text-[10px] uppercase tracking-widest font-bold text-left transition-all ${
+                        selectedCountry === null
+                          ? 'bg-white text-black'
+                          : 'text-white/60 hover:bg-white/5 hover:text-white'
+                      }`}
+                    >
+                      Все страны
+                    </button>
+                    {countries.map((country: any) => (
+                      <button
+                        key={country}
+                        onClick={() => {
+                          setSelectedCountry(country);
+                          setIsFilterOpen(false);
+                        }}
+                        className={`px-4 py-3 rounded-2xl text-[10px] uppercase tracking-widest font-bold text-left transition-all ${
+                          selectedCountry === country
+                            ? 'bg-white text-black'
+                            : 'text-white/60 hover:bg-white/5 hover:text-white'
+                        }`}
+                      >
+                        {country}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 

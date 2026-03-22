@@ -150,3 +150,11 @@
   background-size: 200% 200%;
   animation: shimmer-bg 3s ease infinite;
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
