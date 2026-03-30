@@ -24,257 +24,17 @@ interface VlessKey {
   showMiniBanner?: boolean;
 }
 
-const MOCK_KEYS: VlessKey[] = [
-  {
-    id: 1,
-    name: 'Server №1',
-    location: '🇳🇱 Нидерланды, Амстердам',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://c3f4f0de-5245-49cf-8c33-19abdaf24f1f@nl-ams-5.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=VcBxJnmuJ3mlh8SqOEncKIFdAlIxhjlfIa252CPcm1w&security=reality&sid=a72771b7&sni=nl-ams-5.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%205',
-    expiryDate: '24.03.2026',
-    status: 'online',
-  },
-  {
-    id: 2,
-    name: 'Server №2',
-    location: '🇩🇪 Германия, Франкфурт-На-Майне',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://33c7ebc2-7f5f-4a66-b570-1c0f505d9d84@de-fra-8.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=uNyPARTLMtBT6AeOS61GTInVeKAMqXrVwZyR004u9Dg&security=reality&sid=a80ac422&sni=de-fra-8.blook.network&spx=%2F&type=tcp#%F0%9F%87%A9%F0%9F%87%AA%20%D0%93%D0%B5%D1%80%D0%BC%D0%B0%D0%BD%D0%B8%D1%8F%208',
-    expiryDate: '24.03.2026',
-    status: 'online',
-  },
-  {
-    id: 3,
-    name: 'Server №3',
-    location: '🇫🇮 Финляндия, Хельсинки',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://a1bf8635-4c92-47f4-8a01-e076fefa30fe@fi-hel-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=qTokRYlMp5lS9KOJp8fjXMXy2XQ55kcDG9qg8Ke-mXE&security=reality&sid=0fe26a66&sni=fi-hel-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%AB%F0%9F%87%AE%20%D0%A4%D0%B8%D0%BD%D0%BB%D1%8F%D0%BD%D0%B4%D0%B8%D1%8F%202',
-    expiryDate: '24.03.2026',
-    status: 'online',
-  },
-  {
-    id: 4,
-    name: 'Server №4',
-    location: '🇨🇾 Кипр',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://8dc7722c-2767-4eea-a28b-2f8daacc07e3@pqh29v4.globalfymain.com:8880?encryption=none&security=none&type=grpc#Republic of Cyprus%201089%20/%20VlessKey.com%20/%20t.me/VlessVpnFree',
-    expiryDate: 'неизвестно',
-    status: 'online',
-  },
-  {
-    id: 5,
-    name: 'Server №5',
-    location: '🇷🇺 Россия, Москва',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://7a5d312a-8d12-4311-a878-9813e4a073c8@ru-svo-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=04Kor4UEaxb90YlCNktYu52799Dw5uoYeaagJ-xQ8wA&security=reality&sid=8957cb90&sni=ru-svo-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B7%F0%9F%87%BA%20%D0%A0%D0%BE%D1%81%D1%81%D0%B8%D1%8F%201',
-    expiryDate: '24.03.2026',
-    status: 'online',
-  },
-  {
-    id: 6,
-    name: 'Server №6',
-    location: '🇳🇬 Нигерия, Лагос',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://ebb88de6-68a7-4e37-b614-3b72fcfdf8a5@ng-los-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=bnOJ_uKtqdg94h0Jt3cGJJAnXhW-UAdWKZBfbiaT9ho&security=reality&sid=3c642112&sni=ng-los-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%AC%20%D0%9D%D0%B8%D0%B3%D0%B5%D1%80%D0%B8%D1%8F%201',
-    expiryDate: '24.03.2026',
-    status: 'online',
-  },
-  {
-    id: 7,
-    name: 'Server №7',
-    location: '🇫🇷 Франция, Париж',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://70924395-41fc-423a-a3dd-1f99ac295c5e@fr-cdg-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=CL5aeP6smcd4ie9upZlYVEvuHDwLAt46BOIfHOjkMis&security=reality&sid=cae7fcef&sni=fr-cdg-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%AB%F0%9F%87%B7%20%D0%A4%D1%80%D0%B0%D0%BD%D1%86%D0%B8%D1%8F%201',
-    expiryDate: '24.03.2026',
-    status: 'online',
-  },
-  {
-    id: 8,
-    name: 'Server №8',
-    location: '🇰🇿 Казахстан, Алматы',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://1a70f5b7-82ef-4bcd-a049-93bd0c78562d@kz-ala-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=cEKfInbAE2ZWB3RH-MYQiIfA2aAPO6wZT_TNCPgh7TE&security=reality&sid=85b45f16&sni=kz-ala-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%B0%F0%9F%87%BF%20%D0%9A%D0%B0%D0%B7%D0%B0%D1%85%D1%81%D1%82%D0%B0%D0%BD%201',
-    expiryDate: '24.03.2026',
-    status: 'online',
-  },
-  {
-    id: 9,
-    name: 'Server №9',
-    location: '🇰🇿 Казахстан, Алматы',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://bb89590a-0161-41fd-9eb7-fae3a0beef17@br-gru-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=GYqQl8suX6lgrJZ27CkhMwtxmDGkd45QxKBJGaHUgQM&security=reality&sid=7cc366b3&sni=br-gru-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%A7%F0%9F%87%B7%20%D0%91%D1%80%D0%B0%D0%B7%D0%B8%D0%BB%D0%B8%D1%8F%201',
-    expiryDate: '24.03.2026',
-    status: 'online',
-  },
-  {
-    id: 10,
-    name: 'Server №10',
-    location: '🇹🇷 Турция, Стамбул',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://e63e881a-74a4-42dd-b9ea-f6d97977e5c7@tr-ist-11-x.blook.network:443?allowInsecure=1&alpn=h2&extra=%7B%22noGRPCHeader%22%3Atrue%2C%22scMaxConcurrentPosts%22%3A100%2C%22scMaxEachPostBytes%22%3A1000000%2C%22scMinPostsIntervalMs%22%3A30%2C%22xPaddingBytes%22%3A%22100-1000%22%7D&fp=chrome&headerType=&mode=auto&path=%2FVLSpdG9k&security=tls&sni=tr-ist-11-x.blook.network&type=xhttp#%F0%9F%87%B9%F0%9F%87%B7%20%D0%A2%D1%83%D1%80%D1%86%D0%B8%D1%8F%2011',
-    expiryDate: '24.03.2026',
-    status: 'online',
-  },
-  {
-    id: 11,
-    name: 'Server №11',
-    location: '🇳🇱 Нидерланды, Амстердам',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://b059a169-d85c-45ad-b04a-b344eb3e7ba0@nl-ams-4.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=_Fp55m3LYD2R2hr-vDJzQ5WQbqKQ6lLiklB5ZRSXeDw&security=reality&sid=8d93d0b7&sni=nl-ams-4.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%204',
-    expiryDate: '24.03.2026',
-    status: 'online',
-  },
-  {
-    id: 'special',
-    name: 'Special Server Folder',
-    location: 'Multi-location',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: '',
-    expiryDate: '24.03.2026',
-    status: 'online',
-    isSpecial: true,
-    subKeys: [
-      {
-        name: 'Special Server №1',
-        location: '🇳🇱 Нидерланды, Амстердам',
-        config: 'vless://c0b01050-5202-4ed5-a36f-ac9719657a91@nl-ams-5.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=VcBxJnmuJ3mlh8SqOEncKIFdAlIxhjlfIa252CPcm1w&security=reality&sid=a72771b7&sni=nl-ams-5.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%205'
-      },
-      {
-        name: 'Special Server №2',
-        location: '🇩🇪 Германия, Франкфурт-На-Майне',
-        config: 'vless://329bc28d-2e57-4526-9d39-a54e6230de8b@de-fra-8.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=uNyPARTLMtBT6AeOS61GTInVeKAMqXrVwZyR004u9Dg&security=reality&sid=a80ac422&sni=de-fra-8.blook.network&spx=%2F&type=tcp#%F0%9F%87%A9%F0%9F%87%AA%20%D0%93%D0%B5%D1%80%D0%BC%D0%B0%D0%BD%D0%B8%D1%8F%208'
-      },
-      {
-        name: 'Special Server №3',
-        location: '🇫🇮 Финляндия, Хельсинки',
-        config: 'vless://fe058017-5f9f-48ff-ad2e-35f0a77208a6@fi-hel-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=qTokRYlMp5lS9KOJp8fjXMXy2XQ55kcDG9qg8Ke-mXE&security=reality&sid=0fe26a66&sni=fi-hel-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%AB%F0%9F%87%AE%20%D0%A4%D0%B8%D0%BD%D0%BB%D1%8F%D0%BD%D0%B4%D0%B8%D1%8F%202'
-      }
-    ],
-    showMiniBanner: true
-  },
-  {
-    id: 101,
-    name: 'Server №12',
-    location: '🇳🇱 Нидерланды, Амстердам',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://1966afa8-66af-4ca3-89fe-f754b614c16b@nl-ams-4.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=_Fp55m3LYD2R2hr-vDJzQ5WQbqKQ6lLiklB5ZRSXeDw&security=reality&sid=8d93d0b7&sni=nl-ams-4.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%204',
-    expiryDate: '22.03.2026 15:00',
-    status: 'offline',
-    reason: 'Истек срок активности',
-  },
-  {
-    id: 102,
-    name: 'Server №13',
-    location: '🇩🇪 Германия, Франкфурт-На-Майне',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://5af0e0c9-d857-4a9d-86b5-de4ac3aa6a23@de-fra-8.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=uNyPARTLMtBT6AeOS61GTInVeKAMqXrVwZyR004u9Dg&security=reality&sid=a80ac422&sni=de-fra-8.blook.network&spx=%2F&type=tcp#%F0%9F%87%A9%F0%9F%87%AA%20%D0%93%D0%B5%D1%80%D0%BC%D0%B0%D0%BD%D0%B8%D1%8F%208',
-    expiryDate: '22.03.2026 15:00',
-    status: 'offline',
-    reason: 'Истек срок активности',
-  },
-  {
-    id: 103,
-    name: 'Server №14',
-    location: '🇳🇱 Нидерланды, Амстердам',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://1966afa8-66af-4ca3-89fe-f754b614c16b@nl-ams-4.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=_Fp55m3LYD2R2hr-vDJzQ5WQbqKQ6lLiklB5ZRSXeDw&security=reality&sid=8d93d0b7&sni=nl-ams-4.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%204',
-    expiryDate: '22.03.2026 15:00',
-    status: 'offline',
-    reason: 'Истек срок активности',
-  },
-  {
-    id: 105,
-    name: 'Server №15',
-    location: '🇺🇸 США, Нью-Йорк',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://554d798d-79b8-41c5-a84e-52abb0418ddf@us-jfk-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=HQU7RO0Q0M1z8r_sNeT1kbNBbEGk3-ZShzPfCC5GbBU&security=reality&sid=61c86959&sni=us-jfk-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%BA%F0%9F%87%B8%20%D0%A1%D0%A8%D0%90%202',
-    expiryDate: '22.03.2026 15:00',
-    status: 'offline',
-    reason: 'Истек срок активности',
-  },
-  {
-    id: 106,
-    name: 'Server №16',
-    location: '🇬🇧 Великобритания, Лондон',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://928ee856-e924-40c6-be66-dd7bfcde1242@uk-lhr-1.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=jfQ43JU-FeRkFdHGJT5NBCX0GZaWTZjC7N23Z2POsh8&security=reality&sid=97e4b5f5&sni=uk-lhr-1.blook.network&spx=%2F&type=tcp#%F0%9F%87%AC%F0%9F%87%A7%20%D0%92%D0%B5%D0%BB%D0%B8%D0%BA%D0%BE%D0%B1%D1%80%D0%B8%D1%82%D0%B0%D0%BD%D0%B8%D1%8F%201',
-    expiryDate: '22.03.2026 15:00',
-    status: 'offline',
-    reason: 'Истек срок активности',
-  },
-  {
-    id: 107,
-    name: 'Server №17',
-    location: '🇸🇬 Сингапур',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://6c245c60-1213-4a47-abcd-7a78fa22ced6@sg-sin-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=eLJZDr57FFoNrBKhF3Lx5aZBoqc_1sVRrPMZLgy3Kgk&security=reality&sid=a0be6214&sni=sg-sin-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B8%F0%9F%87%AC%20%D0%A1%D0%B8%D0%BD%D0%B3%D0%B0%D0%BF%D1%83%D1%80%202',
-    expiryDate: '22.03.2026 15:00',
-    status: 'offline',
-    reason: 'Истек срок активности',
-  },
-  {
-    id: 108,
-    name: 'Server №18',
-    location: '🇮🇳 Индия, Бангалор',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://5567bc21-a6a8-4b3b-ab42-05f7b5c48989@in-blr-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=4hgbGo2EFMD_G-67IL4UrPtBri0Dh-l_SFafynnVHm8&security=reality&sid=dd0d7f6b&sni=in-blr-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%AE%F0%9F%87%B3%20%D0%98%D0%BD%D0%B4%D0%B8%D1%8F%202',
-    expiryDate: '22.03.2026 15:00',
-    status: 'offline',
-    reason: 'Истек срок активности',
-  },
-  {
-    id: 109,
-    name: 'Server №19',
-    location: '🇰🇿 Казахстан, Алматы',
-    protocol: 'VLESS',
-    latency: '0ms',
-    load: 0,
-    config: 'vless://bd13dfce-f331-4059-a9a6-791c4fb0c60f@kz-ala-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=1qOetCE3B75XXzhHHF-0Y2fXEROUWY6gA0REH6tc8FM&security=reality&sid=6966f5d4&sni=kz-ala-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B0%F0%9F%87%BF%20%D0%9A%D0%B0%D0%B7%D0%B0%D1%85%D1%81%D1%82%D0%B0%D0%BD%202',
-    expiryDate: '22.03.2026 15:00',
-    status: 'offline',
-    reason: 'Истек срок активности',
-  }
-];
+const MOCK_KEYS: VlessKey[] = [];
 
 const UPDATES = [
+  {
+    version: '0.7',
+    date: '30.03.2026',
+    changes: [
+      'Временное отключение серверов для планового обслуживания.',
+      'Сервера будут доступны 31.03.2026 в 16:00.'
+    ]
+  },
   {
     version: '0.6',
     date: '21.03.2026',
@@ -563,7 +323,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
   return (
     <main className="relative pt-32 md:pt-56 pb-28 md:pb-20 px-4 md:px-6 max-w-7xl mx-auto min-h-screen flex flex-col">
       {/* Hero Section */}
-      <section className="mb-8 md:mb-24 text-center shrink-0">
+      <section className="mb-8 md:mb-16 text-center shrink-0">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -579,8 +339,33 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
         </motion.div>
       </section>
 
-      {/* Tabs / Segmented Control */}
-      <div className="flex justify-center mb-8 md:mb-16 shrink-0">
+      {/* Maintenance Banner */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="mb-12 p-6 md:p-10 rounded-[32px] md:rounded-[48px] bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent border border-amber-500/30 text-center glass relative overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.1)]"
+      >
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500">
+            <Calendar className="w-5 h-5" />
+          </div>
+          <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] text-amber-500/80">Технические работы</span>
+        </div>
+        <h3 className="text-3xl md:text-5xl font-serif italic mb-4 tracking-tight leading-tight">
+          Сервера будут <br className="md:hidden" />
+          <span className="text-white">31.03.2026 16:00</span>
+        </h3>
+        <p className="text-white/40 text-sm md:text-lg max-w-2xl mx-auto font-serif italic">
+          Мы проводим плановое обновление оборудования. <br className="hidden md:block" />
+          Приносим извинения за временные неудобства.
+        </p>
+      </motion.div>
+
+      {keys.length > 0 && (
+        <>
+          {/* Tabs / Segmented Control */}
+          <div className="flex justify-center mb-8 md:mb-16 shrink-0">
         <div className="glass p-1 rounded-xl md:rounded-3xl flex gap-1 bg-white/5">
           <button 
             onClick={() => setActiveTab('active')}
@@ -892,6 +677,8 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
           </motion.div>
         )}
       </AnimatePresence>
+        </>
+      )}
 
       {/* Password Prompt Modal */}
       <AnimatePresence>
@@ -1436,11 +1223,11 @@ function AppContent() {
               <div className="text-6xl mb-6">⚠️</div>
               
               <h2 className="text-3xl md:text-4xl font-serif italic mb-4 tracking-tighter">
-                Ещё доделываем
+                Технические работы
               </h2>
               
               <p className="text-white/50 leading-relaxed mb-10 text-sm md:text-base">
-                Доделываю ещё сайт и сервера ищу нормальные, так что будет мало серверов в первое время
+                Мы обновляем сервера. Они будут доступны 31.03.2026 в 16:00.
               </p>
 
               <div className="glass bg-white/5 rounded-3xl p-8 mb-4 flex items-center justify-center min-h-[120px]">
