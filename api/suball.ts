@@ -1,12 +1,25 @@
-import { MOCK_KEYS } from '../src/data/keys.js';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import firebaseConfig from '../firebase-applet-config.json';
 
-export default function handler(req, res) {
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+
+export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  let servers: any[] = [];
+  try {
+    const snapshot = await getDocs(collection(db, 'servers'));
+    servers = snapshot.docs.map(doc => doc.data());
+  } catch (error) {
+    console.error("Firestore error:", error);
+  }
+
   const userAgent = req.headers['user-agent'] || '';
-  const configs = MOCK_KEYS.map(k => k.config).join('\n');
+  const configs = servers.filter(s => s.status === 'online').map(k => k.config).join('\n');
   const base64Content = Buffer.from(configs).toString('base64');
 
   // Simple detection for non-client access

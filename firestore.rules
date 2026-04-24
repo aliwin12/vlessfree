@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'bubinadubina5@gmail.com' ||
+        (isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)))
+      );
+    }
+
+    function isValidServer(data) {
+      return data.name is string && data.name.size() <= 100 &&
+             data.protocol is string &&
+             (data.latency == null || data.latency is string) &&
+             data.load is number &&
+             data.expiryDate is string &&
+             data.status in ['online', 'offline'] &&
+             data.config is string && data.config.size() <= 2000 &&
+             data.country is string && data.country.size() == 2 &&
+             (data.city == null || data.city is string);
+    }
+
+    match /servers/{serverId} {
+      allow read: if true;
+      allow create: if isAdmin() && 
+                      isValidServer(request.resource.data) &&
+                      request.resource.data.createdAt == request.time;
+      allow update: if isAdmin() && 
+                      isValidServer(request.resource.data) &&
+                      request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
+
+    match /admins/{adminId} {
+      allow read: if isAdmin();
+      allow write: if isVerified() && request.auth.token.email == 'bubinadubina5@gmail.com';
+    }
+  }
+}

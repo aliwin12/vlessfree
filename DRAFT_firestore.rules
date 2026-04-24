@@ -1,0 +1,63 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      // Hardcoded check for the owner email as a bootstrap, 
+      // or check the /admins collection
+      return isVerified() && (
+        request.auth.token.email == 'bubinadubina5@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidServer(data) {
+      return data.name is string && data.name.size() <= 100 &&
+             data.protocol is string &&
+             data.latency is string &&
+             data.load is number &&
+             data.expiryDate is string &&
+             data.status in ['online', 'offline'] &&
+             data.config is string && data.config.size() <= 2000 &&
+             data.country is string && data.country.size() == 2;
+    }
+
+    // 1. Servers collection
+    match /servers/{serverId} {
+      // Public read for the main page and sub link
+      allow read: if true;
+      
+      allow create: if isAdmin() && 
+                      isValidServer(request.resource.data) &&
+                      request.resource.data.createdAt == request.time;
+                      
+      allow update: if isAdmin() && 
+                      isValidServer(request.resource.data) &&
+                      request.resource.data.updatedAt == request.time &&
+                      request.resource.data.createdAt == resource.data.createdAt;
+                      
+      allow delete: if isAdmin();
+    }
+
+    // 2. Admins collection (Optional, but good for management)
+    match /admins/{adminId} {
+      allow read: if isAdmin();
+      // Only the primary admin (owner) can add other admins
+      allow write: if isVerified() && request.auth.token.email == 'bubinadubina5@gmail.com';
+    }
+  }
+}

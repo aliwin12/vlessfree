@@ -9,6 +9,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { MOCK_KEYS, VlessKey } from './data/keys';
+import { db, collection, query, orderBy, onSnapshot } from './lib/firebase';
+import AdminPanel from './components/AdminPanel';
 
 const UPDATES = [
   {
@@ -1131,13 +1133,40 @@ function LoadingScreen() {
 }
 
 function AppContent() {
-  const [keys] = useState<VlessKey[]>(MOCK_KEYS);
+  const [keys, setKeys] = useState<VlessKey[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, 'servers'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs.map(doc => {
+        const data = doc.data() as any;
+        const countryNames: Record<string, string> = {
+          'NL': 'Нидерланды', 'DE': 'Германия', 'FI': 'Финляндия', 'US': 'США', 
+          'UK': 'Великобритания', 'MD': 'Молдова', 'IN': 'Индия', 'KZ': 'Казахстан', 
+          'RU': 'Россия', 'SE': 'Швеция', 'TR': 'Турция', 'JP': 'Япония', 'BR': 'Бразилия'
+        };
+        
+        const baseLocation = countryNames[data.country] || data.country;
+        const location = data.city ? `${baseLocation}, ${data.city}` : baseLocation;
+
+        return { 
+          id: doc.id, 
+          ...data,
+          location
+        };
+      }) as VlessKey[];
+      setKeys(docs);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const [copiedId, setCopiedId] = useState<any>(null);
   const [scrolled, setScrolled] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedKey, setSelectedKey] = useState<VlessKey | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
-  const [loading, setLoading] = useState(true);
   const [showMirror, setShowMirror] = useState(false);
   const [unlockedSpecial, setUnlockedSpecial] = useState(false);
   const location = useLocation();
@@ -1155,28 +1184,17 @@ function AppContent() {
       document.body.classList.add('is-iphone');
     }
 
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1500);
-
     // Show mirror suggestion if loading takes too long (e.g. 10 seconds)
     const mirrorTimer = setTimeout(() => {
-      setLoading(prev => {
-        if (prev) {
-          setShowMirror(true);
-        }
-        return prev;
-      });
+      setShowMirror(loading);
     }, 10000);
     
     return () => {
       window.removeEventListener('scroll', handleScroll);
       document.body.classList.remove('is-iphone');
-      clearTimeout(timer);
       clearTimeout(mirrorTimer);
     };
-  }, []);
+  }, [loading]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -1351,6 +1369,7 @@ function AppContent() {
             unlockedSpecial={unlockedSpecial} 
           />
         } />
+        <Route path="/admin" element={<AdminPanel />} />
       </Routes>
     </div>
   );

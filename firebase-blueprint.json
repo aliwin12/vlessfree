@@ -1,0 +1,42 @@
+{
+  "entities": {
+    "Server": {
+      "title": "Server",
+      "description": "VLESS Server configuration",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "protocol": { "type": "string" },
+        "latency": { "type": "string" },
+        "load": { "type": "number" },
+        "expiryDate": { "type": "string" },
+        "status": { "type": "string", "enum": ["online", "offline"] },
+        "config": { "type": "string" },
+        "country": { "type": "string", "description": "2-letter country code" },
+        "city": { "type": "string", "description": "City name" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "protocol", "latency", "load", "expiryDate", "status", "config", "country", "city"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "User with admin privileges",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" }
+      },
+      "required": ["email"]
+    }
+  },
+  "firestore": {
+    "/servers/{serverId}": {
+      "schema": "Server",
+      "description": "Collection of VLESS servers managed by admin"
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "List of authorized admin UIDs"
+    }
+  }
+}

@@ -6,16 +6,30 @@ import { createServer as createViteServer } from 'vite';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-import { MOCK_KEYS } from './src/data/keys.js';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import fs from 'fs';
+
+const firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf8'));
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
   // Subscription endpoint for VLESS clients
-  app.get('/suball', (req, res) => {
+  app.get('/suball', async (req, res) => {
+    let servers: any[] = [];
+    try {
+      const snapshot = await getDocs(collection(db, 'servers'));
+      servers = snapshot.docs.map(doc => doc.data());
+    } catch (error) {
+      console.error("Firestore error:", error);
+    }
+
     const userAgent = req.headers['user-agent'] || '';
-    const configs = MOCK_KEYS.map(k => k.config).join('\n');
+    const configs = servers.filter(s => s.status === 'online').map(k => k.config).join('\n');
     const base64Content = Buffer.from(configs).toString('base64');
 
     // Simple detection for non-client access (browsers usually have "Mozilla" or specific browser names)
