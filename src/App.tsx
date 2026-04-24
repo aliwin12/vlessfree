@@ -8,25 +8,17 @@ import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, C
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 
-interface VlessKey {
-  id: number | string;
-  name: string;
-  location: string;
-  protocol: string;
-  latency: string;
-  config: string;
-  load: number;
-  expiryDate: string;
-  status?: 'online' | 'unstable' | 'offline';
-  reason?: string;
-  isSpecial?: boolean;
-  subKeys?: { name: string; config: string; location: string }[];
-  showMiniBanner?: boolean;
-}
-
-const MOCK_KEYS: VlessKey[] = [];
+import { MOCK_KEYS, VlessKey } from './data/keys';
 
 const UPDATES = [
+  {
+    version: '0.8',
+    date: '24.04.2026',
+    changes: [
+      'Завершено техническое обслуживание.',
+      'Добавлены 13 новых высокоскоростных серверов в разных локациях.'
+    ]
+  },
   {
     version: '0.7',
     date: '30.03.2026',
@@ -339,29 +331,6 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
         </motion.div>
       </section>
 
-      {/* Maintenance Banner */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="mb-12 p-6 md:p-10 rounded-[32px] md:rounded-[48px] bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent border border-amber-500/30 text-center glass relative overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.1)]"
-      >
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
-        <div className="flex items-center justify-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500">
-            <Calendar className="w-5 h-5" />
-          </div>
-          <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] text-amber-500/80">Технические работы</span>
-        </div>
-        <h3 className="text-3xl md:text-5xl font-serif italic mb-4 tracking-tight leading-tight">
-          Сервис станет доступен <br className="md:hidden" />
-          <span className="text-white">в 17:55 по мск</span>
-        </h3>
-        <p className="text-white/40 text-sm md:text-lg max-w-2xl mx-auto font-serif italic">
-          Мы проводим плановое обновление оборудования. <br className="hidden md:block" />
-          Приносим извинения за временные неудобства.
-        </p>
-      </motion.div>
-
       {keys.length > 0 && (
         <>
           {/* Tabs / Segmented Control */}
@@ -388,6 +357,28 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
             Неактивные
           </button>
         </div>
+      </div>
+
+      {/* Subscription Button */}
+      <div className="flex justify-center mb-8 md:mb-12 shrink-0">
+        <a 
+          href="/suball" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="glass group relative px-8 py-4 rounded-3xl bg-gradient-to-br from-white/10 to-transparent border border-white/10 hover:border-white/30 transition-all duration-500 overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="relative flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white/60 group-hover:text-white transition-colors duration-300">
+              <Download className="w-4 h-4" />
+            </div>
+            <div className="flex flex-col items-start text-left">
+              <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-white">vlessfree Sub✅</span>
+              <span className="text-[8px] text-white/40 uppercase tracking-widest group-hover:text-white/60 transition-colors duration-300">Подписаться на все сервера</span>
+            </div>
+            <ExternalLink className="w-3 h-3 text-white/20 group-hover:text-white/40 transition-colors ml-4" />
+          </div>
+        </a>
       </div>
 
       {/* Country Filter Dropdown */}
@@ -1140,7 +1131,7 @@ function AppContent() {
   const [keys] = useState<VlessKey[]>(MOCK_KEYS);
   const [copiedId, setCopiedId] = useState<any>(null);
   const [scrolled, setScrolled] = useState(false);
-  const [showModal, setShowModal] = useState(true);
+  const [showModal, setShowModal] = useState(false);
   const [selectedKey, setSelectedKey] = useState<VlessKey | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
   const [loading, setLoading] = useState(true);
