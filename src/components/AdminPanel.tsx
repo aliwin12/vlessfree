@@ -62,8 +62,24 @@ export default function AdminPanel() {
 
     const q = query(serversCollection, orderBy('createdAt', 'desc'));
     const unsubscribeDocs = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setServers(docs);
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      
+      // Natural sort by name numbers (1, 2, 3...)
+      const sortedDocs = [...docs].sort((a, b) => {
+        const nameA = a.name || '';
+        const nameB = b.name || '';
+        const matchA = nameA.match(/\d+/);
+        const matchB = nameB.match(/\d+/);
+        
+        if (matchA && matchB) {
+          const numA = parseInt(matchA[0]);
+          const numB = parseInt(matchB[0]);
+          if (numA !== numB) return numA - numB;
+        }
+        return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+      });
+
+      setServers(sortedDocs);
     });
 
     return () => {

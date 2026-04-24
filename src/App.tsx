@@ -1156,7 +1156,23 @@ function AppContent() {
           location
         };
       }) as VlessKey[];
-      setKeys(docs);
+
+      // Natural sort by name numbers (1, 2, 3...)
+      const sortedDocs = [...docs].sort((a, b) => {
+        const nameA = a.name || '';
+        const nameB = b.name || '';
+        const matchA = nameA.match(/\d+/);
+        const matchB = nameB.match(/\d+/);
+        
+        if (matchA && matchB) {
+          const numA = parseInt(matchA[0]);
+          const numB = parseInt(matchB[0]);
+          if (numA !== numB) return numA - numB;
+        }
+        return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+      });
+
+      setKeys(sortedDocs);
       setLoading(false);
     });
     return () => unsubscribe();

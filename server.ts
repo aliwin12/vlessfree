@@ -24,6 +24,21 @@ async function startServer() {
     try {
       const snapshot = await getDocs(collection(db, 'servers'));
       servers = snapshot.docs.map(doc => doc.data());
+      
+      // Natural sort by name numbers (1, 2, 3...)
+      servers.sort((a, b) => {
+        const nameA = a.name || '';
+        const nameB = b.name || '';
+        const matchA = nameA.match(/\d+/);
+        const matchB = nameB.match(/\d+/);
+        
+        if (matchA && matchB) {
+          const numA = parseInt(matchA[0]);
+          const numB = parseInt(matchB[0]);
+          if (numA !== numB) return numA - numB;
+        }
+        return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+      });
     } catch (error) {
       console.error("Firestore error:", error);
     }
