@@ -50,6 +50,7 @@ async function startServer() {
             
             <button class="btn btn-primary" onclick="copySubLink()">Скопировать ссылку подписки</button>
             <div id="copyMsg" class="copy-msg">Ссылка скопирована!</div>
+            <p style="margin-top: 12px; margin-bottom: 0; font-size: 10px; color: rgba(255,255,255,0.3); font-style: italic;">* рекомендуем обновлять подписку, чтобы получать новые ключи удобнее</p>
             
             <div style="margin-top: 24px;">
               <a href="v2raytun://install-config?url=\${encodeURIComponent(window.location.href)}" class="btn btn-outline">Импорт в v2rayTun</a>

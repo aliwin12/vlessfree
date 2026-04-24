@@ -360,7 +360,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
       </div>
 
       {/* Subscription Button */}
-      <div className="flex justify-center mb-8 md:mb-12 shrink-0">
+      <div className="flex flex-col items-center justify-center mb-8 md:mb-12 shrink-0">
         <a 
           href="/suball" 
           target="_blank" 
@@ -379,6 +379,9 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
             <ExternalLink className="w-3 h-3 text-white/20 group-hover:text-white/40 transition-colors ml-4" />
           </div>
         </a>
+        <p className="mt-4 text-[10px] text-white/30 font-serif italic tracking-wide">
+          * рекомендуем обновлять подписку, чтобы получать новые ключи удобнее
+        </p>
       </div>
 
       {/* Country Filter Dropdown */}
