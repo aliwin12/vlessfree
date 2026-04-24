@@ -74,9 +74,18 @@ export default function AdminPanel() {
 
   const handleLogin = async () => {
     try {
+      console.log("Attempting login...");
       await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-      console.error("Login failed:", error);
+      console.log("Login call completed");
+    } catch (error: any) {
+      console.error("Login failed error:", error);
+      if (error.code === 'auth/popup-blocked') {
+        alert("Окно входа заблокировано браузером. Пожалуйста, разрешите всплывающие окна для этого сайта.");
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        // User closed the popup, usually no need to alert
+      } else {
+        alert("Ошибка входа: " + error.message);
+      }
     }
   };
 
@@ -227,11 +236,21 @@ export default function AdminPanel() {
           <p className="text-white/40 text-sm mb-8">Доступ только для администраторов</p>
           <button 
             onClick={handleLogin}
-            className="w-full py-4 rounded-2xl bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-all flex items-center justify-center gap-3"
+            className="w-full py-4 rounded-2xl bg-white text-black font-bold uppercase tracking-widest hover:bg-white/90 transition-all flex items-center justify-center gap-3 shadow-[0_20px_40px_rgba(255,255,255,0.1)]"
           >
             <Globe className="w-5 h-5" />
             Войти через Google
           </button>
+          
+          <div className="mt-8 p-4 rounded-2xl bg-white/5 border border-white/5 text-[10px] text-left space-y-2">
+            <p className="text-white/40 uppercase tracking-widest font-bold">Если окно не открывается:</p>
+            <ul className="text-white/30 list-disc list-inside space-y-1">
+              <li>Отключите блокировщик всплывающих окон</li>
+              <li>Проверьте, добавлен ли домен в Authorized Domains в консоли Firebase</li>
+              <li>Домен: <code className="text-white/60 break-all">{window.location.hostname}</code></li>
+            </ul>
+          </div>
+
           <button 
             onClick={() => navigate('/')}
             className="mt-6 text-white/20 text-[10px] uppercase tracking-widest hover:text-white/60 transition-colors"
