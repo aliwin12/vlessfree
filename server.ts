@@ -32,13 +32,19 @@ async function startServer() {
 
     const configs = servers.filter(s => s && s.status === 'online' && s.config).map(s => {
       let config = s.config;
-      if (s.name) {
-        // VLESS configs usually end with #Name
-        if (config.includes('#')) {
-          config = config.split('#')[0] + '#' + encodeURIComponent(s.name);
-        } else {
-          config = config + '#' + encodeURIComponent(s.name);
+      let displayName = s.name || 'Server';
+      
+      if (s.country || s.city) {
+        const location = [s.country, s.city].filter(Boolean).join(', ');
+        if (location) {
+          displayName += ` / ${location}`;
         }
+      }
+
+      if (config.includes('#')) {
+        config = config.split('#')[0] + '#' + encodeURIComponent(displayName);
+      } else {
+        config = config + '#' + encodeURIComponent(displayName);
       }
       return config;
     }).join('\n');
