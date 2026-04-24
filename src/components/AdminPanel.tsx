@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { MOCK_KEYS } from '../data/keys';
 
-const ADMIN_EMAIL = 'bubinadubina5@gmail.com';
+const ADMIN_EMAILS = ['bubinadubina5@gmail.com', 'intelxeonuser@gmail.com'];
 
 const countryMapping: Record<string, string> = {
   'Нидерланды': 'NL',
@@ -51,7 +51,7 @@ export default function AdminPanel() {
 
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((u) => {
-      if (u && u.email === ADMIN_EMAIL) {
+      if (u && ADMIN_EMAILS.includes(u.email || '')) {
         setUser(u);
       } else {
         setUser(null);
