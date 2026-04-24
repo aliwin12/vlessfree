@@ -242,15 +242,6 @@ export default function AdminPanel() {
             Войти через Google
           </button>
           
-          <div className="mt-8 p-4 rounded-2xl bg-white/5 border border-white/5 text-[10px] text-left space-y-2">
-            <p className="text-white/40 uppercase tracking-widest font-bold">Если окно не открывается:</p>
-            <ul className="text-white/30 list-disc list-inside space-y-1">
-              <li>Отключите блокировщик всплывающих окон</li>
-              <li>Проверьте, добавлен ли домен в Authorized Domains в консоли Firebase</li>
-              <li>Домен: <code className="text-white/60 break-all">{window.location.hostname}</code></li>
-            </ul>
-          </div>
-
           <button 
             onClick={() => navigate('/')}
             className="mt-6 text-white/20 text-[10px] uppercase tracking-widest hover:text-white/60 transition-colors"
