@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, auth, googleProvider, signInWithPopup, signOut, serversCollection, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp } from '../lib/firebase';
+import { db, auth, googleProvider, signInWithRedirect, getRedirectResult, signOut, serversCollection, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp } from '../lib/firebase';
 import { Trash2, Edit3, Plus, LogOut, Shield, ChevronRight, Save, X, Globe, Activity, Calendar, ExternalLink, RefreshCw, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
@@ -50,6 +50,19 @@ export default function AdminPanel() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Handle redirect result
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result?.user) {
+          console.log("Redirect login success:", result.user.email);
+        }
+      } catch (error: any) {
+        console.error("Redirect error:", error);
+      }
+    };
+    checkRedirect();
+
     const unsubscribeAuth = auth.onAuthStateChanged((u) => {
       if (u && ADMIN_EMAILS.includes(u.email || '')) {
         setUser(u);
@@ -74,18 +87,20 @@ export default function AdminPanel() {
 
   const handleLogin = async () => {
     try {
-      console.log("Attempting login...");
-      await signInWithPopup(auth, googleProvider);
-      console.log("Login call completed");
+      console.log("Attempting login via redirect...");
+      const isIframe = window.self !== window.top;
+      
+      if (isIframe) {
+        // If in iframe, we encourage opening in a new tab because redirection inside iframe is blocked by Google
+        if (window.confirm("Для входа через Google приложение должно быть открыто в новой вкладке. Открыть?")) {
+          window.open(window.location.href, '_blank');
+        }
+      } else {
+        await signInWithRedirect(auth, googleProvider);
+      }
     } catch (error: any) {
       console.error("Login failed error:", error);
-      if (error.code === 'auth/popup-blocked') {
-        alert("Окно входа заблокировано браузером. Пожалуйста, разрешите всплывающие окна для этого сайта.");
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        // User closed the popup, usually no need to alert
-      } else {
-        alert("Ошибка входа: " + error.message);
-      }
+      alert("Ошибка входа: " + error.message);
     }
   };
 
@@ -242,15 +257,6 @@ export default function AdminPanel() {
             Войти через Google
           </button>
           
-          <div className="mt-8 p-4 rounded-2xl bg-white/5 border border-white/5 text-[10px] text-left space-y-2">
-            <p className="text-white/40 uppercase tracking-widest font-bold">Если окно не открывается:</p>
-            <ul className="text-white/30 list-disc list-inside space-y-1">
-              <li>Отключите блокировщик всплывающих окон</li>
-              <li>Проверьте, добавлен ли домен в Authorized Domains в консоли Firebase</li>
-              <li>Домен: <code className="text-white/60 break-all">{window.location.hostname}</code></li>
-            </ul>
-          </div>
-
           <button 
             onClick={() => navigate('/')}
             className="mt-6 text-white/20 text-[10px] uppercase tracking-widest hover:text-white/60 transition-colors"
