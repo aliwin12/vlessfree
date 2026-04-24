@@ -29,13 +29,17 @@ async function startServer() {
     }
 
     const userAgent = req.headers['user-agent'] || '';
-    const configs = servers.filter(s => s.status === 'online').map(k => k.config).join('\n');
+    const configs = servers.filter(s => s && s.status === 'online' && s.config).map(k => k.config).join('\n');
     const base64Content = Buffer.from(configs).toString('base64');
 
     // Simple detection for non-client access (browsers usually have "Mozilla" or specific browser names)
     const isBrowser = /Mozilla|Chrome|Safari|Firefox|Edge/.test(userAgent) && !/v2ray|hiddify|vless|shadowsocks|clash|nekobox|streisand|quantumult|surge/i.test(userAgent);
 
     if (isBrowser) {
+      const host = req.headers.host || 'vlessfree.vercel.app';
+      const protocol = host.includes('localhost') ? 'http' : 'https';
+      const subUrl = `${protocol}://${host}/suball`;
+
       // Return a simple HTML page for humans
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
       return res.send(`
@@ -67,9 +71,9 @@ async function startServer() {
             <p style="margin-top: 12px; margin-bottom: 0; font-size: 10px; color: rgba(255,255,255,0.3); font-style: italic;">* рекомендуем обновлять подписку, чтобы получать новые ключи удобнее</p>
             
             <div style="margin-top: 24px;">
-              <a href="v2raytun://install-config?url=\${encodeURIComponent(window.location.href)}" class="btn btn-outline">Импорт в v2rayTun</a>
-              <a href="hiddify://install-config?url=\${encodeURIComponent(window.location.href)}" class="btn btn-outline">Импорт в Hiddify</a>
-              <a href="happ://install-config?url=\${encodeURIComponent(window.location.href)}" class="btn btn-outline">Импорт в Happ</a>
+              <a href="v2raytun://install-config?url=${encodeURIComponent(subUrl)}" class="btn btn-outline">Импорт в v2rayTun</a>
+              <a href="hiddify://install-config?url=${encodeURIComponent(subUrl)}" class="btn btn-outline">Импорт в Hiddify</a>
+              <a href="happ://install-config?url=${encodeURIComponent(subUrl)}" class="btn btn-outline">Импорт в Happ</a>
             </div>
 
             <p style="margin-top: 32px; margin-bottom: 0; font-size: 10px;">https://vlessfree.vercel.app</p>

@@ -1,11 +1,14 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs } from 'firebase/firestore';
-import firebaseConfig from '../firebase-applet-config.json';
+import fs from 'fs';
+import path from 'path';
+
+const firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf8'));
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
-export default async function handler(req, res) {
+export default async function handler(req: any, res: any) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -19,13 +22,17 @@ export default async function handler(req, res) {
   }
 
   const userAgent = req.headers['user-agent'] || '';
-  const configs = servers.filter(s => s.status === 'online').map(k => k.config).join('\n');
+  const configs = servers.filter(s => s && s.status === 'online' && s.config).map(k => k.config).join('\n');
   const base64Content = Buffer.from(configs).toString('base64');
 
   // Simple detection for non-client access
   const isBrowser = /Mozilla|Chrome|Safari|Firefox|Edge/.test(userAgent) && !/v2ray|hiddify|vless|shadowsocks|clash|nekobox|streisand|quantumult|surge/i.test(userAgent);
 
   if (isBrowser) {
+    const host = req.headers.host || 'vlessfree.vercel.app';
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const subUrl = `${protocol}://${host}/suball`;
+
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(`
       <!DOCTYPE html>
@@ -49,16 +56,16 @@ export default async function handler(req, res) {
       <body>
         <div class="card">
           <h1>vlessfree Sub✅</h1>
-          <p>Скопируйте ссылку и вставьте её в клиент или выберете приложение ниже для быстрого импорта:</p>
+          <p>Скопируйте ссылку и вставьте её в клиент или выберите приложение ниже для быстрого импорта:</p>
           
           <button class="btn btn-primary" onclick="copySubLink()">Скопировать ссылку подписки</button>
           <div id="copyMsg" class="copy-msg">Ссылка скопирована!</div>
           <p style="margin-top: 12px; margin-bottom: 0; font-size: 10px; color: rgba(255,255,255,0.3); font-style: italic;">* рекомендуем обновлять подписку, чтобы получать новые ключи удобнее</p>
           
           <div style="margin-top: 24px;">
-            <a href="v2raytun://install-config?url=\${encodeURIComponent(req.headers.host ? 'https://' + req.headers.host + '/suball' : '')}" class="btn btn-outline">Импорт в v2rayTun</a>
-            <a href="hiddify://install-config?url=\${encodeURIComponent(req.headers.host ? 'https://' + req.headers.host + '/suball' : '')}" class="btn btn-outline">Импорт в Hiddify</a>
-            <a href="happ://install-config?url=\${encodeURIComponent(req.headers.host ? 'https://' + req.headers.host + '/suball' : '')}" class="btn btn-outline">Импорт в Happ</a>
+            <a href="v2raytun://install-config?url=${encodeURIComponent(subUrl)}" class="btn btn-outline">Импорт в v2rayTun</a>
+            <a href="hiddify://install-config?url=${encodeURIComponent(subUrl)}" class="btn btn-outline">Импорт в Hiddify</a>
+            <a href="happ://install-config?url=${encodeURIComponent(subUrl)}" class="btn btn-outline">Импорт в Happ</a>
           </div>
 
           <p style="margin-top: 32px; margin-bottom: 0; font-size: 10px;">https://vlessfree.vercel.app</p>
