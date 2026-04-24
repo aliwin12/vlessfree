@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/suball", "destination": "/api/suball" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
