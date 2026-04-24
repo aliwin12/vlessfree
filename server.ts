@@ -29,7 +29,20 @@ async function startServer() {
     }
 
     const userAgent = req.headers['user-agent'] || '';
-    const configs = servers.filter(s => s && s.status === 'online' && s.config).map(k => k.config).join('\n');
+
+    const configs = servers.filter(s => s && s.status === 'online' && s.config).map(s => {
+      let config = s.config;
+      if (s.name) {
+        // VLESS configs usually end with #Name
+        if (config.includes('#')) {
+          config = config.split('#')[0] + '#' + encodeURIComponent(s.name);
+        } else {
+          config = config + '#' + encodeURIComponent(s.name);
+        }
+      }
+      return config;
+    }).join('\n');
+
     const base64Content = Buffer.from(configs).toString('base64');
 
     // Simple detection for non-client access (browsers usually have "Mozilla" or specific browser names)
