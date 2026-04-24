@@ -97,7 +97,9 @@ async function startServer() {
         </head>
         <body>
           <div class="card">
-            <h1>vlessfree Sub✅</h1>
+            <div style="display: flex; justify-content: center; margin-bottom: 20px;">
+              <img src="https://i.ibb.co/WWRyGZcS/2026-04-24-203638-removebg-preview.png" alt="Logo" style="max-width: 150px; height: auto;">
+            </div>
             <p>Скопируйте ссылку и вставьте её в клиент или выберите приложение ниже для быстрого импорта:</p>
             
             <button class="btn btn-primary" onclick="copySubLink()">Скопировать ссылку подписки</button>
