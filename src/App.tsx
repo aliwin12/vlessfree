@@ -32,7 +32,7 @@ const UPDATES = [
     date: '30.03.2026',
     changes: [
       'Временное отключение серверов для планового обслуживания.',
-      'Сервера будут доступны 31.03.2026 в 16:00.'
+      'Сервис станет доступен в 17:55 по мск'
     ]
   },
   {
@@ -96,31 +96,43 @@ const UPDATES = [
 
 function Header({ scrolled }: { scrolled: boolean }) {
   return (
-    <header className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-300 ${
-      scrolled ? 'py-4 bg-white border-b-[4px] border-brutal-black' : 'py-8 md:py-12 bg-transparent'
+    <header className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-500 ${
+      scrolled ? 'py-2 md:py-4 glass border-b' : 'py-3 md:py-8 bg-transparent md:bg-transparent glass md:glass-none border-b md:border-none'
     }`}>
-      <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-        <Link to="/" className="flex items-center gap-4 group">
-          <div className="w-12 h-12 md:w-14 md:h-14 bg-white border-[3px] border-brutal-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center overflow-hidden group-hover:-translate-y-1 group-hover:-translate-x-1 group-hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all">
-            <img 
-              src="https://s10.iimage.su/s/17/gzMssIvxlmD4o7bBXdXbwchG1mLsp8EHi8CdMFJ2o.png" 
-              alt="logo" 
-              className="w-full h-full object-contain p-2"
-              referrerPolicy="no-referrer"
-            />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-xl md:text-3xl font-black tracking-tighter leading-none">VLESSFREE</span>
-            <span className="text-[10px] uppercase tracking-[0.3em] font-black opacity-40">Secure Access</span>
-          </div>
-        </Link>
-
-        <div className="hidden md:flex items-center gap-4">
-          <Link to="/updates" className="brutal-btn py-2 px-4 text-[10px]">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 relative flex flex-col items-center gap-4">
+        <div className="w-full flex justify-center items-center relative">
+          {/* Left Updates Button */}
+          <Link 
+            to="/updates" 
+            className="hidden md:flex absolute left-0 items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white hover:text-black text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10"
+          >
+            <RefreshCw className="w-3 h-3" />
             Обновления
           </Link>
-          <Link to="/how-to-use" className="brutal-btn-secondary py-2 px-4 text-[10px]">
-            Инструкция
+
+          <Link to="/" className="flex items-center gap-2 md:gap-3">
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-white/10 flex items-center justify-center rounded-lg md:rounded-xl overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+              <img 
+                src="https://s10.iimage.su/s/17/gzMssIvxlmD4o7bBXdXbwchG1mLsp8EHi8CdMFJ2o.png" 
+                alt="vlessfree logo" 
+                className="w-full h-full object-contain p-1"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            <img 
+              src="https://s10.iimage.su/s/17/gW7gsFfxcyoojRD4cNLejI21W6YZc62Ieh9AfziAL.png" 
+              alt="vlessfree" 
+              className="h-6 md:h-10 w-auto object-contain glow-text"
+              referrerPolicy="no-referrer"
+            />
+          </Link>
+          
+          {/* Desktop Button */}
+          <Link 
+            to="/how-to-use" 
+            className="hidden md:block absolute right-0 px-4 py-2 rounded-xl bg-white/5 hover:bg-white hover:text-black text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10"
+          >
+            Как установить VPN
           </Link>
         </div>
       </div>
@@ -134,31 +146,47 @@ function BottomNav() {
 
   return (
     <motion.nav 
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
-      className="md:hidden fixed bottom-0 left-0 right-0 z-[60] pb-safe"
+      initial={{ y: 100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.5, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      className="md:hidden fixed bottom-0 left-0 right-0 z-[60] glass border-t pb-safe backdrop-blur-2xl"
     >
-      <div className="mx-4 mb-6 bg-white border-[3px] border-brutal-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] flex justify-around items-center h-20 px-2">
+      <div className="flex justify-around items-center h-14 md:h-16">
         <Link 
           to="/updates" 
-          className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all ${isActive('/updates') ? 'bg-accent-primary' : 'hover:bg-accent-primary/10'}`}
+          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/updates') ? 'text-white' : 'text-white/30'}`}
         >
-          <RefreshCw className="w-6 h-6" />
-          <span className="text-[9px] font-black uppercase tracking-widest">Обновы</span>
+          <motion.div 
+            whileTap={{ scale: 0.9 }}
+            className={`p-1.5 rounded-xl transition-all duration-300 ${isActive('/updates') ? 'bg-white/10' : ''}`}
+          >
+            <RefreshCw className={`w-5 h-5 ${isActive('/updates') ? 'glow-text' : ''}`} />
+          </motion.div>
+          <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/updates') ? 'opacity-100' : 'opacity-60'}`}>Обновы</span>
         </Link>
         <Link 
           to="/" 
-          className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all border-x-[3px] border-brutal-black ${isActive('/') ? 'bg-accent-secondary text-white' : 'hover:bg-accent-secondary/10'}`}
+          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/') ? 'text-white' : 'text-white/30'}`}
         >
-          <Globe className="w-6 h-6" />
-          <span className="text-[9px] font-black uppercase tracking-widest">Сервера</span>
+          <motion.div 
+            whileTap={{ scale: 0.9 }}
+            className={`p-1.5 rounded-xl transition-all duration-300 ${isActive('/') ? 'bg-white/10' : ''}`}
+          >
+            <Globe className={`w-5 h-5 ${isActive('/') ? 'glow-text' : ''}`} />
+          </motion.div>
+          <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/') ? 'opacity-100' : 'opacity-60'}`}>Сервера</span>
         </Link>
         <Link 
           to="/how-to-use" 
-          className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-all ${isActive('/how-to-use') ? 'bg-accent-tertiary text-white' : 'hover:bg-accent-tertiary/10'}`}
+          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/how-to-use') ? 'text-white' : 'text-white/30'}`}
         >
-          <Smartphone className="w-6 h-6" />
-          <span className="text-[9px] font-black uppercase tracking-widest">Гайд</span>
+          <motion.div 
+            whileTap={{ scale: 0.9 }}
+            className={`p-1.5 rounded-xl transition-all duration-300 ${isActive('/how-to-use') ? 'bg-white/10' : ''}`}
+          >
+            <Smartphone className={`w-5 h-5 ${isActive('/how-to-use') ? 'glow-text' : ''}`} />
+          </motion.div>
+          <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/how-to-use') ? 'opacity-100' : 'opacity-60'}`}>Гайд</span>
         </Link>
       </div>
     </motion.nav>
@@ -167,14 +195,15 @@ function BottomNav() {
 
 function SkeletonCard() {
   return (
-    <div className="brutal-card p-8 animate-pulse">
-      <div className="flex justify-between items-start mb-8">
-        <div className="w-12 h-12 bg-brutal-black/10" />
-        <div className="w-16 h-4 bg-brutal-black/10" />
+    <div className="glass rounded-[20px] md:rounded-[32px] p-4 md:p-8 animate-pulse">
+      <div className="flex justify-between items-start mb-4 md:mb-8">
+        <div className="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl bg-white/5" />
+        <div className="w-16 h-3 bg-white/5 rounded" />
       </div>
-      <div className="w-3/4 h-8 bg-brutal-black/10 mb-4" />
-      <div className="w-1/2 h-4 bg-brutal-black/10 mb-8" />
-      <div className="w-full h-14 bg-brutal-black/10" />
+      <div className="w-3/4 h-6 md:h-8 bg-white/5 rounded mb-2" />
+      <div className="w-1/2 h-4 bg-white/5 rounded mb-4 md:mb-6" />
+      <div className="w-1/3 h-3 bg-white/5 rounded mb-6 md:mb-8" />
+      <div className="w-full h-12 md:h-14 bg-white/5 rounded-xl md:rounded-2xl" />
     </div>
   );
 }
@@ -258,6 +287,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
       if (navigator.share) {
         await navigator.share(shareData);
       } else {
+        // Fallback: copy to clipboard and show alert
         await navigator.clipboard.writeText(shareData.text);
         alert('Ссылка на конфигурацию скопирована в буфер обмена для отправки.');
       }
@@ -280,6 +310,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
     return matchesTab && matchesCountry;
   });
 
+  // Pagination logic
   const totalPages = Math.ceil(filteredKeys.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -290,213 +321,388 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
   }, [activeTab, selectedCountry]);
 
   return (
-    <main className="relative pt-40 md:pt-64 pb-32 px-6 max-w-7xl mx-auto min-h-screen">
-      <div className="fixed inset-0 brutal-grid-bg pointer-events-none" />
-      
-      {/* Neo-Brutalist Hero */}
-      <section className="mb-24 text-center relative">
+    <main className="relative pt-32 md:pt-56 pb-28 md:pb-20 px-4 md:px-6 max-w-7xl mx-auto min-h-screen flex flex-col">
+      {/* Hero Section */}
+      <section className="mb-8 md:mb-16 text-center shrink-0">
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
         >
-          <div className="inline-block bg-accent-tertiary text-white border-[3px] border-brutal-black px-6 py-2 font-black uppercase tracking-widest mb-8 -rotate-2">
-            Next Gen VLESS Sharing
-          </div>
-          <h1 className="text-6xl md:text-9xl font-black mb-8 tracking-tighter leading-[0.85]">
-            Свобода <br /> 
-            <span className="bg-accent-primary px-4 py-2 border-[4px] border-brutal-black inline-block mt-4 rotate-1">в каждом ключе.</span>
-          </h1>
-          <p className="text-xl md:text-2xl font-bold max-w-2xl mx-auto leading-tight">
-            Высокоскоростные VLESS конфигурации для обхода любых ограничений. 
-            Безопасно, анонимно, бесплатно.
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-serif italic mb-4 tracking-tighter leading-tight selectable glow-text-iphone">
+            Ключи для <br className="hidden sm:block" /> 
+            <span className="text-white/40">свободного интернета.</span>
+          </h2>
+          <p className="text-lg md:text-2xl text-white/40 font-serif italic tracking-tight">
+            Актуальные ключи VLESS
           </p>
         </motion.div>
       </section>
 
-      {/* Maintenance Banner - Neo-Brutalist */}
+      {/* Maintenance Banner */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="mb-32 brutal-card p-8 md:p-16 bg-accent-primary relative overflow-hidden"
+        className="mb-12 p-6 md:p-10 rounded-[32px] md:rounded-[48px] bg-gradient-to-br from-amber-500/20 via-orange-500/10 to-transparent border border-amber-500/30 text-center glass relative overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.1)]"
       >
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
-          <div className="w-24 h-24 md:w-32 md:h-32 bg-white border-[4px] border-brutal-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center rotate-3">
-            <Calendar className="w-12 h-12 md:w-16 md:h-16" />
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500">
+            <Calendar className="w-5 h-5" />
           </div>
-          
-          <div className="text-center md:text-left flex-1">
-            <div className="bg-brutal-black text-white inline-block px-4 py-1 font-black uppercase tracking-widest mb-4">Maintenance Schedule</div>
-            <h2 className="text-4xl md:text-7xl font-black mb-4 tracking-tighter leading-none">
-              Сервера будут <br /> <span className="bg-white px-4 border-[3px] border-brutal-black">31.03.2026 16:00</span>
-            </h2>
-            <p className="text-brutal-black font-bold text-lg md:text-xl max-w-xl">
-              Мы проводим глобальное обновление инфраструктуры для повышения стабильности и скорости.
-            </p>
-          </div>
+          <span className="text-[10px] md:text-xs font-bold uppercase tracking-[0.4em] text-amber-500/80">Технические работы</span>
         </div>
+        <h3 className="text-3xl md:text-5xl font-serif italic mb-4 tracking-tight leading-tight">
+          Сервис станет доступен <br className="md:hidden" />
+          <span className="text-white">в 17:55 по мск</span>
+        </h3>
+        <p className="text-white/40 text-sm md:text-lg max-w-2xl mx-auto font-serif italic">
+          Мы проводим плановое обновление оборудования. <br className="hidden md:block" />
+          Приносим извинения за временные неудобства.
+        </p>
       </motion.div>
 
       {keys.length > 0 && (
-        <div className="space-y-16">
-          {/* Controls */}
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-            <div className="flex gap-4 p-2 bg-white border-[3px] border-brutal-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <button 
-                onClick={() => setActiveTab('active')}
-                className={`brutal-pill ${activeTab === 'active' ? 'active' : 'hover:bg-accent-secondary/10'}`}
-              >
-                Активные
-              </button>
-              <button 
-                onClick={() => setActiveTab('inactive')}
-                className={`brutal-pill ${activeTab === 'inactive' ? 'active' : 'hover:bg-accent-secondary/10'}`}
-              >
-                Неактивные
-              </button>
-            </div>
+        <>
+          {/* Tabs / Segmented Control */}
+          <div className="flex justify-center mb-8 md:mb-16 shrink-0">
+        <div className="glass p-1 rounded-xl md:rounded-3xl flex gap-1 bg-white/5">
+          <button 
+            onClick={() => setActiveTab('active')}
+            className={`px-5 md:px-8 py-2 md:py-3 rounded-lg md:rounded-2xl text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-bold transition-all duration-300 ${
+              activeTab === 'active' 
+              ? 'bg-white text-black shadow-xl scale-[1.02]' 
+              : 'text-white/40 hover:text-white/60'
+            }`}
+          >
+            Активные
+          </button>
+          <button 
+            onClick={() => setActiveTab('inactive')}
+            className={`px-5 md:px-8 py-2 md:py-3 rounded-lg md:rounded-2xl text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-bold transition-all duration-300 ${
+              activeTab === 'inactive' 
+              ? 'bg-white text-black shadow-xl scale-[1.02]' 
+              : 'text-white/40 hover:text-white/60'
+            }`}
+          >
+            Неактивные
+          </button>
+        </div>
+      </div>
 
-            <div className="relative">
-              <button
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="brutal-btn-secondary flex items-center gap-4"
-              >
-                <Globe className="w-5 h-5" />
-                <span>{selectedCountry || 'Все страны'}</span>
-                <ChevronDown className={`w-5 h-5 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
-              </button>
+      {/* Country Filter Dropdown */}
+      <div className="flex justify-center mb-8 md:mb-12 relative z-[60]">
+        <div className="relative">
+          <button
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className="glass px-6 py-3 rounded-2xl flex items-center gap-3 text-[10px] uppercase tracking-[0.2em] font-bold transition-all hover:border-white/30"
+          >
+            <Globe className="w-4 h-4 text-white/40" />
+            <span>{selectedCountry || 'Все страны'}</span>
+            <ChevronDown className={`w-4 h-4 text-white/40 transition-transform duration-300 ${isFilterOpen ? 'rotate-180' : ''}`} />
+          </button>
 
-              <AnimatePresence>
-                {isFilterOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full right-0 mt-4 w-64 bg-white border-[3px] border-brutal-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-2 z-50"
-                  >
+          <AnimatePresence>
+            {isFilterOpen && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setIsFilterOpen(false)}
+                  className="fixed inset-0 z-[-1]"
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 glass rounded-3xl overflow-hidden shadow-2xl z-50 border-white/20"
+                >
+                  <div className="p-2 flex flex-col gap-1 max-h-80 overflow-y-auto no-scrollbar">
                     <button
-                      onClick={() => { setSelectedCountry(null); setIsFilterOpen(false); }}
-                      className="w-full text-left px-4 py-3 font-bold hover:bg-accent-primary transition-colors border-b-2 border-brutal-black last:border-0"
+                      onClick={() => {
+                        setSelectedCountry(null);
+                        setIsFilterOpen(false);
+                      }}
+                      className={`px-4 py-3 rounded-2xl text-[10px] uppercase tracking-widest font-bold text-left transition-all ${
+                        selectedCountry === null
+                          ? 'bg-white text-black'
+                          : 'text-white/60 hover:bg-white/5 hover:text-white'
+                      }`}
                     >
                       Все страны
                     </button>
                     {countries.map((country: any) => (
                       <button
                         key={country}
-                        onClick={() => { setSelectedCountry(country); setIsFilterOpen(false); }}
-                        className="w-full text-left px-4 py-3 font-bold hover:bg-accent-primary transition-colors border-b-2 border-brutal-black last:border-0"
+                        onClick={() => {
+                          setSelectedCountry(country);
+                          setIsFilterOpen(false);
+                        }}
+                        className={`px-4 py-3 rounded-2xl text-[10px] uppercase tracking-widest font-bold text-left transition-all ${
+                          selectedCountry === country
+                            ? 'bg-white text-black'
+                            : 'text-white/60 hover:bg-white/5 hover:text-white'
+                        }`}
                       >
                         {country}
                       </button>
                     ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* Grid */}
-          <AnimatePresence mode="wait">
-            {loading ? (
-              <div className="bento-grid">
-                {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} />)}
-              </div>
-            ) : currentItems.length > 0 ? (
-              <motion.div 
-                key={activeTab}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="bento-grid"
-              >
-                {currentItems.map((key: any, index: number) => (
-                  <motion.div
-                    key={key.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className={`brutal-card p-8 group ${key.status === 'offline' ? 'opacity-50 grayscale' : ''}`}
-                  >
-                    <div className="flex justify-between items-start mb-8">
-                      <div className="w-16 h-16 border-[3px] border-brutal-black bg-accent-primary flex items-center justify-center group-hover:bg-accent-secondary group-hover:text-white transition-all duration-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                        <Globe className="w-8 h-8" />
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        {key.isSpecial && <span className="bg-accent-tertiary text-white border-2 border-brutal-black px-2 py-0.5 text-[10px] font-black uppercase tracking-widest">SPECIAL</span>}
-                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{key.protocol}</span>
-                      </div>
-                    </div>
-
-                    <h3 className="text-3xl font-black mb-1 tracking-tighter">{key.name}</h3>
-                    <p className="font-bold opacity-40 text-sm mb-8">{key.location}</p>
-
-                    <div className="space-y-4 mb-8">
-                      <div className="flex justify-between items-center text-[10px] uppercase tracking-widest font-black">
-                        <span className="opacity-40">Status</span>
-                        <span className={key.status === 'online' ? 'text-emerald-600' : 'text-rose-600'}>{key.status}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-[10px] uppercase tracking-widest font-black">
-                        <span className="opacity-40">Expiry</span>
-                        <span>{key.expiryDate}</span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <button
-                        onClick={() => handleCopy(key.id, key.config)}
-                        className="flex-1 brutal-btn text-xs"
-                      >
-                        {copiedId === key.id ? 'Copied' : 'Copy Key'}
-                      </button>
-                      <button
-                        onClick={() => handleShare(key)}
-                        className="w-14 h-14 brutal-btn-secondary flex items-center justify-center p-0"
-                      >
-                        <Share2 className="w-6 h-6" />
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            ) : (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="py-32 text-center brutal-card bg-white"
-              >
-                <div className="w-24 h-24 bg-accent-tertiary/10 border-[3px] border-brutal-black flex items-center justify-center mx-auto mb-8 rotate-3">
-                  <AlertTriangle className="w-12 h-12 text-accent-tertiary" />
-                </div>
-                <h3 className="text-4xl font-black mb-2 tracking-tighter">Серверов пока нет</h3>
-                <p className="font-bold opacity-40">Ожидайте обновления 31 марта.</p>
-              </motion.div>
+                  </div>
+                </motion.div>
+              </>
             )}
           </AnimatePresence>
         </div>
+      </div>
+
+      {/* Nodes Grid / Empty State */}
+      <AnimatePresence mode="wait">
+        {loading ? (
+          <motion.div 
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
+          >
+            {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} />)}
+          </motion.div>
+        ) : filteredKeys.length > 0 ? (
+          <div key={activeTab} className="flex flex-col gap-6">
+
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
+            >
+            {currentItems.map((key: any, index: number) => (
+              <motion.div
+                key={key.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + index * 0.05 }}
+                className={`glass rounded-[20px] md:rounded-[32px] p-4 md:p-8 group hover:border-white/30 transition-all duration-500 ${key.status === 'offline' ? 'opacity-60 grayscale' : ''} relative overflow-hidden`}
+              >
+                {key.isSpecial && !unlockedSpecial && (
+                  <div className="absolute inset-0 z-10 backdrop-blur-md bg-black/20 pointer-events-none" />
+                )}
+                
+                <div className="flex justify-between items-start mb-4 md:mb-8 relative z-20">
+                  <div className={`w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-colors duration-500 ${key.status === 'offline' ? 'bg-rose-500/10 text-rose-500' : ''}`}>
+                    <Globe className="w-4 h-4 md:w-6 md:h-6" />
+                  </div>
+                  <div className="flex gap-2">
+                    {key.isSpecial && (
+                      <span className="px-2 py-1 rounded-lg bg-amber-500 text-black text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+                        SPECIAL
+                      </span>
+                    )}
+                    <button 
+                      onClick={() => key.isSpecial && !unlockedSpecial ? handleSpecialClick(key) : setSelectedKey(key)}
+                      className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 hover:opacity-100 transition-opacity"
+                    >
+                      Подробнее
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 mb-1 md:mb-2 relative z-20">
+                  <h3 className="text-xl md:text-2xl font-serif italic tracking-tight selectable">{key.name}</h3>
+                  {key.status === 'unstable' && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-[7px] md:text-[8px] uppercase tracking-widest font-bold border border-amber-500/20">
+                      Нестабильный
+                    </span>
+                  )}
+                  {key.status === 'offline' && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-500 text-[7px] md:text-[8px] uppercase tracking-widest font-bold border border-rose-500/20">
+                      Отключен
+                    </span>
+                  )}
+                </div>
+                
+                <div className={key.isSpecial && !unlockedSpecial ? 'blur-sm select-none pointer-events-none' : ''}>
+                  <p className="text-xs md:text-sm text-white/40 mb-4 md:mb-6 selectable">{key.location}</p>
+
+                  {key.reason && (
+                    <div className="bg-rose-500/5 border border-rose-500/10 rounded-lg md:rounded-xl p-3 md:p-4 mb-4 md:mb-6">
+                      <p className="text-[9px] md:text-[10px] text-rose-500/60 uppercase tracking-widest font-bold mb-1">Причина:</p>
+                      <p className="text-[11px] md:text-xs text-rose-500/80">{key.reason}</p>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 mb-6 md:mb-8">
+                    <Calendar className="w-3 h-3" />
+                    <span>До: {key.expiryDate}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 relative z-20">
+                  <button
+                    onClick={() => {
+                      if (key.isSpecial) {
+                        handleSpecialClick(key);
+                      } else {
+                        handleCopy(key.id, key.config);
+                      }
+                    }}
+                    disabled={key.status === 'offline'}
+                    className={`w-full py-3.5 md:py-4 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${
+                      key.status === 'offline'
+                      ? 'bg-white/5 text-white/20 cursor-not-allowed'
+                      : copiedId === key.id 
+                      ? 'bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
+                      : key.isSpecial && !unlockedSpecial
+                      ? 'bg-amber-500 text-black hover:bg-amber-400'
+                      : key.isSpecial && unlockedSpecial
+                      ? 'bg-white/10 hover:bg-white hover:text-black'
+                      : 'bg-white/5 hover:bg-white hover:text-black'
+                    }`}
+                  >
+                    {key.isSpecial && !unlockedSpecial ? (
+                      <div className="flex items-center gap-2">
+                        <Lock className="w-4 h-4" /> Разблокировать
+                      </div>
+                    ) : key.isSpecial && unlockedSpecial ? (
+                      <div className="flex items-center gap-2">
+                        <Folder className="w-4 h-4" /> Открыть папку
+                      </div>
+                    ) : (
+                      <AnimatePresence mode="wait">
+                        {copiedId === key.id ? (
+                          <motion.div
+                            key="check"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            className="flex items-center gap-2"
+                          >
+                            <Check className="w-4 h-4" /> Скопировано!
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="copy"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            className="flex items-center gap-2"
+                          >
+                            <Copy className="w-4 h-4" /> Копировать конфигурацию
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (key.isSpecial) {
+                        handleSpecialClick(key);
+                      } else {
+                        handleShare(key);
+                      }
+                    }}
+                    disabled={key.status === 'offline'}
+                    className={`w-full py-3 md:py-3.5 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 border border-white/10 ${
+                      key.status === 'offline'
+                      ? 'opacity-20 cursor-not-allowed'
+                      : 'bg-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    {key.isSpecial ? <Folder className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
+                    {key.isSpecial ? 'Просмотреть содержимое' : 'Поделиться'}
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+            </motion.div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-4 mt-8 md:mt-12">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className={`p-3 rounded-xl border border-white/10 transition-all duration-300 ${
+                    currentPage === 1 ? 'opacity-20 cursor-not-allowed' : 'hover:bg-white hover:text-black'
+                  }`}
+                >
+                  <ChevronRight className="w-5 h-5 rotate-180" />
+                </button>
+                
+                <div className="flex gap-2">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-10 h-10 rounded-xl border border-white/10 text-[10px] font-bold transition-all duration-300 ${
+                        currentPage === page ? 'bg-white text-black' : 'hover:bg-white/5'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className={`p-3 rounded-xl border border-white/10 transition-all duration-300 ${
+                    currentPage === totalPages ? 'opacity-20 cursor-not-allowed' : 'hover:bg-white hover:text-black'
+                  }`}
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
+          </div>
+      ) : (
+          <motion.div 
+            key="empty"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="py-32 text-center"
+          >
+            <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-8">
+              <AlertTriangle className="w-8 h-8 opacity-20" />
+            </div>
+            <h3 className="text-2xl font-serif italic mb-2">
+              {activeTab === 'active' ? 'Нет активных серверов' : 'Нет неактивных серверов'}
+            </h3>
+            <p className="text-white/30 text-sm">
+              {activeTab === 'active' ? 'Пожалуйста, подождите обновления списка.' : 'Все доступные узлы работают в штатном режиме.'}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+        </>
       )}
 
-      {/* Password Prompt Modal - Neo-Brutalist */}
+      {/* Password Prompt Modal */}
       <AnimatePresence>
         {showPasswordPrompt && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brutal-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="brutal-card p-8 md:p-12 max-w-md w-full relative overflow-hidden"
+              className="glass p-8 rounded-[32px] max-w-md w-full border border-white/10 relative overflow-hidden"
             >
-              <div className="absolute top-0 left-0 w-full h-2 bg-accent-tertiary" />
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-orange-500" />
               
-              <div className="flex justify-between items-center mb-8">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-accent-tertiary border-[3px] border-brutal-black flex items-center justify-center text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                    <Lock className="w-6 h-6" />
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                    <Lock className="w-5 h-5" />
                   </div>
-                  <h3 className="text-2xl font-black tracking-tighter">Доступ ограничен</h3>
+                  <h3 className="text-xl font-serif italic tracking-tight">Доступ ограничен</h3>
                 </div>
                 <button 
                   onClick={() => {
@@ -504,17 +710,17 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
                     setPassword('');
                     setPasswordError(false);
                   }}
-                  className="p-2 hover:bg-accent-tertiary/10 transition-colors"
+                  className="p-2 rounded-full hover:bg-white/5 transition-colors"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5 text-white/40" />
                 </button>
               </div>
 
-              <p className="font-bold opacity-60 mb-8 leading-tight">
+              <p className="text-sm text-white/40 mb-6 leading-relaxed">
                 Этот сервер является специальным. Для получения доступа к конфигурации необходимо ввести пароль.
               </p>
 
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div className="relative">
                   <input
                     type="password"
@@ -525,14 +731,14 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
                     }}
                     onKeyDown={(e) => e.key === 'Enter' && checkPassword()}
                     placeholder="Введите пароль..."
-                    className={`w-full bg-bg-main border-[3px] ${passwordError ? 'border-rose-500' : 'border-brutal-black'} px-6 py-4 font-bold focus:outline-none focus:bg-white transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}
+                    className={`w-full bg-white/5 border ${passwordError ? 'border-rose-500/50' : 'border-white/10'} rounded-2xl px-5 py-4 text-sm focus:outline-none focus:border-amber-500/50 transition-colors`}
                     autoFocus
                   />
                   {passwordError && (
                     <motion.p 
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-[10px] text-rose-600 mt-3 font-black uppercase tracking-widest"
+                      className="text-[10px] text-rose-500 mt-2 font-bold uppercase tracking-widest"
                     >
                       Неверный пароль
                     </motion.p>
@@ -541,7 +747,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
 
                 <button
                   onClick={checkPassword}
-                  className="w-full brutal-btn"
+                  className="w-full py-4 rounded-2xl bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-amber-500 transition-colors duration-300"
                 >
                   Разблокировать
                 </button>
@@ -552,7 +758,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
       </AnimatePresence>
 
       {/* Footer */}
-      <footer className="mt-32 py-12 border-t-[3px] border-brutal-black flex flex-col md:flex-row justify-between items-center gap-6 font-black uppercase tracking-widest text-xs">
+      <footer className="mt-24 md:mt-32 py-10 md:py-12 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6 opacity-40 text-[10px] uppercase tracking-[0.2em] font-bold text-center md:text-left">
         <div className="flex flex-col gap-2">
           <p>© 2026 VLESSFREE</p>
         </div>
@@ -591,121 +797,138 @@ function HowToUsePage() {
       name: 'Linux',
       icon: Terminal,
       app: 'Karing',
-      description: 'Современный кроссплатформенный клиент с открытым исходным кодом.',
-      tutorial: 'Установите пакет для вашего дистрибутива. Скопируйте ключ, в приложении выберите "Add from Clipboard".',
-      link: 'https://karing.app'
+      description: 'Современный кроссплатформенный клиент с отличной поддержкой Linux.',
+      tutorial: 'Установите пакет для вашего дистрибутива. Перейдите в раздел подписок/узлов и вставьте скопированный ключ.',
+      link: 'https://github.com/KaringX/karing/releases'
     }
   ];
 
   return (
-    <motion.main 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="pt-40 md:pt-64 pb-32 px-6 max-w-5xl mx-auto min-h-screen"
-    >
-      <div className="fixed inset-0 brutal-grid-bg pointer-events-none" />
-      
-      <div className="text-center mb-24 relative">
-        <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-6">Как подключиться?</h1>
-        <div className="inline-block bg-accent-primary border-[3px] border-brutal-black px-6 py-2 font-black uppercase tracking-widest -rotate-1">
-          Простая инструкция для всех устройств
-        </div>
-      </div>
+    <main className="relative pt-32 md:pt-56 pb-28 md:pb-20 px-4 md:px-6 max-w-5xl mx-auto min-h-screen flex flex-col">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8 md:mb-16 text-center shrink-0"
+      >
+        <h2 className="text-4xl sm:text-5xl md:text-6xl font-serif italic mb-4 md:mb-6 tracking-tighter leading-tight">
+          Как установить <br className="hidden sm:block" />
+          <span className="text-white/40">и настроить VPN.</span>
+        </h2>
+        <p className="text-white/40 max-w-2xl mx-auto leading-relaxed text-sm md:text-base">
+          Следуйте инструкциям ниже для вашей операционной системы. Мы подобрали лучшие приложения для работы с нашими ключами.
+        </p>
+      </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative">
+      <div className="grid gap-6 md:gap-8 flex-1">
         {platforms.map((platform, index) => (
           <motion.div
             key={platform.name}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="brutal-card p-8 md:p-12 bg-white"
+            className="glass rounded-[24px] md:rounded-[32px] p-5 md:p-10 flex flex-col md:flex-row gap-5 md:gap-8 items-start hover:border-white/20 transition-all duration-500"
           >
-            <div className="flex items-center gap-6 mb-8">
-              <div className="w-16 h-16 bg-accent-secondary border-[3px] border-brutal-black flex items-center justify-center text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <platform.icon className="w-8 h-8" />
-              </div>
-              <div>
-                <h3 className="text-3xl font-black tracking-tighter">{platform.name}</h3>
-                <span className="bg-accent-tertiary text-white px-2 py-0.5 text-[10px] font-black uppercase tracking-widest border-2 border-brutal-black">{platform.app}</span>
-              </div>
+            <div className="w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-white/5 flex items-center justify-center shrink-0">
+              <platform.icon className="w-5 h-5 md:w-8 md:h-8" />
             </div>
-
-            <p className="font-bold opacity-60 mb-8 leading-tight">{platform.description}</p>
             
-            <div className="bg-bg-main border-[3px] border-brutal-black p-6 mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              <h4 className="text-sm font-black uppercase tracking-widest mb-3 flex items-center gap-2">
-                <span className="flex items-center gap-2"><Info className="w-4 h-4" /> Шаги:</span>
-              </h4>
-              <p className="text-sm font-bold leading-tight opacity-80">{platform.tutorial}</p>
-            </div>
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-3 md:mb-4">
+                <h3 className="text-xl md:text-2xl font-serif italic tracking-tight">{platform.name}</h3>
+                <span className="px-2 md:px-3 py-0.5 md:py-1 rounded-full bg-white/10 text-[8px] md:text-[10px] uppercase tracking-widest font-bold">
+                  {platform.app}
+                </span>
+              </div>
+              
+              <p className="text-white/60 mb-4 md:mb-6 text-xs md:text-sm leading-relaxed">
+                {platform.description}
+              </p>
+              
+              <div className="bg-white/5 rounded-xl md:rounded-2xl p-4 md:p-6 mb-6 md:mb-8 border border-white/5">
+                <div className="flex items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 mb-3 md:mb-4">
+                  <Info className="w-3 h-3" />
+                  <span>Инструкция</span>
+                </div>
+                <p className="text-xs md:text-sm leading-relaxed text-white/80">
+                  {platform.tutorial}
+                </p>
+              </div>
 
-            <a 
-              href={platform.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="brutal-btn w-full flex items-center justify-center gap-3"
-            >
-              Скачать клиент <ExternalLink className="w-4 h-4" />
-            </a>
+              <div className="flex flex-wrap gap-3 md:gap-4">
+                <a 
+                  href={platform.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 md:px-8 py-3 md:py-4 bg-white text-black rounded-lg md:rounded-xl text-[9px] md:text-[10px] uppercase tracking-widest font-bold hover:scale-105 active:scale-95 transition-all"
+                >
+                  <Download className="w-3 h-3 md:w-4 md:h-4" /> Скачать приложение
+                </a>
+              </div>
+            </div>
           </motion.div>
         ))}
       </div>
-    </motion.main>
+
+      <div className="mt-12 md:mt-20 p-6 md:p-10 glass rounded-[24px] md:rounded-[40px] text-center border-white/10 shrink-0">
+        <h3 className="text-xl md:text-2xl font-serif italic mb-3 md:mb-4">Остались вопросы?</h3>
+        <p className="text-white/40 text-xs md:text-sm mb-6 md:mb-8">
+          Если у вас возникли трудности с настройкой, попробуйте поискать видео-туториалы по названию приложения на YouTube.
+        </p>
+        <Link 
+          to="/" 
+          className="inline-flex items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-60 hover:opacity-100 transition-opacity"
+        >
+          Вернуться к списку серверов <ChevronRight className="w-4 h-4" />
+        </Link>
+      </div>
+    </main>
   );
 }
 
 function UpdatesPage() {
   return (
-    <motion.main 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="pt-40 md:pt-64 pb-32 px-6 max-w-4xl mx-auto min-h-screen"
-    >
-      <div className="fixed inset-0 brutal-grid-bg pointer-events-none" />
-      
-      <div className="text-center mb-20 relative">
-        <h1 className="text-5xl md:text-8xl font-black tracking-tighter mb-6">История обновлений</h1>
-        <div className="inline-block bg-accent-secondary text-white border-[3px] border-brutal-black px-6 py-2 font-black uppercase tracking-widest rotate-1">
-          Следите за развитием VLESSFREE
-        </div>
-      </div>
+    <main className="relative pt-32 md:pt-56 pb-28 md:pb-20 px-4 md:px-6 max-w-3xl mx-auto min-h-screen">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-12 md:mb-20 text-center"
+      >
+        <h2 className="text-4xl md:text-6xl font-serif italic mb-4 tracking-tighter glow-text-iphone">Обновления</h2>
+        <p className="text-white/40 font-serif italic">История изменений проекта VLESSFREE</p>
+      </motion.div>
 
-      <div className="space-y-12 relative">
+      <div className="space-y-8 md:space-y-12">
         {UPDATES.map((update, index) => (
           <motion.div
             key={update.version}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="brutal-card p-8 md:p-12 bg-white"
+            className="relative pl-8 md:pl-12 border-l border-white/10"
           >
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-              <div className="flex items-center gap-6">
-                <div className="w-16 h-16 bg-accent-primary border-[3px] border-brutal-black flex items-center justify-center text-brutal-black font-black text-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                  {update.version}
-                </div>
-                <div>
-                  <h3 className="text-3xl font-black tracking-tighter">Версия {update.version}</h3>
-                  <p className="text-brutal-black/40 text-xs uppercase tracking-widest font-black">{update.date}</p>
-                </div>
-              </div>
+            <div className="absolute left-[-5px] top-0 w-2.5 h-2.5 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+            
+            <div className="flex items-baseline gap-4 mb-4">
+              <h3 className="text-2xl md:text-3xl font-serif italic text-white">v{update.version}</h3>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-white/20">{update.date}</span>
             </div>
 
-            <ul className="space-y-4">
+            <ul className="space-y-3">
               {update.changes.map((change, i) => (
-                <li key={i} className="flex items-start gap-4 font-bold text-brutal-black/70 leading-tight">
-                  <div className="w-2.5 h-2.5 bg-accent-tertiary border-2 border-brutal-black mt-1.5 shrink-0" />
-                  <span>{change}</span>
+                <li key={i} className="flex items-start gap-3 text-sm md:text-base text-white/60 leading-relaxed">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white/20 mt-2 shrink-0" />
+                  {change}
                 </li>
               ))}
             </ul>
           </motion.div>
         ))}
       </div>
-    </motion.main>
+
+      <footer className="mt-24 md:mt-32 py-10 md:py-12 border-t border-white/10 opacity-40 text-[10px] uppercase tracking-[0.2em] font-bold text-center">
+        <p>© 2026 VLESSFREE</p>
+      </footer>
+    </main>
   );
 }
 
@@ -741,59 +964,58 @@ function SpecialFolderPage({ keys, handleCopy, copiedId, unlockedSpecial }: any)
   };
 
   return (
-    <main className="relative pt-40 md:pt-64 pb-32 px-6 max-w-5xl mx-auto min-h-screen">
-      <div className="fixed inset-0 brutal-grid-bg pointer-events-none" />
-      
+    <main className="relative pt-32 md:pt-56 pb-28 md:pb-20 px-4 md:px-6 max-w-5xl mx-auto min-h-screen">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-24 relative"
+        className="mb-12 md:mb-20"
       >
         <Link 
           to="/" 
-          className="inline-flex items-center gap-2 bg-white border-[3px] border-brutal-black px-4 py-2 font-black uppercase tracking-widest text-[10px] hover:bg-accent-primary transition-colors mb-12 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+          className="inline-flex items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-40 hover:opacity-100 transition-opacity mb-8"
         >
           <ChevronRight className="w-4 h-4 rotate-180" /> Назад к серверам
         </Link>
-        <h2 className="text-5xl md:text-8xl font-black mb-6 tracking-tighter">Спец Папка</h2>
-        <div className="inline-block bg-accent-tertiary text-white border-[3px] border-brutal-black px-6 py-2 font-black uppercase tracking-widest rotate-1">
-          Эксклюзивные конфигурации VLESS
-        </div>
+        <h2 className="text-4xl md:text-6xl font-serif italic mb-4 tracking-tighter glow-text-iphone">Спец Папка</h2>
+        <p className="text-white/40 font-serif italic">Эксклюзивные конфигурации VLESS</p>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {specialFolder.subKeys.map((sub: any, idx: number) => (
           <motion.div
             key={idx}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: idx * 0.1 }}
-            className="brutal-card p-8 md:p-12 bg-white group"
+            className="glass rounded-[32px] p-8 border-white/10 hover:border-white/20 transition-all group"
           >
             <div className="flex justify-between items-start mb-8">
-              <div className="w-16 h-16 border-[3px] border-brutal-black bg-accent-primary flex items-center justify-center group-hover:bg-accent-secondary group-hover:text-white transition-all duration-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <Globe className="w-8 h-8" />
+              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-colors duration-500">
+                <Globe className="w-6 h-6" />
               </div>
-              <div className="bg-accent-tertiary text-white border-[3px] border-brutal-black px-4 py-1 font-black uppercase tracking-widest text-[10px] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <div className="px-3 py-1 rounded-lg bg-amber-500 text-black text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)]">
                 PREMIUM
               </div>
             </div>
 
-            <h3 className="text-3xl font-black mb-2 tracking-tighter">{sub.name}</h3>
-            <p className="font-bold opacity-40 text-sm mb-12">{sub.location}</p>
+            <h3 className="text-2xl font-serif italic mb-2 tracking-tight">{sub.name}</h3>
+            <p className="text-sm text-white/40 mb-8">{sub.location}</p>
 
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
               <button
                 onClick={() => handleCopy(`special-${idx}`, sub.config)}
-                className={`w-full brutal-btn ${copiedId === `special-${idx}` ? 'bg-emerald-500 text-white' : ''}`}
+                className={`w-full py-4 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                  copiedId === `special-${idx}` ? 'bg-emerald-500 text-white' : 'bg-white/5 hover:bg-white hover:text-black'
+                }`}
               >
+                {copiedId === `special-${idx}` ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 {copiedId === `special-${idx}` ? 'Скопировано' : 'Копировать ключ'}
               </button>
               <button
                 onClick={() => handleShare(sub)}
-                className="w-full brutal-btn-secondary flex items-center justify-center gap-3"
+                className="w-full py-3.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-white/10 bg-white/5 hover:bg-white/10"
               >
-                <Share2 className="w-5 h-5" /> Поделиться
+                <Share2 className="w-4 h-4" /> Поделиться
               </button>
             </div>
           </motion.div>
@@ -805,9 +1027,9 @@ function SpecialFolderPage({ keys, handleCopy, copiedId, unlockedSpecial }: any)
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="mt-20 brutal-card p-12 bg-accent-primary text-center rotate-1"
+          className="mt-12 p-8 rounded-[32px] bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-transparent border border-amber-500/20 text-center"
         >
-          <p className="text-xl font-black uppercase tracking-[0.2em] animate-pulse">
+          <p className="text-xs md:text-sm font-bold uppercase tracking-[0.3em] text-amber-500 animate-pulse">
             Скоро будут добавлены новые локации
           </p>
         </motion.div>
@@ -821,19 +1043,18 @@ function MirrorScreen() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-[300] bg-bg-main flex flex-col items-center justify-center p-6 text-center"
+      className="fixed inset-0 z-[300] bg-[#050505] flex flex-col items-center justify-center p-6 text-center"
     >
-      <div className="fixed inset-0 brutal-grid-bg pointer-events-none" />
-      <div className="text-8xl mb-12 rotate-12">⏳</div>
-      <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter">
+      <div className="text-6xl mb-8">⏳</div>
+      <h1 className="text-3xl md:text-4xl font-serif italic mb-4 tracking-tighter">
         Не загружается?
       </h1>
-      <p className="font-black uppercase tracking-widest opacity-40 mb-12 max-w-xs">
+      <p className="text-white/50 mb-10 text-sm md:text-base max-w-xs">
         Попробуй тогда это зеркало
       </p>
       <a 
         href="https://vlessfree-djif23janskdq21.vercel.app/"
-        className="brutal-btn text-xl"
+        className="px-10 py-4 rounded-2xl bg-white text-black font-bold uppercase tracking-widest text-xs hover:scale-105 transition-transform"
       >
         Зеркало
       </a>
@@ -846,49 +1067,70 @@ function LoadingScreen() {
     <motion.div
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] bg-bg-main flex flex-col items-center justify-center overflow-hidden"
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed inset-0 z-[200] bg-[#050505] flex flex-col items-center justify-center overflow-hidden"
     >
-      <div className="fixed inset-0 brutal-grid-bg pointer-events-none" />
-      
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-amber-500/10 blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 flex flex-col items-center"
       >
-        <div className="relative mb-12">
+        <div className="relative mb-8">
           <motion.div
             animate={{ 
-              rotate: [0, 90, 180, 270, 360],
-              x: [0, 10, 0, -10, 0],
-              y: [0, -10, 0, 10, 0]
+              rotate: 360,
+              scale: [1, 1.1, 1],
             }}
             transition={{ 
-              duration: 2, 
-              repeat: Infinity, 
-              ease: "linear" 
+              rotate: { duration: 3, repeat: Infinity, ease: "linear" },
+              scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
             }}
-            className="w-24 h-24 bg-accent-primary border-[4px] border-brutal-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center"
+            className="w-20 h-20 md:w-24 md:h-24 rounded-3xl border-2 border-white/10 flex items-center justify-center glass relative overflow-hidden"
           >
-            <Zap className="w-12 h-12 text-brutal-black" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/20 to-transparent animate-pulse" />
+            <Zap className="w-10 h-10 md:w-12 md:h-12 text-white glow-text" />
           </motion.div>
+          
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: "100%" }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
+            className="absolute -bottom-4 left-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500 to-transparent"
+          />
         </div>
 
-        <div className="flex flex-col items-center gap-4">
-          <h1 className="text-4xl md:text-6xl font-black tracking-tighter">
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.8 }}
+          className="flex flex-col items-center gap-2"
+        >
+          <h1 className="text-2xl md:text-3xl font-serif italic tracking-tighter text-white">
             VlessFree
           </h1>
-          <div className="flex gap-3">
-            <div className="w-4 h-4 bg-accent-primary border-2 border-brutal-black animate-bounce" style={{ animationDelay: '0s' }} />
-            <div className="w-4 h-4 bg-accent-secondary border-2 border-brutal-black animate-bounce" style={{ animationDelay: '0.2s' }} />
-            <div className="w-4 h-4 bg-accent-tertiary border-2 border-brutal-black animate-bounce" style={{ animationDelay: '0.4s' }} />
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-1 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '0s' }} />
+            <div className="w-1 h-1 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '0.2s' }} />
+            <div className="w-1 h-1 rounded-full bg-amber-500 animate-bounce" style={{ animationDelay: '0.4s' }} />
           </div>
-        </div>
+        </motion.div>
       </motion.div>
 
       <div className="absolute bottom-12 left-0 right-0 flex justify-center">
-        <div className="bg-brutal-black text-white px-6 py-2 font-black uppercase tracking-[0.3em] text-[10px] -rotate-1">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.3 }}
+          transition={{ delay: 0.8, duration: 1 }}
+          className="text-[10px] uppercase tracking-[0.3em] font-bold text-white"
+        >
           Загрузка конфигураций...
-        </div>
+        </motion.div>
       </div>
     </motion.div>
   );
@@ -953,64 +1195,54 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden selection:bg-accent-primary selection:text-brutal-black">
-      <Header scrolled={scrolled} />
-      
+    <div className="min-h-screen bg-[#050505] selection:bg-white selection:text-black pt-safe pb-safe">
       <AnimatePresence mode="wait">
-        <Routes location={location}>
-          <Route path="/" element={
-            <HomePage 
-              keys={keys} 
-              handleCopy={handleCopy} 
-              copiedId={copiedId} 
-              selectedKey={selectedKey} 
-              setSelectedKey={setSelectedKey} 
-              activeTab={activeTab} 
-              setActiveTab={setActiveTab} 
-              loading={loading}
-              unlockedSpecial={unlockedSpecial}
-              onUnlockSpecial={() => setUnlockedSpecial(true)}
-            />
-          } />
-          <Route path="/how-to-use" element={<HowToUsePage />} />
-          <Route path="/updates" element={<UpdatesPage />} />
-          <Route path="/special" element={
-            <SpecialFolderPage 
-              keys={keys} 
-              handleCopy={handleCopy} 
-              copiedId={copiedId} 
-              unlockedSpecial={unlockedSpecial} 
-            />
-          } />
-        </Routes>
+        {showMirror ? (
+          <MirrorScreen key="mirror" />
+        ) : loading ? (
+          <LoadingScreen key="loader" />
+        ) : null}
       </AnimatePresence>
 
-      <BottomNav />
-
-      {/* Modals with Neo-Brutalist design */}
       <AnimatePresence>
         {showModal && location.pathname === '/' && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-brutal-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl"
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative max-w-lg w-full brutal-card p-12 text-center overflow-hidden"
+              className="relative max-w-lg w-full glass rounded-[32px] md:rounded-[40px] p-6 md:p-12 text-center overflow-hidden"
             >
-              <div className="absolute top-0 left-0 w-full h-2 bg-accent-primary" />
-              <div className="text-6xl mb-8 rotate-12">⚠️</div>
-              <h2 className="text-4xl font-black mb-4 tracking-tighter">Технические работы</h2>
-              <p className="font-bold opacity-60 leading-tight mb-10">
-                Мы обновляем сервера. Они будут доступны 31.03.2026 в 16:00.
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500/0 via-amber-500 to-amber-500/0" />
+              
+              <div className="text-6xl mb-6">⚠️</div>
+              
+              <h2 className="text-3xl md:text-4xl font-serif italic mb-4 tracking-tighter">
+                Технические работы
+              </h2>
+              
+              <p className="text-white/50 leading-relaxed mb-10 text-sm md:text-base">
+                Сервис станет доступен в 17:55 по мск
               </p>
+
+              <div className="glass bg-white/5 rounded-3xl p-8 mb-4 flex items-center justify-center min-h-[120px]">
+                <div className="text-2xl md:text-3xl font-serif italic tracking-tight text-white">
+                  Ура я теперь в т2
+                </div>
+              </div>
+              
+              <div className="text-[10px] uppercase tracking-[0.2em] font-bold opacity-20 mb-10">
+                мегафон говно
+              </div>
+
               <button 
                 onClick={() => setShowModal(false)}
-                className="w-full brutal-btn"
+                className="w-full py-5 bg-white text-black rounded-2xl text-xs font-bold uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_20px_40px_rgba(255,255,255,0.1)]"
               >
                 Понятно
               </button>
@@ -1023,48 +1255,48 @@ function AppContent() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-brutal-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/80 backdrop-blur-xl"
             onClick={() => setSelectedKey(null)}
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative max-w-lg w-full brutal-card p-12 overflow-hidden"
+              className="relative max-w-lg w-full glass rounded-[24px] md:rounded-[40px] p-5 md:p-12 overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <button 
                 onClick={() => setSelectedKey(null)}
-                className="absolute top-6 right-6 w-10 h-10 border-[3px] border-brutal-black bg-white flex items-center justify-center hover:bg-accent-tertiary hover:text-white transition-colors"
+                className="absolute top-4 md:top-6 right-4 md:right-6 w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
               >
-                <X className="w-6 h-6" />
+                <X className="w-4 h-4 md:w-5 md:h-5" />
               </button>
 
-              <div className="w-16 h-16 border-[3px] border-brutal-black bg-accent-primary flex items-center justify-center mb-8 text-brutal-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <Globe className="w-8 h-8" />
+              <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl bg-white/5 flex items-center justify-center mb-6 md:mb-8">
+                <Globe className="w-6 h-6 md:w-8 md:h-8" />
               </div>
 
-              <h2 className="text-4xl font-black mb-2 tracking-tighter selectable">
+              <h2 className="text-2xl md:text-3xl font-serif italic mb-1 md:mb-2 tracking-tighter selectable">
                 {selectedKey.name}
               </h2>
-              <p className="font-bold opacity-40 text-sm mb-10 selectable">{selectedKey.location}</p>
+              <p className="text-white/40 text-xs md:text-sm mb-6 md:mb-8 selectable">{selectedKey.location}</p>
 
-              <div className="space-y-4 mb-10">
-                <div className="flex justify-between items-center py-4 border-b-[3px] border-brutal-black">
-                  <span className="text-[10px] uppercase tracking-widest font-black opacity-40">Протокол</span>
-                  <span className="text-sm font-mono font-bold selectable">{selectedKey.protocol}</span>
+              <div className="space-y-3 md:space-y-4 mb-8 md:mb-10">
+                <div className="flex justify-between items-center py-3 md:py-4 border-b border-white/5">
+                  <span className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30">Протокол</span>
+                  <span className="text-xs md:text-sm font-mono selectable">{selectedKey.protocol}</span>
                 </div>
-                <div className="flex justify-between items-center py-4 border-b-[3px] border-brutal-black">
-                  <span className="text-[10px] uppercase tracking-widest font-black opacity-40">Активен до</span>
-                  <span className="text-sm font-mono font-bold selectable">{selectedKey.expiryDate}</span>
+                <div className="flex justify-between items-center py-3 md:py-4 border-b border-white/5">
+                  <span className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30">Активен до</span>
+                  <span className="text-xs md:text-sm font-mono selectable">{selectedKey.expiryDate}</span>
                 </div>
-                <div className="flex justify-between items-center py-4 border-b-[3px] border-brutal-black">
-                  <span className="text-[10px] uppercase tracking-widest font-black opacity-40">Статус</span>
-                  <span className={`text-sm font-black flex items-center gap-2 ${
-                    selectedKey.status === 'online' ? 'text-emerald-600' : 
-                    selectedKey.status === 'unstable' ? 'text-amber-600' : 'text-rose-600'
+                <div className="flex justify-between items-center py-3 md:py-4 border-b border-white/5">
+                  <span className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30">Статус</span>
+                  <span className={`text-xs md:text-sm flex items-center gap-2 ${
+                    selectedKey.status === 'online' ? 'text-emerald-500' : 
+                    selectedKey.status === 'unstable' ? 'text-amber-500' : 'text-rose-500'
                   }`}>
-                    <div className={`w-2 h-2 border-2 border-brutal-black animate-pulse ${
+                    <div className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full animate-pulse ${
                       selectedKey.status === 'online' ? 'bg-emerald-500' : 
                       selectedKey.status === 'unstable' ? 'bg-amber-500' : 'bg-rose-500'
                     }`} />
@@ -1076,17 +1308,56 @@ function AppContent() {
 
               <button 
                 onClick={() => handleCopy(selectedKey.id, selectedKey.config)}
-                className={`w-full brutal-btn ${
-                  copiedId === selectedKey.id ? 'bg-emerald-500 text-white' : ''
+                className={`w-full py-4 md:py-5 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${
+                  copiedId === selectedKey.id 
+                  ? 'bg-emerald-500 text-white' 
+                  : 'bg-white text-black'
                 }`}
               >
-                {copiedId === selectedKey.id ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                {copiedId === selectedKey.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 {copiedId === selectedKey.id ? 'Скопировано' : 'Копировать ключ'}
               </button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Background Atmosphere */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[120px] rounded-full" />
+        <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-purple-500/5 blur-[100px] rounded-full" />
+      </div>
+
+      <Header scrolled={scrolled} />
+      <BottomNav />
+
+      <Routes>
+        <Route path="/" element={
+          <HomePage 
+            keys={keys} 
+            handleCopy={handleCopy} 
+            copiedId={copiedId} 
+            selectedKey={selectedKey} 
+            setSelectedKey={setSelectedKey} 
+            activeTab={activeTab} 
+            setActiveTab={setActiveTab} 
+            loading={loading}
+            unlockedSpecial={unlockedSpecial}
+            onUnlockSpecial={() => setUnlockedSpecial(true)}
+          />
+        } />
+        <Route path="/how-to-use" element={<HowToUsePage />} />
+        <Route path="/updates" element={<UpdatesPage />} />
+        <Route path="/special" element={
+          <SpecialFolderPage 
+            keys={keys} 
+            handleCopy={handleCopy} 
+            copiedId={copiedId} 
+            unlockedSpecial={unlockedSpecial} 
+          />
+        } />
+      </Routes>
     </div>
   );
 }

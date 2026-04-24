@@ -1,90 +1,154 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Inter", sans-serif;
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-  
-  --color-accent-primary: #FACC15; /* Neon Yellow */
-  --color-accent-secondary: #3B82F6; /* Electric Blue */
-  --color-accent-tertiary: #EC4899; /* Hot Pink */
-  --color-bg-main: #F3F4F6;
-  --color-brutal-black: #000000;
 }
 
 @layer base {
   body {
-    @apply bg-bg-main text-brutal-black antialiased overflow-x-hidden font-body;
+    @apply bg-[#050505] text-white antialiased overflow-x-hidden;
     -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
   }
   
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-sans font-black tracking-tighter uppercase;
-  }
-
+  /* Allow selection in specific areas if needed, but generally disable for app feel */
   .selectable {
     user-select: text;
   }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .mt-safe {
+    margin-top: env(safe-area-inset-top);
+  }
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
 }
 
-/* Neo-Brutalist Card */
-.brutal-card {
-  @apply bg-white border-[3px] border-brutal-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-200;
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.brutal-card:hover {
-  @apply -translate-x-1 -translate-y-1 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)];
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
-/* Neo-Brutalist Button */
-.brutal-btn {
-  @apply bg-accent-primary border-[3px] border-brutal-black px-6 py-3 font-black uppercase tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-x-1 active:translate-y-1 active:shadow-none;
+.is-iphone .glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    inset 0 0 20px rgba(255, 255, 255, 0.1),
+    0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
-.brutal-btn-secondary {
-  @apply bg-white border-[3px] border-brutal-black px-6 py-3 font-black uppercase tracking-wider shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-x-1 active:translate-y-1 active:shadow-none;
-}
-
-/* Neo-Brutalist Pill */
-.brutal-pill {
-  @apply bg-white border-2 border-brutal-black px-4 py-1 text-xs font-black uppercase tracking-widest transition-all;
-}
-
-.brutal-pill.active {
-  @apply bg-accent-secondary text-white;
-}
-
-/* Decorative Elements */
-.brutal-grid-bg {
-  background-image: radial-gradient(circle, #000 1px, transparent 1px);
-  background-size: 30px 30px;
-  opacity: 0.05;
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 10px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-bg-main;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-brutal-black border-2 border-bg-main;
-}
-
-/* Bento Grid Utilities */
-.bento-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 2rem;
-}
-
-/* iPhone Specific Overrides */
+/* Floating Bottom Nav for iPhone */
 .is-iphone nav.fixed.bottom-0 {
-  @apply bottom-6 left-4 right-4 rounded-2xl border-[3px] border-brutal-black bg-white shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] h-20;
+  bottom: 32px;
+  left: 24px;
+  right: 24px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding-bottom: 0;
+  height: 72px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  animation: float 6s ease-in-out infinite;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.is-iphone nav.fixed.bottom-0 .flex.justify-around {
+  height: 100%;
+}
+
+/* Floating Header for iPhone */
+.is-iphone header.fixed.top-0 {
+  top: 16px;
+  left: 20px;
+  right: 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  width: auto;
+  margin: 0 auto;
+  max-width: calc(100% - 40px);
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+}
+
+.is-iphone::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 9999;
+  filter: contrast(150%) brightness(100%);
+}
+
+.is-iphone .glow-text-iphone {
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+  background: linear-gradient(to bottom, #fff, rgba(255, 255, 255, 0.5));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: float-text 8s ease-in-out infinite;
+}
+
+@keyframes float-text {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(0.5deg); }
+}
+
+.is-iphone .glow-text {
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+}
+
+.is-iphone .glass.p-1.rounded-xl {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  padding: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.is-iphone .fixed.inset-0.overflow-hidden.pointer-events-none {
+  opacity: 1.5;
+  filter: saturate(1.5) blur(150px);
+}
+
+.glow-text {
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+@keyframes shimmer-bg {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-shimmer-bg {
+  background-size: 200% 200%;
+  animation: shimmer-bg 3s ease infinite;
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -94,4 +158,3 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
