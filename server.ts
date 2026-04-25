@@ -107,9 +107,9 @@ async function startServer() {
             <p style="margin-top: 12px; margin-bottom: 0; font-size: 10px; color: rgba(255,255,255,0.3); font-style: italic;">* рекомендуем обновлять подписку, чтобы получать новые ключи удобнее</p>
             
             <div style="margin-top: 24px;">
-              <a href="v2raytun://install-config?url=${encodeURIComponent(subUrl)}" class="btn btn-outline">Импорт в v2rayTun</a>
-              <a href="hiddify://install-config?url=${encodeURIComponent(subUrl)}" class="btn btn-outline">Импорт в Hiddify</a>
-              <a href="happ://install-config?url=${encodeURIComponent(subUrl)}" class="btn btn-outline">Импорт в Happ</a>
+              <a href="v2raytun://import/${subUrl}" class="btn btn-outline">Импорт в v2rayTun</a>
+              <a href="hiddify://import/${subUrl}" class="btn btn-outline">Импорт в Hiddify</a>
+              <a href="happ://import/config?url=${subUrl}" class="btn btn-outline">Импорт в Happ</a>
             </div>
 
             <p style="margin-top: 32px; margin-bottom: 0; font-size: 10px;">https://vlessfree.vercel.app</p>
