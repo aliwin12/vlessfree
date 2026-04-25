@@ -539,11 +539,11 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
                 <div className="flex items-center gap-2 mb-1 md:mb-2 relative z-20">
                   <div className="flex flex-col">
                     <h3 className="text-xl md:text-2xl font-serif italic tracking-tight selectable">
-                      {key.remark || key.name}
+                      {key.name || 'Server'}
                     </h3>
                     {key.remark && (
-                      <span className="text-[8px] text-white/20 font-bold uppercase tracking-widest mt-0.5">
-                        {key.name}
+                      <span className="text-[11px] text-amber-500 font-bold uppercase tracking-widest mt-0.5 bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/10 w-fit">
+                        {key.remark}
                       </span>
                     )}
                   </div>

@@ -60,6 +60,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // 2. Warnings Collection
     function isValidWarning(data) {
       return data.text is string && data.text.size() <= 1000 &&

@@ -41,12 +41,24 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["text", "type", "active", "replaceContent", "createdAt"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Global application settings",
+      "type": "object",
+      "properties": {
+        "subscriptionTitle": { "type": "string", "description": "Global title for VLESS subscription" }
+      }
     }
   },
   "firestore": {
     "/servers/{serverId}": {
       "schema": "Server",
       "description": "Collection of VLESS servers managed by admin"
+    },
+    "/settings/global": {
+      "schema": "Settings",
+      "description": "Global config"
     },
     "/admins/{adminId}": {
       "schema": "Admin",

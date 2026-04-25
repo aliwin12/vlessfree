@@ -15,6 +15,7 @@ export default async function handler(req: any, res: any) {
   }
 
   let servers: any[] = [];
+  let subTitle = 'vlessfree Sub';
   try {
     const snapshot = await getDocs(collection(db, 'servers'));
     servers = snapshot.docs.map(doc => doc.data());
@@ -33,6 +34,12 @@ export default async function handler(req: any, res: any) {
       }
       return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
     });
+
+    const settingsSnapshot = await getDocs(collection(db, 'settings'));
+    const globalSettings = settingsSnapshot.docs.find(d => d.id === 'global')?.data();
+    if (globalSettings?.subscriptionTitle) {
+      subTitle = globalSettings.subscriptionTitle;
+    }
   } catch (error) {
     console.error("Firestore error:", error);
   }
@@ -148,7 +155,7 @@ export default async function handler(req: any, res: any) {
   }
   
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-  res.setHeader('Profile-Title', 'vlessfree Sub');
+  res.setHeader('Profile-Title', subTitle);
   res.setHeader('Profile-Web-Page-Url', 'https://vlessfree.vercel.app');
   
   return res.status(200).send(base64Content);
