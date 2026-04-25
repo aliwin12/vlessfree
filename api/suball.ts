@@ -65,19 +65,7 @@ export default async function handler(req: any, res: any) {
 
   if (isBrowser) {
     const subUrl = `https://vlessfree.vercel.app/suball`;
-    let qrCodeDataUrl = '';
-    try {
-      qrCodeDataUrl = await QRCode.toDataURL(subUrl, {
-        color: {
-          dark: '#FFFFFF',
-          light: '#00000000'
-        },
-        margin: 1,
-        width: 200
-      });
-    } catch (err) {
-      console.error('QR Code generation error:', err);
-    }
+    const qrCodeImageUrl = 'https://i.ibb.co/7J85dCT8/Untitled.png';
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(`
@@ -131,7 +119,7 @@ export default async function handler(req: any, res: any) {
 
             <div class="right-side">
               <div class="qr-image">
-                <img src="${qrCodeDataUrl}" alt="QR Code" style="width: 180px; height: 180px; display: block;">
+                <img src="${qrCodeImageUrl}" alt="QR Code" style="width: 180px; height: 180px; display: block; object-contain;">
               </div>
               <div class="qr-label">Сканируйте для импорта</div>
               <div style="font-size: 9px; color: rgba(255,255,255,0.2); margin-top: 8px;">vlessfree Sub</div>
