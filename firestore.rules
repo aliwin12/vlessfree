@@ -46,7 +46,8 @@ service cloud.firestore {
              data.status in ['online', 'offline'] &&
              data.config is string && data.config.size() <= 2000 &&
              data.country is string && data.country.size() == 2 &&
-             (data.city == null || data.city is string);
+             (data.city == null || data.city is string) &&
+             (data.remark == null || data.remark is string);
     }
 
     match /servers/{serverId} {

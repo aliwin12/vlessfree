@@ -14,6 +14,7 @@
         "config": { "type": "string" },
         "country": { "type": "string", "description": "2-letter country code" },
         "city": { "type": "string", "description": "City name" },
+        "remark": { "type": "string", "description": "Optional remark for the subscription" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },

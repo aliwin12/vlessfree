@@ -46,6 +46,7 @@ export default function AdminPanel() {
     config: '',
     country: '',
     city: '',
+    remark: '',
     reason: '',
     isSpecial: false
   });
@@ -181,7 +182,7 @@ export default function AdminPanel() {
         setIsAdding(false);
       }
       setFormData({
-        name: '', protocol: 'VLESS / REALITY', latency: '', load: 0, expiryDate: '', status: 'online', config: '', country: '', city: '', reason: '', isSpecial: false
+        name: '', protocol: 'VLESS / REALITY', latency: '', load: 0, expiryDate: '', status: 'online', config: '', country: '', city: '', remark: '', reason: '', isSpecial: false
       });
     } catch (error) {
       handleFirestoreError(error, editingId ? OperationType.UPDATE : OperationType.CREATE, 'servers');
@@ -300,6 +301,7 @@ export default function AdminPanel() {
       config: server.config,
       country: server.country,
       city: server.city || '',
+      remark: server.remark || '',
       reason: server.reason || '',
       isSpecial: server.isSpecial || false
     });
@@ -362,7 +364,7 @@ export default function AdminPanel() {
             setIsAdding(true);
             setEditingId(null);
             setFormData({
-              name: '', protocol: 'VLESS / REALITY', latency: '', load: 0, expiryDate: '27.04.2026', status: 'online', config: '', country: '', city: '', reason: '', isSpecial: false
+              name: '', protocol: 'VLESS / REALITY', latency: '', load: 0, expiryDate: '27.04.2026', status: 'online', config: '', country: '', city: '', remark: '', reason: '', isSpecial: false
             });
           }}
           className="px-6 py-4 rounded-2xl bg-white text-black font-bold text-xs uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all"
@@ -561,6 +563,15 @@ export default function AdminPanel() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-2">Ремарк (Примечание)</label>
+                  <input 
+                    value={formData.remark}
+                    onChange={e => setFormData({...formData, remark: e.target.value})}
+                    placeholder="Например: VIP Server"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:border-white/30 transition-all outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
                   <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-2">Статус</label>
                   <select 
                     value={formData.status}
@@ -708,6 +719,11 @@ export default function AdminPanel() {
                   <td className="p-6">
                     <div className="flex flex-col">
                       <span className="font-serif italic text-lg">{server.name}</span>
+                      {server.remark && (
+                        <span className="text-[10px] text-amber-500 font-bold uppercase tracking-widest mt-1 bg-amber-500/10 px-2 py-0.5 rounded w-fit">
+                          {server.remark}
+                        </span>
+                      )}
                       <span className="text-[10px] text-white/20 font-mono tracking-tighter truncate max-w-[200px]">{server.config}</span>
                     </div>
                   </td>
