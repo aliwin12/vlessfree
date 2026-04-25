@@ -14,7 +14,6 @@
         "config": { "type": "string" },
         "country": { "type": "string", "description": "2-letter country code" },
         "city": { "type": "string", "description": "City name" },
-        "remark": { "type": "string", "description": "Optional remark for the subscription" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
@@ -41,24 +40,12 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["text", "type", "active", "replaceContent", "createdAt"]
-    },
-    "Settings": {
-      "title": "Settings",
-      "description": "Global application settings",
-      "type": "object",
-      "properties": {
-        "subscriptionTitle": { "type": "string", "description": "Global title for VLESS subscription" }
-      }
     }
   },
   "firestore": {
     "/servers/{serverId}": {
       "schema": "Server",
       "description": "Collection of VLESS servers managed by admin"
-    },
-    "/settings/global": {
-      "schema": "Settings",
-      "description": "Global config"
     },
     "/admins/{adminId}": {
       "schema": "Admin",

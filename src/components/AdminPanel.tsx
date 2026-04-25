@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db, auth, googleProvider, signInWithPopup, signOut, serversCollection, collection, addDoc, updateDoc, deleteDoc, setDoc, doc, onSnapshot, query, orderBy, serverTimestamp, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, auth, googleProvider, signInWithPopup, signOut, serversCollection, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, handleFirestoreError, OperationType } from '../lib/firebase';
 import { Trash2, Edit3, Plus, LogOut, Shield, ChevronRight, Save, X, Globe, Activity, Calendar, ExternalLink, RefreshCw, Layers, AlertTriangle, Bell, Eye, EyeOff, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
@@ -31,8 +31,6 @@ export default function AdminPanel() {
   const [isImporting, setIsImporting] = useState(false);
   const [servers, setServers] = useState<any[]>([]);
   const [warnings, setWarnings] = useState<any[]>([]);
-  const [globalRemark, setGlobalRemark] = useState('');
-  const [isSavingGlobal, setIsSavingGlobal] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [isAddingWarning, setIsAddingWarning] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -48,7 +46,6 @@ export default function AdminPanel() {
     config: '',
     country: '',
     city: '',
-    remark: '',
     reason: '',
     isSpecial: false
   });
@@ -105,19 +102,10 @@ export default function AdminPanel() {
       handleFirestoreError(error, OperationType.LIST, 'warnings');
     });
 
-    const unsubscribeSettings = onSnapshot(doc(db, 'settings', 'global'), (doc) => {
-      if (doc.exists()) {
-        setGlobalRemark(doc.data().subscriptionTitle || '');
-      }
-    }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'settings');
-    });
-
     return () => {
       unsubscribeAuth();
       unsubscribeDocs();
       unsubscribeWarnings();
-      unsubscribeSettings();
     };
   }, []);
 
@@ -139,21 +127,6 @@ export default function AdminPanel() {
   };
 
   const handleLogout = () => signOut(auth);
-
-  const saveGlobalRemark = async () => {
-    setIsSavingGlobal(true);
-    try {
-      await setDoc(doc(db, 'settings', 'global'), {
-        subscriptionTitle: globalRemark,
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-      alert('Глобальный ремарк обновлен!');
-    } catch (error: any) {
-      handleFirestoreError(error, OperationType.WRITE, 'settings');
-    } finally {
-      setIsSavingGlobal(false);
-    }
-  };
 
   const importMockData = async () => {
     if (!window.confirm("Это импортирует 13 стандартных серверов. Продолжить?")) return;
@@ -208,7 +181,7 @@ export default function AdminPanel() {
         setIsAdding(false);
       }
       setFormData({
-        name: '', protocol: 'VLESS / REALITY', latency: '', load: 0, expiryDate: '', status: 'online', config: '', country: '', city: '', remark: '', reason: '', isSpecial: false
+        name: '', protocol: 'VLESS / REALITY', latency: '', load: 0, expiryDate: '', status: 'online', config: '', country: '', city: '', reason: '', isSpecial: false
       });
     } catch (error) {
       handleFirestoreError(error, editingId ? OperationType.UPDATE : OperationType.CREATE, 'servers');
@@ -327,7 +300,6 @@ export default function AdminPanel() {
       config: server.config,
       country: server.country,
       city: server.city || '',
-      remark: server.remark || '',
       reason: server.reason || '',
       isSpecial: server.isSpecial || false
     });
@@ -383,33 +355,6 @@ export default function AdminPanel() {
           <LogOut className="w-5 h-5" />
         </button>
       </header>
-      
-      <div className="mb-12 glass p-8 rounded-[40px] border border-white/10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex-1">
-            <h2 className="text-xl font-serif italic mb-1 flex items-center gap-2">
-              <RefreshCw className={`w-5 h-5 ${isSavingGlobal ? 'animate-spin' : ''}`} />
-              Глобальный ремарк подписки
-            </h2>
-            <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold">Изменяет имя подписки в приложениях (v2ray, vless)</p>
-          </div>
-          <div className="flex gap-3 max-w-md w-full">
-            <input 
-              value={globalRemark}
-              onChange={e => setGlobalRemark(e.target.value)}
-              placeholder="Например: My Premium VLESS"
-              className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-5 py-3 focus:border-white/30 transition-all outline-none text-sm"
-            />
-            <button 
-              onClick={saveGlobalRemark}
-              disabled={isSavingGlobal}
-              className="px-6 py-3 rounded-2xl bg-white text-black font-bold text-[10px] uppercase tracking-widest hover:scale-105 transition-all disabled:opacity-50"
-            >
-              {isSavingGlobal ? '...' : 'Сохранить'}
-            </button>
-          </div>
-        </div>
-      </div>
 
       <div className="flex flex-wrap gap-4 mb-8">
         <button 
@@ -417,7 +362,7 @@ export default function AdminPanel() {
             setIsAdding(true);
             setEditingId(null);
             setFormData({
-              name: '', protocol: 'VLESS / REALITY', latency: '', load: 0, expiryDate: '27.04.2026', status: 'online', config: '', country: '', city: '', remark: '', reason: '', isSpecial: false
+              name: '', protocol: 'VLESS / REALITY', latency: '', load: 0, expiryDate: '27.04.2026', status: 'online', config: '', country: '', city: '', reason: '', isSpecial: false
             });
           }}
           className="px-6 py-4 rounded-2xl bg-white text-black font-bold text-xs uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-all"
@@ -556,43 +501,17 @@ export default function AdminPanel() {
                 </button>
               </div>
               
-              <div className="space-y-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-2">Название сервера (Для админ-панели)</label>
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-2">Название</label>
                   <input 
                     required
                     value={formData.name}
                     onChange={e => setFormData({...formData, name: e.target.value})}
-                    placeholder="Например: NL-AMS-VLESS-01"
+                    placeholder="Server №1"
                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:border-white/30 transition-all outline-none"
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-2">Ремарк (Имя конфигурации внутри приложения у пользователя)</label>
-                  <div className="relative">
-                    <input 
-                      value={formData.remark}
-                      onChange={e => setFormData({...formData, remark: e.target.value})}
-                      placeholder="Например: 🇳🇱 Netherlands | Premium #1"
-                      className="w-full bg-white/10 border border-white/20 rounded-2xl px-5 py-4 focus:border-white/40 transition-all outline-none pr-12 text-amber-500 font-bold"
-                    />
-                    {formData.remark && (
-                      <button 
-                        type="button" 
-                        onClick={() => setFormData({...formData, remark: ''})}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-rose-500 transition-colors"
-                        title="Удалить ремарк"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-[9px] text-white/20 italic ml-2">Если пусто, будет использовано название сервера</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-2">Страна (Код)</label>
                   <input 
@@ -768,7 +687,7 @@ export default function AdminPanel() {
                     className="w-4 h-4 rounded border-white/10 bg-white/5 accent-white"
                   />
                 </th>
-                <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Сервер / Ремарк</th>
+                <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Сервер</th>
                 <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Страна</th>
                 <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Нагрузка</th>
                 <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Статус</th>
@@ -789,12 +708,7 @@ export default function AdminPanel() {
                   <td className="p-6">
                     <div className="flex flex-col">
                       <span className="font-serif italic text-lg">{server.name}</span>
-                      {server.remark && (
-                        <span className="text-[10px] text-amber-500 font-bold uppercase tracking-widest mt-1 bg-amber-500/10 px-2 py-0.5 rounded w-fit border border-amber-500/20">
-                          {server.remark}
-                        </span>
-                      )}
-                      <span className="text-[10px] text-white/20 font-mono tracking-tighter truncate max-w-[200px] mt-1">{server.config}</span>
+                      <span className="text-[10px] text-white/20 font-mono tracking-tighter truncate max-w-[200px]">{server.config}</span>
                     </div>
                   </td>
                   <td className="p-6">

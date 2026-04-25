@@ -15,7 +15,6 @@ export default async function handler(req: any, res: any) {
   }
 
   let servers: any[] = [];
-  let subTitle = 'vlessfree Sub';
   try {
     const snapshot = await getDocs(collection(db, 'servers'));
     servers = snapshot.docs.map(doc => doc.data());
@@ -34,19 +33,13 @@ export default async function handler(req: any, res: any) {
       }
       return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
     });
-
-    const settingsSnapshot = await getDocs(collection(db, 'settings'));
-    const globalSettings = settingsSnapshot.docs.find(d => d.id === 'global')?.data();
-    if (globalSettings?.subscriptionTitle) {
-      subTitle = globalSettings.subscriptionTitle;
-    }
   } catch (error) {
     console.error("Firestore error:", error);
   }
 
   const userAgent = req.headers['user-agent'] || '';
   
-    const configs = servers.filter(s => s && s.status === 'online' && s.config).map(s => {
+  const configs = servers.filter(s => s && s.status === 'online' && s.config).map(s => {
     let config = s.config;
     let displayName = s.name || 'Server';
     
@@ -57,13 +50,10 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    // Remark is the REAL name for the client if provided
-    const finalRemark = s.remark ? s.remark : displayName;
-
     if (config.includes('#')) {
-      config = config.split('#')[0] + '#' + encodeURIComponent(finalRemark);
+      config = config.split('#')[0] + '#' + encodeURIComponent(displayName);
     } else {
-      config = config + '#' + encodeURIComponent(finalRemark);
+      config = config + '#' + encodeURIComponent(displayName);
     }
     return config;
   }).join('\n');
@@ -82,7 +72,7 @@ export default async function handler(req: any, res: any) {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>${subTitle} ✅</title>
+        <title>vlessfree Sub✅</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; text-align: center; }
@@ -132,7 +122,7 @@ export default async function handler(req: any, res: any) {
                 <img src="${qrCodeImageUrl}" alt="QR Code" style="width: 180px; height: 180px; display: block; object-contain;">
               </div>
               <div class="qr-label">Сканируйте для импорта</div>
-              <div style="font-size: 9px; color: rgba(255,255,255,0.2); margin-top: 8px;">${subTitle}</div>
+              <div style="font-size: 9px; color: rgba(255,255,255,0.2); margin-top: 8px;">vlessfree Sub</div>
             </div>
           </div>
 
@@ -155,7 +145,7 @@ export default async function handler(req: any, res: any) {
   }
   
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-  res.setHeader('Profile-Title', subTitle);
+  res.setHeader('Profile-Title', 'vlessfree Sub');
   res.setHeader('Profile-Web-Page-Url', 'https://vlessfree.vercel.app');
   
   return res.status(200).send(base64Content);

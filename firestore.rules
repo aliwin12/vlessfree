@@ -46,8 +46,7 @@ service cloud.firestore {
              data.status in ['online', 'offline'] &&
              data.config is string && data.config.size() <= 2000 &&
              data.country is string && data.country.size() == 2 &&
-             (data.city == null || data.city is string) &&
-             (data.remark == null || data.remark is string);
+             (data.city == null || data.city is string);
     }
 
     match /servers/{serverId} {
@@ -58,11 +57,6 @@ service cloud.firestore {
       allow update: if isAdmin() && 
                       isValidServer(incoming());
       allow delete: if isAdmin();
-    }
-
-    match /settings/{settingId} {
-      allow read: if true;
-      allow write: if isAdmin();
     }
 
     // 2. Warnings Collection

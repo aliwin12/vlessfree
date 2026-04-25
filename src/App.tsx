@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, Calendar, X, AlertTriangle, Monitor, Smartphone, Terminal, Info, ChevronRight, Download, ExternalLink, Menu, Share2, Folder, ChevronDown, Bell } from 'lucide-react';
+import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, Calendar, X, AlertTriangle, Monitor, Smartphone, Terminal, Info, ChevronRight, Download, ExternalLink, Menu, Share2, Folder, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -537,16 +537,7 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
                 </div>
 
                 <div className="flex items-center gap-2 mb-1 md:mb-2 relative z-20">
-                  <div className="flex flex-col">
-                    <h3 className="text-xl md:text-2xl font-serif italic tracking-tight selectable">
-                      {key.name || 'Server'}
-                    </h3>
-                    {key.remark && (
-                      <span className="text-[11px] text-amber-500 font-bold uppercase tracking-widest mt-0.5 bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/10 w-fit">
-                        {key.remark}
-                      </span>
-                    )}
-                  </div>
+                  <h3 className="text-xl md:text-2xl font-serif italic tracking-tight selectable">{key.name}</h3>
                   {key.status === 'unstable' && (
                     <span className="px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-[7px] md:text-[8px] uppercase tracking-widest font-bold border border-amber-500/20">
                       Нестабильный
