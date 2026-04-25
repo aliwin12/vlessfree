@@ -19,6 +19,18 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Sitemap endpoint
+  app.get('/sitemap.xml', (req, res) => {
+    res.setHeader('Content-Type', 'application/xml');
+    res.sendFile(path.join(process.cwd(), 'public', 'sitemap.xml'));
+  });
+
+  // Robots.txt endpoint
+  app.get('/robots.txt', (req, res) => {
+    res.setHeader('Content-Type', 'text/plain');
+    res.sendFile(path.join(process.cwd(), 'public', 'robots.txt'));
+  });
+
   // Subscription endpoint for VLESS clients
   app.get('/suball', async (req, res) => {
     let servers: any[] = [];
