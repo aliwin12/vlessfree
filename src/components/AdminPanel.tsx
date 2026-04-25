@@ -505,7 +505,7 @@ export default function AdminPanel() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-2">Название</label>
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-2">Название сервера</label>
                   <input 
                     required
                     value={formData.name}
@@ -513,6 +513,27 @@ export default function AdminPanel() {
                     placeholder="Server №1"
                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:border-white/30 transition-all outline-none"
                   />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-2">Ремарк (Имя в клиенте)</label>
+                  <div className="relative">
+                    <input 
+                      value={formData.remark}
+                      onChange={e => setFormData({...formData, remark: e.target.value})}
+                      placeholder="Например: VIP | NL #1"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:border-white/30 transition-all outline-none pr-12"
+                    />
+                    {formData.remark && (
+                      <button 
+                        type="button" 
+                        onClick={() => setFormData({...formData, remark: ''})}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-rose-500 transition-colors"
+                        title="Удалить ремарк"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-2">Страна (Код)</label>
@@ -559,15 +580,6 @@ export default function AdminPanel() {
                     value={formData.expiryDate}
                     onChange={e => setFormData({...formData, expiryDate: e.target.value})}
                     placeholder="27.04.2026"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:border-white/30 transition-all outline-none"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-2">Ремарк (Примечание)</label>
-                  <input 
-                    value={formData.remark}
-                    onChange={e => setFormData({...formData, remark: e.target.value})}
-                    placeholder="Например: VIP Server"
                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:border-white/30 transition-all outline-none"
                   />
                 </div>
@@ -699,6 +711,7 @@ export default function AdminPanel() {
                   />
                 </th>
                 <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Сервер</th>
+                <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Ремарк (В клиенте)</th>
                 <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Страна</th>
                 <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Нагрузка</th>
                 <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Статус</th>
@@ -719,13 +732,17 @@ export default function AdminPanel() {
                   <td className="p-6">
                     <div className="flex flex-col">
                       <span className="font-serif italic text-lg">{server.name}</span>
-                      {server.remark && (
-                        <span className="text-[10px] text-amber-500 font-bold uppercase tracking-widest mt-1 bg-amber-500/10 px-2 py-0.5 rounded w-fit">
-                          {server.remark}
-                        </span>
-                      )}
                       <span className="text-[10px] text-white/20 font-mono tracking-tighter truncate max-w-[200px]">{server.config}</span>
                     </div>
+                  </td>
+                  <td className="p-6">
+                    {server.remark ? (
+                      <span className="text-[10px] text-amber-500 font-bold uppercase tracking-widest bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                        {server.remark}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-white/10 uppercase tracking-widest italic">—</span>
+                    )}
                   </td>
                   <td className="p-6">
                     <div className="flex flex-col">

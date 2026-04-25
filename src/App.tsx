@@ -538,10 +538,12 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
 
                 <div className="flex items-center gap-2 mb-1 md:mb-2 relative z-20">
                   <div className="flex flex-col">
-                    <h3 className="text-xl md:text-2xl font-serif italic tracking-tight selectable">{key.name}</h3>
+                    <h3 className="text-xl md:text-2xl font-serif italic tracking-tight selectable">
+                      {key.remark || key.name}
+                    </h3>
                     {key.remark && (
-                      <span className="text-[10px] text-amber-500 font-bold uppercase tracking-widest mt-1 bg-amber-500/10 px-2 py-0.5 rounded w-fit">
-                        {key.remark}
+                      <span className="text-[8px] text-white/20 font-bold uppercase tracking-widest mt-0.5">
+                        {key.name}
                       </span>
                     )}
                   </div>

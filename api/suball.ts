@@ -39,7 +39,7 @@ export default async function handler(req: any, res: any) {
 
   const userAgent = req.headers['user-agent'] || '';
   
-  const configs = servers.filter(s => s && s.status === 'online' && s.config).map(s => {
+    const configs = servers.filter(s => s && s.status === 'online' && s.config).map(s => {
     let config = s.config;
     let displayName = s.name || 'Server';
     
@@ -50,14 +50,13 @@ export default async function handler(req: any, res: any) {
       }
     }
 
-    if (s.remark) {
-      displayName += ` | ${s.remark}`;
-    }
+    // Remark is the REAL name for the client if provided
+    const finalRemark = s.remark ? s.remark : displayName;
 
     if (config.includes('#')) {
-      config = config.split('#')[0] + '#' + encodeURIComponent(displayName);
+      config = config.split('#')[0] + '#' + encodeURIComponent(finalRemark);
     } else {
-      config = config + '#' + encodeURIComponent(displayName);
+      config = config + '#' + encodeURIComponent(finalRemark);
     }
     return config;
   }).join('\n');
