@@ -34,6 +34,7 @@ async function startServer() {
   // Subscription endpoint for VLESS clients
   app.get('/suball', async (req, res) => {
     let servers: any[] = [];
+    let subTitle = 'vlessfree Sub';
     try {
       const snapshot = await getDocs(collection(db, 'servers'));
       servers = snapshot.docs.map(doc => doc.data());
@@ -52,6 +53,12 @@ async function startServer() {
         }
         return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
       });
+
+      const settingsSnapshot = await getDocs(collection(db, 'settings'));
+      const globalSettings = settingsSnapshot.docs.find(d => d.id === 'global')?.data();
+      if (globalSettings?.subscriptionTitle) {
+        subTitle = globalSettings.subscriptionTitle;
+      }
     } catch (error) {
       console.error("Firestore error:", error);
     }
@@ -69,10 +76,13 @@ async function startServer() {
         }
       }
 
+      // Remark is the REAL name for the client if provided
+      const finalRemark = s.remark ? s.remark : displayName;
+
       if (config.includes('#')) {
-        config = config.split('#')[0] + '#' + encodeURIComponent(displayName);
+        config = config.split('#')[0] + '#' + encodeURIComponent(finalRemark);
       } else {
-        config = config + '#' + encodeURIComponent(displayName);
+        config = config + '#' + encodeURIComponent(finalRemark);
       }
       return config;
     }).join('\n');
@@ -92,7 +102,7 @@ async function startServer() {
         <!DOCTYPE html>
         <html>
         <head>
-          <title>vlessfree Sub✅</title>
+          <title>${subTitle} ✅</title>
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; text-align: center; }
@@ -142,7 +152,7 @@ async function startServer() {
                   <img src="${qrCodeImageUrl}" alt="QR Code" style="width: 180px; height: 180px; display: block; object-contain;">
                 </div>
                 <div class="qr-label">Сканируйте для импорта</div>
-                <div style="font-size: 9px; color: rgba(255,255,255,0.2); margin-top: 8px;">vlessfree Sub</div>
+                <div style="font-size: 9px; color: rgba(255,255,255,0.2); margin-top: 8px;">${subTitle}</div>
               </div>
             </div>
 
@@ -166,7 +176,7 @@ async function startServer() {
 
     // Standard subscription headers for clients
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Profile-Title', 'vlessfree Sub'); 
+    res.setHeader('Profile-Title', subTitle); 
     res.setHeader('Profile-Web-Page-Url', 'https://vlessfree.vercel.app');
     
     res.send(base64Content);

@@ -82,7 +82,7 @@ export default async function handler(req: any, res: any) {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>vlessfree Sub✅</title>
+        <title>${subTitle} ✅</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; text-align: center; }
@@ -132,7 +132,7 @@ export default async function handler(req: any, res: any) {
                 <img src="${qrCodeImageUrl}" alt="QR Code" style="width: 180px; height: 180px; display: block; object-contain;">
               </div>
               <div class="qr-label">Сканируйте для импорта</div>
-              <div style="font-size: 9px; color: rgba(255,255,255,0.2); margin-top: 8px;">vlessfree Sub</div>
+              <div style="font-size: 9px; color: rgba(255,255,255,0.2); margin-top: 8px;">${subTitle}</div>
             </div>
           </div>
 
