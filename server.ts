@@ -63,7 +63,7 @@ async function startServer() {
 
     const userAgent = req.headers['user-agent'] || '';
 
-    const configs = servers.filter(s => s && s.status === 'online' && s.config).map(s => {
+    const subscriptionNodes = servers.filter(s => s && s.status === 'online' && s.config).map(s => {
       let config = s.config;
       let displayName = s.name || 'Server';
       
@@ -80,7 +80,13 @@ async function startServer() {
         config = config + '#' + encodeURIComponent(displayName);
       }
       return config;
-    }).join('\n');
+    });
+
+    if (subDescription && subDescription.trim()) {
+      subscriptionNodes.unshift(`vless://00000000-0000-0000-0000-000000000000@127.0.0.1:443?encryption=none&security=none#${encodeURIComponent('📢 ' + subDescription.trim())}`);
+    }
+    
+    const configs = subscriptionNodes.join('\n');
 
     const base64Content = Buffer.from(configs).toString('base64');
 
@@ -171,7 +177,7 @@ async function startServer() {
 
     // Standard subscription headers for clients
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Profile-Title', `vlessfree Sub | ${subDescription}`); 
+    res.setHeader('Profile-Title', 'vlessfree Sub'); 
     res.setHeader('Profile-Web-Page-Url', 'https://vlessfree.vercel.app');
     
     res.send(base64Content);
