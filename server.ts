@@ -70,9 +70,7 @@ async function startServer() {
     const isBrowser = /Mozilla|Chrome|Safari|Firefox|Edge/.test(userAgent) && !/v2ray|hiddify|vless|shadowsocks|clash|nekobox|streisand|quantumult|surge/i.test(userAgent);
 
     if (isBrowser) {
-      const host = req.headers.host || 'vlessfree.vercel.app';
-      const protocol = host.includes('localhost') ? 'http' : 'https';
-      const subUrl = `${protocol}://${host}/suball`;
+      const subUrl = `https://vlessfree.vercel.app/suball`;
 
       // Return a simple HTML page for humans
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
