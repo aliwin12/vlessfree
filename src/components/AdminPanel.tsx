@@ -31,6 +31,7 @@ export default function AdminPanel() {
   const [isImporting, setIsImporting] = useState(false);
   const [servers, setServers] = useState<any[]>([]);
   const [warnings, setWarnings] = useState<any[]>([]);
+  const [subSettings, setSubSettings] = useState<any>({ description: 'Сервис работает в штатном режиме. https://vlessfree.vercel.app' });
   const [isAdding, setIsAdding] = useState(false);
   const [isAddingWarning, setIsAddingWarning] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -102,10 +103,20 @@ export default function AdminPanel() {
       handleFirestoreError(error, OperationType.LIST, 'warnings');
     });
 
+    const subSettingsDoc = doc(db, 'subscriptionSettings', 'global');
+    const unsubscribeSubSettings = onSnapshot(subSettingsDoc, (snapshot) => {
+      if (snapshot.exists()) {
+        setSubSettings(snapshot.data());
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'subscriptionSettings');
+    });
+
     return () => {
       unsubscribeAuth();
       unsubscribeDocs();
       unsubscribeWarnings();
+      unsubscribeSubSettings();
     };
   }, []);
 
@@ -271,6 +282,29 @@ export default function AdminPanel() {
     }
   };
 
+  const handleUpdateSubSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await updateDoc(doc(db, 'subscriptionSettings', 'global'), {
+        ...subSettings,
+        updatedAt: serverTimestamp()
+      });
+      alert("Настройки подписки обновлены!");
+    } catch (error) {
+      // If doc doesn't exist, setDoc instead
+      try {
+        const { setDoc } = await import('firebase/firestore');
+        await setDoc(doc(db, 'subscriptionSettings', 'global'), {
+          ...subSettings,
+          updatedAt: serverTimestamp()
+        });
+        alert("Настройки подписки обновлены!");
+      } catch (innerError) {
+        handleFirestoreError(innerError, OperationType.UPDATE, 'subscriptionSettings');
+      }
+    }
+  };
+
   const startEditWarning = (warning: any) => {
     setEditingWarningId(warning.id);
     setWarningFormData({
@@ -382,6 +416,24 @@ export default function AdminPanel() {
         >
           <Bell className="w-5 h-5" /> Добавить объявление
         </button>
+
+        <div className="flex-1 min-w-[300px]">
+          <form onSubmit={handleUpdateSubSettings} className="glass p-2 rounded-2xl flex gap-2 border border-white/5">
+            <input 
+              type="text"
+              value={subSettings.description || ''}
+              onChange={e => setSubSettings({...subSettings, description: e.target.value})}
+              placeholder="Описание подписки..."
+              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs focus:border-white/30 transition-all outline-none"
+            />
+            <button 
+              type="submit"
+              className="px-4 py-2 rounded-xl bg-white text-black font-bold text-[10px] uppercase tracking-widest hover:bg-white/90 transition-all"
+            >
+              Сохранить
+            </button>
+          </form>
+        </div>
         
         {servers.length === 0 && (
           <button 

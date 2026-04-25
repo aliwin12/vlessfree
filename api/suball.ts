@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import fs from 'fs';
 import path from 'path';
 import QRCode from 'qrcode';
@@ -15,9 +15,20 @@ export default async function handler(req: any, res: any) {
   }
 
   let servers: any[] = [];
+  let subDescription = 'Сервис работает в штатном режиме. https://vlessfree.vercel.app';
+  
   try {
-    const snapshot = await getDocs(collection(db, 'servers'));
-    servers = snapshot.docs.map(doc => doc.data());
+    // Parallel fetch
+    const [serversSnapshot, settingsSnapshot] = await Promise.all([
+      getDocs(collection(db, 'servers')),
+      getDoc(doc(db, 'subscriptionSettings', 'global'))
+    ]);
+
+    servers = serversSnapshot.docs.map(doc => doc.data());
+    
+    if (settingsSnapshot.exists()) {
+      subDescription = settingsSnapshot.data().description || subDescription;
+    }
     
     // Natural sort by name numbers (1, 2, 3...)
     servers.sort((a, b) => {
@@ -145,7 +156,7 @@ export default async function handler(req: any, res: any) {
   }
   
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-  res.setHeader('Profile-Title', 'vlessfree Sub');
+  res.setHeader('Profile-Title', `vlessfree Sub | ${subDescription}`);
   res.setHeader('Profile-Web-Page-Url', 'https://vlessfree.vercel.app');
   
   return res.status(200).send(base64Content);

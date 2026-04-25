@@ -40,6 +40,16 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["text", "type", "active", "replaceContent", "createdAt"]
+    },
+    "SubscriptionSetting": {
+      "title": "Subscription Setting",
+      "description": "Global settings for VLESS subscriptions",
+      "type": "object",
+      "properties": {
+        "description": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["description", "updatedAt"]
     }
   },
   "firestore": {
@@ -54,6 +64,10 @@
     "/warnings/{warningId}": {
       "schema": "Warning",
       "description": "System-wide alerts"
+    },
+    "/subscriptionSettings/{settingId}": {
+      "schema": "SubscriptionSetting",
+      "description": "Global settings for VLESS subscriptions"
     }
   }
 }

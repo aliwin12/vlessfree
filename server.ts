@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import fs from 'fs';
 
 const firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf8'));
@@ -34,9 +34,20 @@ async function startServer() {
   // Subscription endpoint for VLESS clients
   app.get('/suball', async (req, res) => {
     let servers: any[] = [];
+    let subDescription = 'Сервис работает в штатном режиме. https://vlessfree.vercel.app';
+    
     try {
-      const snapshot = await getDocs(collection(db, 'servers'));
-      servers = snapshot.docs.map(doc => doc.data());
+      // Parallel fetch
+      const [serversSnapshot, settingsSnapshot] = await Promise.all([
+        getDocs(collection(db, 'servers')),
+        getDoc(doc(db, 'subscriptionSettings', 'global'))
+      ]);
+
+      servers = serversSnapshot.docs.map(doc => doc.data());
+      
+      if (settingsSnapshot.exists()) {
+        subDescription = settingsSnapshot.data().description || subDescription;
+      }
       
       // Natural sort by name numbers (1, 2, 3...)
       servers.sort((a, b) => {
@@ -166,7 +177,7 @@ async function startServer() {
 
     // Standard subscription headers for clients
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Profile-Title', 'vlessfree Sub'); 
+    res.setHeader('Profile-Title', `vlessfree Sub | ${subDescription}`); 
     res.setHeader('Profile-Web-Page-Url', 'https://vlessfree.vercel.app');
     
     res.send(base64Content);
