@@ -537,7 +537,14 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
                 </div>
 
                 <div className="flex items-center gap-2 mb-1 md:mb-2 relative z-20">
-                  <h3 className="text-xl md:text-2xl font-serif italic tracking-tight selectable">{key.name}</h3>
+                  <div className="flex flex-col">
+                    <h3 className="text-xl md:text-2xl font-serif italic tracking-tight selectable">{key.name}</h3>
+                    {key.remark && (
+                      <span className="text-[10px] text-amber-500 font-bold uppercase tracking-widest mt-1 bg-amber-500/10 px-2 py-0.5 rounded w-fit">
+                        {key.remark}
+                      </span>
+                    )}
+                  </div>
                   {key.status === 'unstable' && (
                     <span className="px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-[7px] md:text-[8px] uppercase tracking-widest font-bold border border-amber-500/20">
                       Нестабильный

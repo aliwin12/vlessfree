@@ -50,6 +50,10 @@ export default async function handler(req: any, res: any) {
       }
     }
 
+    if (s.remark) {
+      displayName += ` | ${s.remark}`;
+    }
+
     if (config.includes('#')) {
       config = config.split('#')[0] + '#' + encodeURIComponent(displayName);
     } else {
