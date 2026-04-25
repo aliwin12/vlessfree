@@ -1,52 +1,55 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
-import fs from 'fs';
 import path from 'path';
 import QRCode from 'qrcode';
 
-const firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf8'));
+// Robust firebase config loading
+let firebaseConfig: any;
+try {
+  // Try dynamic import/require for better bundling compatibility
+  firebaseConfig = require('../firebase-applet-config.json');
+} catch (e) {
+  try {
+    // Fallback for different environments
+    const fs = require('fs');
+    firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf8'));
+  } catch (e2) {
+    console.error("Failed to load firebase config", e2);
+  }
+}
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+const app = firebaseConfig ? initializeApp(firebaseConfig) : null;
+const db = app ? getFirestore(app, firebaseConfig.firestoreDatabaseId) : null;
 
 export default async function handler(req: any, res: any) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  let servers: any[] = [];
-  let subDescription = 'Сервис работает в штатном режиме. https://vlessfree.vercel.app';
-  
   try {
-    // Parallel fetch
-    const [serversSnapshot, settingsSnapshot] = await Promise.all([
-      getDocs(collection(db, 'servers')),
-      getDoc(doc(db, 'subscriptionSettings', 'global'))
-    ]);
-
-    servers = serversSnapshot.docs.map(doc => doc.data());
-    
-    if (settingsSnapshot.exists()) {
-      subDescription = settingsSnapshot.data().description || subDescription;
+    if (req.method !== 'GET') {
+      return res.status(405).json({ error: 'Method not allowed' });
     }
+
+    let servers: any[] = [];
+    let subDescription = 'Сервис работает в штатном режиме. https://vlessfree.vercel.app';
     
-    // Natural sort by name numbers (1, 2, 3...)
-    servers.sort((a, b) => {
-      const nameA = a.name || '';
-      const nameB = b.name || '';
-      const matchA = nameA.match(/\d+/);
-      const matchB = nameB.match(/\d+/);
-      
-      if (matchA && matchB) {
-        const numA = parseInt(matchA[0]);
-        const numB = parseInt(matchB[0]);
-        if (numA !== numB) return numA - numB;
+    if (db) {
+      try {
+        const serversSnapshot = await getDocs(collection(db, 'servers'));
+        servers = serversSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+        
+        const settingsSnapshot = await getDoc(doc(db, 'subscriptionSettings', 'global'));
+        if (settingsSnapshot.exists()) {
+          subDescription = settingsSnapshot.data().description || subDescription;
+        }
+        
+        // Natural sort
+        servers.sort((a, b) => {
+          const nameA = a.name || '';
+          const nameB = b.name || '';
+          return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+        });
+      } catch (error) {
+        console.error("Firestore fetch error:", error);
       }
-      return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
-    });
-  } catch (error) {
-    console.error("Firestore error:", error);
-  }
+    }
 
   const userAgent = req.headers['user-agent'] || '';
   
@@ -160,4 +163,8 @@ export default async function handler(req: any, res: any) {
   res.setHeader('Profile-Web-Page-Url', 'https://vlessfree.vercel.app');
   
   return res.status(200).send(base64Content);
+  } catch (globalError) {
+    console.error("Global crash in suball:", globalError);
+    return res.status(500).send("Internal Server Error: " + (globalError instanceof Error ? globalError.message : String(globalError)));
+  }
 }

@@ -83,7 +83,18 @@ service cloud.firestore {
       allow write: if isVerified() && request.auth.token.email == 'bubinadubina5@gmail.com';
     }
 
-    // 4. Test Path (Internal)
+    // 4. Subscription Settings Collection
+    function isValidSubscriptionSetting(data) {
+      return data.description is string && data.description.size() <= 2000;
+    }
+
+    match /subscriptionSettings/{settingId} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow write: if isAdmin() && isValidSubscriptionSetting(incoming());
+    }
+
+    // 5. Test Path (Internal)
     match /test/connection {
       allow read: if true;
     }
