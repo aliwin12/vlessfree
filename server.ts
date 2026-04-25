@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
 import fs from 'fs';
 
 const firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf8'));
@@ -34,27 +34,22 @@ async function startServer() {
   // Subscription endpoint for VLESS clients
   app.get('/suball', async (req, res) => {
     let servers: any[] = [];
-    let subDescription = 'Сервис работает в штатном режиме. https://vlessfree.vercel.app';
-    
     try {
-      // Parallel fetch with individual error handling
-      const [serversResult, settingsResult] = await Promise.allSettled([
-        getDocs(collection(db, 'servers')),
-        getDoc(doc(db, 'subscriptionSettings', 'global'))
-      ]);
-
-      if (serversResult.status === 'fulfilled') {
-        servers = serversResult.value.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
-      }
+      const snapshot = await getDocs(collection(db, 'servers'));
+      servers = snapshot.docs.map(doc => doc.data());
       
-      if (settingsResult.status === 'fulfilled' && settingsResult.value.exists()) {
-        subDescription = settingsResult.value.data().description || subDescription;
-      }
-      
-      // Natural sort
+      // Natural sort by name numbers (1, 2, 3...)
       servers.sort((a, b) => {
         const nameA = a.name || '';
         const nameB = b.name || '';
+        const matchA = nameA.match(/\d+/);
+        const matchB = nameB.match(/\d+/);
+        
+        if (matchA && matchB) {
+          const numA = parseInt(matchA[0]);
+          const numB = parseInt(matchB[0]);
+          if (numA !== numB) return numA - numB;
+        }
         return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
       });
     } catch (error) {
@@ -63,7 +58,7 @@ async function startServer() {
 
     const userAgent = req.headers['user-agent'] || '';
 
-    const subscriptionNodes = servers.filter(s => s && s.status === 'online' && s.config).map(s => {
+    const configs = servers.filter(s => s && s.status === 'online' && s.config).map(s => {
       let config = s.config;
       let displayName = s.name || 'Server';
       
@@ -80,13 +75,7 @@ async function startServer() {
         config = config + '#' + encodeURIComponent(displayName);
       }
       return config;
-    });
-
-    if (subDescription && subDescription.trim()) {
-      subscriptionNodes.unshift(`vless://00000000-0000-0000-0000-000000000000@127.0.0.1:443?encryption=none&security=none#${encodeURIComponent('📢 ' + subDescription.trim())}`);
-    }
-    
-    const configs = subscriptionNodes.join('\n');
+    }).join('\n');
 
     const base64Content = Buffer.from(configs).toString('base64');
 
