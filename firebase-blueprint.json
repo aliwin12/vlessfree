@@ -27,6 +27,19 @@
         "email": { "type": "string" }
       },
       "required": ["email"]
+    },
+    "Warning": {
+      "title": "Warning",
+      "description": "Global warnings or maintenance messages",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "warning", "error"] },
+        "active": { "type": "boolean" },
+        "replaceContent": { "type": "boolean", "description": "If true, hides the server list and shows only this message" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["text", "type", "active", "replaceContent", "createdAt"]
     }
   },
   "firestore": {
@@ -37,6 +50,10 @@
     "/admins/{adminId}": {
       "schema": "Admin",
       "description": "List of authorized admin UIDs"
+    },
+    "/warnings/{warningId}": {
+      "schema": "Warning",
+      "description": "System-wide alerts"
     }
   }
 }

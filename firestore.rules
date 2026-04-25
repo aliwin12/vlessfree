@@ -2,10 +2,12 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // 0. Global Safety Net
     match /{document=**} {
       allow read, write: if false;
     }
 
+    // Phase 3: Primitive Definition
     function isSignedIn() {
       return request.auth != null;
     }
@@ -22,6 +24,19 @@ service cloud.firestore {
       );
     }
 
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // 1. Servers Collection
     function isValidServer(data) {
       return data.name is string && data.name.size() <= 100 &&
              data.protocol is string &&
@@ -35,19 +50,42 @@ service cloud.firestore {
     }
 
     match /servers/{serverId} {
-      allow read: if true;
+      allow get, list: if true;
       allow create: if isAdmin() && 
-                      isValidServer(request.resource.data) &&
-                      request.resource.data.createdAt == request.time;
+                      isValidServer(incoming()) &&
+                      incoming().createdAt == request.time;
       allow update: if isAdmin() && 
-                      isValidServer(request.resource.data) &&
-                      request.resource.data.updatedAt == request.time;
+                      isValidServer(incoming());
       allow delete: if isAdmin();
     }
 
+    // 2. Warnings Collection
+    function isValidWarning(data) {
+      return data.text is string && data.text.size() <= 1000 &&
+             data.type in ['info', 'warning', 'error'] &&
+             data.active is bool &&
+             data.replaceContent is bool;
+    }
+
+    match /warnings/{warningId} {
+      allow get, list: if true;
+      allow create: if isAdmin() && 
+                      isValidWarning(incoming()) && 
+                      incoming().createdAt == request.time;
+      allow update: if isAdmin() && 
+                      isValidWarning(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // 3. Admin Roles Collection
     match /admins/{adminId} {
       allow read: if isAdmin();
       allow write: if isVerified() && request.auth.token.email == 'bubinadubina5@gmail.com';
+    }
+
+    // 4. Test Path (Internal)
+    match /test/connection {
+      allow read: if true;
     }
   }
 }

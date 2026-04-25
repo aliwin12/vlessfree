@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db, auth, googleProvider, signInWithPopup, signOut, serversCollection, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp } from '../lib/firebase';
-import { Trash2, Edit3, Plus, LogOut, Shield, ChevronRight, Save, X, Globe, Activity, Calendar, ExternalLink, RefreshCw, Layers } from 'lucide-react';
+import { db, auth, googleProvider, signInWithPopup, signOut, serversCollection, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, handleFirestoreError, OperationType } from '../lib/firebase';
+import { Trash2, Edit3, Plus, LogOut, Shield, ChevronRight, Save, X, Globe, Activity, Calendar, ExternalLink, RefreshCw, Layers, AlertTriangle, Bell, Eye, EyeOff, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 
@@ -30,8 +30,11 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
   const [servers, setServers] = useState<any[]>([]);
+  const [warnings, setWarnings] = useState<any[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [isAddingWarning, setIsAddingWarning] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingWarningId, setEditingWarningId] = useState<string | null>(null);
   const [selectedServers, setSelectedServers] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: '',
@@ -45,6 +48,13 @@ export default function AdminPanel() {
     city: '',
     reason: '',
     isSpecial: false
+  });
+
+  const [warningFormData, setWarningFormData] = useState({
+    text: '',
+    type: 'info' as 'info' | 'warning' | 'error',
+    active: true,
+    replaceContent: false
   });
 
   const navigate = useNavigate();
@@ -80,11 +90,22 @@ export default function AdminPanel() {
       });
 
       setServers(sortedDocs);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'servers');
+    });
+
+    const warningsQuery = query(collection(db, 'warnings'), orderBy('createdAt', 'desc'));
+    const unsubscribeWarnings = onSnapshot(warningsQuery, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      setWarnings(docs);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'warnings');
     });
 
     return () => {
       unsubscribeAuth();
       unsubscribeDocs();
+      unsubscribeWarnings();
     };
   }, []);
 
@@ -136,8 +157,7 @@ export default function AdminPanel() {
       }
       alert("Импорт завершен!");
     } catch (error) {
-      console.error("Import failed:", error);
-      alert("Ошибка импорта: " + (error as Error).message);
+      handleFirestoreError(error, OperationType.CREATE, 'servers');
     } finally {
       setIsImporting(false);
     }
@@ -164,8 +184,7 @@ export default function AdminPanel() {
         name: '', protocol: 'VLESS / REALITY', latency: '', load: 0, expiryDate: '', status: 'online', config: '', country: '', city: '', reason: '', isSpecial: false
       });
     } catch (error) {
-      console.error("Operation failed:", error);
-      alert("Ошибка при сохранении: " + (error as Error).message);
+      handleFirestoreError(error, editingId ? OperationType.UPDATE : OperationType.CREATE, 'servers');
     }
   };
 
@@ -179,8 +198,7 @@ export default function AdminPanel() {
         console.log("Delete successful for:", id);
         alert("Сервер успешно удален");
       } catch (error) {
-        console.error("Delete failed for:", id, error);
-        alert("Ошибка при удалении: " + (error as Error).message);
+        handleFirestoreError(error, OperationType.DELETE, 'servers');
       }
     }
   };
@@ -199,12 +217,69 @@ export default function AdminPanel() {
         setSelectedServers([]);
         alert("Выбранные серверы удалены");
       } catch (error) {
-        console.error("Batch delete failed:", error);
-        alert("Ошибка при массовом удалении: " + (error as Error).message);
+        handleFirestoreError(error, OperationType.DELETE, 'servers');
       } finally {
         setLoading(false);
       }
     }
+  };
+
+  const handleWarningSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editingWarningId) {
+        await updateDoc(doc(db, 'warnings', editingWarningId), {
+          ...warningFormData,
+          updatedAt: serverTimestamp()
+        });
+        setEditingWarningId(null);
+      } else {
+        await addDoc(collection(db, 'warnings'), {
+          ...warningFormData,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        setIsAddingWarning(false);
+      }
+      setWarningFormData({
+        text: '', type: 'info', active: true, replaceContent: false
+      });
+    } catch (error) {
+      handleFirestoreError(error, editingWarningId ? OperationType.UPDATE : OperationType.CREATE, 'warnings');
+    }
+  };
+
+  const handleDeleteWarning = async (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (window.confirm("Удалить это предупреждение?")) {
+      try {
+        await deleteDoc(doc(db, 'warnings', id));
+      } catch (error) {
+        handleFirestoreError(error, OperationType.DELETE, 'warnings');
+      }
+    }
+  };
+
+  const toggleWarningActive = async (id: string, currentStatus: boolean) => {
+    try {
+      await updateDoc(doc(db, 'warnings', id), {
+        active: !currentStatus,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'warnings');
+    }
+  };
+
+  const startEditWarning = (warning: any) => {
+    setEditingWarningId(warning.id);
+    setWarningFormData({
+      text: warning.text,
+      type: warning.type,
+      active: warning.active,
+      replaceContent: warning.replaceContent || false
+    });
+    setIsAddingWarning(true);
   };
 
   const toggleSelect = (id: string) => {
@@ -294,6 +369,19 @@ export default function AdminPanel() {
         >
           <Plus className="w-5 h-5" /> Добавить сервер
         </button>
+
+        <button 
+          onClick={() => {
+            setIsAddingWarning(true);
+            setEditingWarningId(null);
+            setWarningFormData({
+              text: '', type: 'info', active: true, replaceContent: false
+            });
+          }}
+          className="px-6 py-4 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20 font-bold text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-amber-500 hover:text-white transition-all"
+        >
+          <Bell className="w-5 h-5" /> Добавить объявление
+        </button>
         
         {servers.length === 0 && (
           <button 
@@ -315,6 +403,87 @@ export default function AdminPanel() {
           </button>
         )}
       </div>
+
+      <AnimatePresence>
+        {isAddingWarning && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden mb-12"
+          >
+            <form onSubmit={handleWarningSubmit} className="glass p-8 rounded-[40px] border border-amber-500/20">
+              <div className="flex justify-between items-center mb-8">
+                <div className="flex items-center gap-3">
+                  <Bell className="w-6 h-6 text-amber-500" />
+                  <h2 className="text-xl font-serif italic text-amber-500">{editingWarningId ? 'Редактировать объявление' : 'Новое объявление'}</h2>
+                </div>
+                <button type="button" onClick={() => setIsAddingWarning(false)} className="p-2 hover:bg-white/10 rounded-full">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-2">Текст сообщения</label>
+                  <textarea 
+                    required
+                    value={warningFormData.text}
+                    onChange={e => setWarningFormData({...warningFormData, text: e.target.value})}
+                    placeholder="Например: Технические работы на серверах..."
+                    rows={3}
+                    className="w-full bg-white/5 border border-white/10 rounded-3xl px-5 py-4 focus:border-amber-500/30 transition-all outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-2">Тип</label>
+                    <select 
+                      value={warningFormData.type}
+                      onChange={e => setWarningFormData({...warningFormData, type: e.target.value as any})}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:border-amber-500/30 transition-all outline-none appearance-none"
+                    >
+                      <option value="info" className="bg-neutral-900">Инфо (Белый)</option>
+                      <option value="warning" className="bg-neutral-900">Предупреждение (Оранжевый)</option>
+                      <option value="error" className="bg-neutral-900">Ошибка (Красный)</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex flex-col justify-center gap-4">
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <input 
+                        type="checkbox"
+                        checked={warningFormData.active}
+                        onChange={e => setWarningFormData({...warningFormData, active: e.target.checked})}
+                        className="w-5 h-5 rounded-lg border-white/10 bg-white/5 accent-amber-500"
+                      />
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-white/60 group-hover:text-white transition-colors">Показать сейчас</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <input 
+                        type="checkbox"
+                        checked={warningFormData.replaceContent}
+                        onChange={e => setWarningFormData({...warningFormData, replaceContent: e.target.checked})}
+                        className="w-5 h-5 rounded-lg border-white/10 bg-white/5 accent-amber-500"
+                      />
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-white/60 group-hover:text-white transition-colors">Заменить весь список серверов</span>
+                    </label>
+                  </div>
+                </div>
+
+                <button 
+                  type="submit"
+                  className="w-full py-5 rounded-3xl bg-amber-500 text-black font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:scale-[1.01] transition-all"
+                >
+                  <Save className="w-5 h-5" /> {editingWarningId ? 'Обновить объявление' : 'Опубликовать'}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {isAdding && (
@@ -446,6 +615,61 @@ export default function AdminPanel() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {warnings.length > 0 && (
+        <div className="mb-12 space-y-4">
+          <h2 className="text-[10px] uppercase font-bold tracking-[0.2em] text-white/30 ml-4 mb-4">Активные объявления</h2>
+          {warnings.map(warning => (
+            <motion.div 
+              layout
+              key={warning.id}
+              className={`p-4 rounded-3xl border flex items-center justify-between gap-4 ${
+                warning.type === 'error' ? 'bg-rose-500/5 border-rose-500/20 text-rose-500' :
+                warning.type === 'warning' ? 'bg-amber-500/5 border-amber-500/20 text-amber-500' :
+                'bg-white/5 border-white/10 text-white/60'
+              } ${!warning.active ? 'opacity-40 grayscale' : ''}`}
+            >
+              <div className="flex items-center gap-4 flex-1">
+                {warning.type === 'error' ? <AlertTriangle className="w-5 h-5" /> : 
+                 warning.type === 'warning' ? <Bell className="w-5 h-5" /> : 
+                 <Info className="w-5 h-5" />}
+                <div className="flex flex-col">
+                  <p className="text-sm font-medium">{warning.text}</p>
+                  <div className="flex gap-3 mt-1">
+                    {warning.replaceContent && (
+                      <span className="text-[8px] uppercase tracking-widest font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 border border-amber-500/20">Hiding Servers</span>
+                    )}
+                    {!warning.active && (
+                      <span className="text-[8px] uppercase tracking-widest font-bold px-1.5 py-0.5 rounded bg-white/10 text-white/40">Disabled</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => toggleWarningActive(warning.id, warning.active)}
+                  className="p-2.5 rounded-xl bg-black/20 hover:bg-black/40 transition-all border border-white/5"
+                  title={warning.active ? 'Hide' : 'Show'}
+                >
+                  {warning.active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                </button>
+                <button 
+                  onClick={() => startEditWarning(warning)}
+                  className="p-2.5 rounded-xl bg-black/20 hover:bg-black/40 transition-all border border-white/5"
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={(e) => handleDeleteWarning(warning.id, e)}
+                  className="p-2.5 rounded-xl bg-black/20 hover:bg-black/40 transition-all border border-white/5 text-rose-500"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       <div className="glass rounded-[40px] border border-white/10 overflow-hidden">
         <div className="overflow-x-auto no-scrollbar">

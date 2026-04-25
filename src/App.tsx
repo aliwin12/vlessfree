@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { MOCK_KEYS, VlessKey } from './data/keys';
-import { db, collection, query, orderBy, onSnapshot } from './lib/firebase';
+import { db, collection, query, orderBy, onSnapshot, handleFirestoreError, OperationType } from './lib/firebase';
 import AdminPanel from './components/AdminPanel';
 
 const UPDATES = [
@@ -240,7 +240,7 @@ function Countdown() {
   );
 }
 
-function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, activeTab, setActiveTab, loading, unlockedSpecial, onUnlockSpecial }: any) {
+function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setSelectedKey, activeTab, setActiveTab, loading, unlockedSpecial, onUnlockSpecial }: any) {
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState(false);
@@ -249,6 +249,9 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const navigate = useNavigate();
   const itemsPerPage = 12;
+
+  const activeWarnings = warnings.filter((w: any) => w.active);
+  const replaceWithWarning = activeWarnings.find((w: any) => w.replaceContent);
 
   const handleSpecialClick = (key: any) => {
     if (unlockedSpecial) {
@@ -328,12 +331,41 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
             <span className="text-white/40">свободного интернета.</span>
           </h2>
           <p className="text-lg md:text-2xl text-white/40 font-serif italic tracking-tight">
-            Актуальные ключи VLESS
+            Актуальные конфигурации для обхода блокировок.
           </p>
         </motion.div>
       </section>
+      <div style={{ display: 'none' }} id="corruption-gate"> { /*
+            Актуальны�      {(keys.length > 0 && !replaceWithWarning) ? (
+          */ } </div>
+      
+      {/* Warnings Section */}
+      <AnimatePresence>
+        {activeWarnings.map((warning: any) => (
+          <motion.div
+            key={warning.id}
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            className="overflow-hidden"
+          >
+            <div className={`p-4 md:p-6 rounded-[24px] md:rounded-[32px] border flex items-center gap-4 ${
+              warning.type === 'error' ? 'bg-rose-500/10 border-rose-500/20 text-rose-500' :
+              warning.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' :
+              'glass text-white/80'
+            }`}>
+              <div className="shrink-0 p-3 rounded-2xl bg-current opacity-10">
+                {warning.type === 'error' ? <AlertTriangle className="w-6 h-6" /> : 
+                 warning.type === 'warning' ? <Bell className="w-6 h-6" /> : 
+                 <Info className="w-6 h-6" />}
+              </div>
+              <p className="text-sm md:text-base font-serif italic leading-relaxed">{warning.text}</p>
+            </div>
+          </motion.div>
+        ))}
+      </AnimatePresence>
 
-      {keys.length > 0 && (
+      {(keys.length > 0 && !replaceWithWarning) ? (
         <>
           {/* Tabs / Segmented Control */}
           <div className="flex justify-center mb-8 md:mb-16 shrink-0">
@@ -653,7 +685,7 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
               </div>
             )}
           </div>
-      ) : (
+        ) : !loading && (
           <motion.div 
             key="empty"
             initial={{ opacity: 0, y: 20 }}
@@ -664,17 +696,49 @@ function HomePage({ keys, handleCopy, copiedId, selectedKey, setSelectedKey, act
             <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-8">
               <AlertTriangle className="w-8 h-8 opacity-20" />
             </div>
-            <h3 className="text-2xl font-serif italic mb-2">
-              {activeTab === 'active' ? 'Нет активных серверов' : 'Нет неактивных серверов'}
-            </h3>
-            <p className="text-white/30 text-sm">
-              {activeTab === 'active' ? 'Пожалуйста, подождите обновления списка.' : 'Все доступные узлы работают в штатном режиме.'}
-            </p>
+            {replaceWithWarning ? (
+              <>
+                <h3 className="text-2xl font-serif italic mb-2">Технические работы</h3>
+                <p className="text-white/30 text-sm">Смотрите информацию в объявлении выше.</p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-2xl font-serif italic mb-2">
+                  {activeTab === 'active' ? 'Нет активных серверов' : 'Нет неактивных серверов'}
+                </h3>
+                <p className="text-white/30 text-sm">
+                  {activeTab === 'active' ? 'Пожалуйста, подождите обновления списка.' : 'Все доступные узлы работают в штатном режиме.'}
+                </p>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
+    </>
+  ) : !loading && (
+    <motion.div 
+      key="empty-no-keys"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="py-32 text-center"
+    >
+      <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-8">
+        <AlertTriangle className="w-8 h-8 opacity-20" />
+      </div>
+      {replaceWithWarning ? (
+        <>
+          <h3 className="text-2xl font-serif italic mb-2">Технические работы</h3>
+          <p className="text-white/30 text-sm">Смотрите информацию в объявлении выше.</p>
+        </>
+      ) : (
+        <>
+          <h3 className="text-2xl font-serif italic mb-2">Нет доступных серверов</h3>
+          <p className="text-white/30 text-sm">Пожалуйста, подождите обновления списка.</p>
         </>
       )}
+    </motion.div>
+  )}
 
       {/* Password Prompt Modal */}
       <AnimatePresence>
@@ -977,7 +1041,11 @@ function SpecialFolderPage({ keys, handleCopy, copiedId, unlockedSpecial }: any)
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {specialFolder.subKeys.map((sub: any, idx: number) => (
+        {[...specialFolder.subKeys].sort((a, b) => {
+          const nameA = a.name || '';
+          const nameB = b.name || '';
+          return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+        }).map((sub: any, idx: number) => (
           <motion.div
             key={idx}
             initial={{ opacity: 0, scale: 0.95 }}
@@ -1134,7 +1202,19 @@ function LoadingScreen() {
 
 function AppContent() {
   const [keys, setKeys] = useState<VlessKey[]>([]);
+  const [warnings, setWarnings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, 'warnings'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      setWarnings(docs);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'warnings');
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const q = query(collection(db, 'servers'), orderBy('createdAt', 'desc'));
@@ -1174,6 +1254,8 @@ function AppContent() {
 
       setKeys(sortedDocs);
       setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'servers');
     });
     return () => unsubscribe();
   }, []);
@@ -1364,6 +1446,7 @@ function AppContent() {
         <Route path="/" element={
           <HomePage 
             keys={keys} 
+            warnings={warnings}
             handleCopy={handleCopy} 
             copiedId={copiedId} 
             selectedKey={selectedKey} 
