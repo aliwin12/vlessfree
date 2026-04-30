@@ -593,9 +593,13 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
                       </span>
                     )}
                     {(key.isDisappearingSoon || isCriticallyExpiring(key.expiryDate)) && !key.isComingSoon && (
-                      <span className="px-2 py-1 rounded-lg bg-rose-500 text-white text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(244,63,94,0.3)]">
-                        SOON OFFLINE
-                      </span>
+                      <motion.span 
+                        animate={isCriticallyExpiring(key.expiryDate) ? { opacity: [1, 0.5, 1], scale: [1, 1.05, 1] } : {}}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="px-2 py-1 rounded-lg bg-rose-500 text-white text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(244,63,94,0.4)]"
+                      >
+                        СКОРО ИСЧЕЗНЕТ
+                      </motion.span>
                     )}
                     {key.isSpecial && (
                       <span className="px-2 py-1 rounded-lg bg-amber-500 text-black text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)]">
@@ -641,9 +645,9 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
                       <span>До: {key.expiryDate}</span>
                     </div>
                     {isExpiringSoon(key.expiryDate) && key.status !== 'offline' && (
-                      <span className="text-amber-500 opacity-100 flex items-center gap-1">
+                      <span className={`${isCriticallyExpiring(key.expiryDate) ? 'text-rose-500 animate-pulse' : 'text-amber-500'} opacity-100 flex items-center gap-1`}>
                         <AlertTriangle className="w-3 h-3" />
-                        Истекает скоро
+                        {isCriticallyExpiring(key.expiryDate) ? 'Отключится сегодня' : 'Истекает скоро'}
                       </span>
                     )}
                   </div>

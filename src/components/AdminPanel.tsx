@@ -911,7 +911,7 @@ export default function AdminPanel() {
                         <div className="flex items-center gap-2">
                           <span className="font-serif italic text-lg">{server.name}</span>
                           {(expiring || isCriticallyExpiring(server.expiryDate)) && (
-                            <AlertTriangle className="w-4 h-4 text-amber-500" />
+                            <AlertTriangle className={`w-4 h-4 ${isCriticallyExpiring(server.expiryDate) ? 'text-rose-500 animate-pulse' : 'text-amber-500'}`} />
                           )}
                           {server.isComingSoon && (
                             <div className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500 text-[8px] font-bold uppercase tracking-widest">Будет</div>
@@ -947,10 +947,12 @@ export default function AdminPanel() {
                       }`}>
                         {server.status}
                       </span>
-                      {expiring && (
-                        <span className="px-3 py-1 rounded-full text-[8px] uppercase tracking-widest font-bold border w-fit bg-amber-500/10 text-amber-500 border-amber-500/20 flex items-center gap-1">
+                      {(expiring || isCriticallyExpiring(server.expiryDate)) && (
+                        <span className={`px-3 py-1 rounded-full text-[8px] uppercase tracking-widest font-bold border w-fit flex items-center gap-1 ${
+                          isCriticallyExpiring(server.expiryDate) ? 'bg-rose-500/10 text-rose-500 border-rose-500/20 animate-pulse' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                        }`}>
                           <AlertTriangle className="w-2.5 h-2.5" />
-                          СКОРО ИСТЕКАЕТ
+                          {isCriticallyExpiring(server.expiryDate) ? 'ИСТЕКАЕТ СЕГОДНЯ' : 'СКОРО ИСТЕКАЕТ'}
                         </span>
                       )}
                       {server.isComingSoon && (
