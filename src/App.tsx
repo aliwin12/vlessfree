@@ -317,6 +317,19 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
     setCurrentPage(1);
   }, [activeTab, selectedCountry]);
 
+  const isExpiringSoon = (expiryDate: string) => {
+    if (!expiryDate) return false;
+    const [day, month, year] = expiryDate.split('.').map(Number);
+    const expiry = new Date(year, month - 1, day);
+    const now = new Date();
+    // Set both to start of day for accurate day difference
+    expiry.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+    const diffTime = expiry.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 3 && diffDays >= 0;
+  };
+
   return (
     <main className="relative pt-32 md:pt-56 pb-28 md:pb-20 px-4 md:px-6 max-w-7xl mx-auto min-h-screen flex flex-col">
       {/* Hero Section */}
@@ -513,6 +526,10 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
                 transition={{ delay: 0.1 + index * 0.05 }}
                 className={`glass rounded-[20px] md:rounded-[32px] p-4 md:p-8 group hover:border-white/30 transition-all duration-500 ${key.status === 'offline' ? 'opacity-60 grayscale' : ''} relative overflow-hidden`}
               >
+                {isExpiringSoon(key.expiryDate) && key.status !== 'offline' && (
+                  <div className="absolute top-0 left-0 w-full h-1 bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)] z-30" />
+                )}
+                
                 {key.isSpecial && !unlockedSpecial && (
                   <div className="absolute inset-0 z-10 backdrop-blur-md bg-black/20 pointer-events-none" />
                 )}
@@ -560,9 +577,17 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 mb-6 md:mb-8">
-                    <Calendar className="w-3 h-3" />
-                    <span>До: {key.expiryDate}</span>
+                  <div className="flex items-center gap-3 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 mb-6 md:mb-8">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-3 h-3" />
+                      <span>До: {key.expiryDate}</span>
+                    </div>
+                    {isExpiringSoon(key.expiryDate) && key.status !== 'offline' && (
+                      <span className="text-amber-500 opacity-100 flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" />
+                        Истекает скоро
+                      </span>
+                    )}
                   </div>
                 </div>
 

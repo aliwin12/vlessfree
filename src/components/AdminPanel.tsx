@@ -306,6 +306,19 @@ export default function AdminPanel() {
     setIsAdding(true);
   };
 
+  const isExpiringSoon = (expiryDate: string) => {
+    if (!expiryDate) return false;
+    const [day, month, year] = expiryDate.split('.').map(Number);
+    const expiry = new Date(year, month - 1, day);
+    const now = new Date();
+    // Set both to start of day for accurate day difference
+    expiry.setHours(0, 0, 0, 0);
+    now.setHours(0, 0, 0, 0);
+    const diffTime = expiry.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 3 && diffDays >= 0;
+  };
+
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-black">
       <RefreshCw className="w-8 h-8 animate-spin text-white/20" />
@@ -695,22 +708,29 @@ export default function AdminPanel() {
               </tr>
             </thead>
             <tbody>
-              {servers.map((server) => (
-                <tr key={server.id} className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${selectedServers.includes(server.id) ? 'bg-white/[0.03]' : ''}`}>
-                  <td className="p-6">
-                    <input 
-                      type="checkbox" 
-                      checked={selectedServers.includes(server.id)}
-                      onChange={() => toggleSelect(server.id)}
-                      className="w-4 h-4 rounded border-white/10 bg-white/5 accent-white"
-                    />
-                  </td>
-                  <td className="p-6">
-                    <div className="flex flex-col">
-                      <span className="font-serif italic text-lg">{server.name}</span>
-                      <span className="text-[10px] text-white/20 font-mono tracking-tighter truncate max-w-[200px]">{server.config}</span>
-                    </div>
-                  </td>
+              {servers.map((server) => {
+                const expiring = isExpiringSoon(server.expiryDate) && server.status !== 'offline';
+                return (
+                  <tr key={server.id} className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${selectedServers.includes(server.id) ? 'bg-white/[0.03]' : ''} ${expiring ? 'bg-amber-500/[0.03]' : ''} relative`}>
+                    <td className="p-6">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedServers.includes(server.id)}
+                        onChange={() => toggleSelect(server.id)}
+                        className="w-4 h-4 rounded border-white/10 bg-white/5 accent-white"
+                      />
+                    </td>
+                    <td className="p-6">
+                      <div className="flex flex-col relative">
+                        <div className="flex items-center gap-2">
+                          <span className="font-serif italic text-lg">{server.name}</span>
+                          {expiring && (
+                            <AlertTriangle className="w-4 h-4 text-amber-500" />
+                          )}
+                        </div>
+                        <span className="text-[10px] text-white/20 font-mono tracking-tighter truncate max-w-[200px]">{server.config}</span>
+                      </div>
+                    </td>
                   <td className="p-6">
                     <div className="flex flex-col">
                       <span className="font-bold">{server.country}</span>
@@ -729,11 +749,19 @@ export default function AdminPanel() {
                     </div>
                   </td>
                   <td className="p-6">
-                    <span className={`px-3 py-1 rounded-full text-[8px] uppercase tracking-widest font-bold border ${
-                      server.status === 'online' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
-                    }`}>
-                      {server.status}
-                    </span>
+                    <div className="flex flex-col gap-2">
+                      <span className={`px-3 py-1 rounded-full text-[8px] uppercase tracking-widest font-bold border w-fit ${
+                        server.status === 'online' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                      }`}>
+                        {server.status}
+                      </span>
+                      {expiring && (
+                        <span className="px-3 py-1 rounded-full text-[8px] uppercase tracking-widest font-bold border w-fit bg-amber-500/10 text-amber-500 border-amber-500/20 flex items-center gap-1">
+                          <AlertTriangle className="w-2.5 h-2.5" />
+                          СКОРО ИСТЕКАЕТ
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="p-6">
                     <div className="flex gap-2">
@@ -746,7 +774,8 @@ export default function AdminPanel() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
               {servers.length === 0 && (
                 <tr>
                   <td colSpan={6} className="p-20 text-center text-white/20 uppercase tracking-[0.2em] text-[10px] font-bold">

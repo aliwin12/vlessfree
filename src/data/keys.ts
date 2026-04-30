@@ -22,7 +22,7 @@ export const MOCK_KEYS: VlessKey[] = [
     protocol: "VLESS / REALITY",
     latency: "42ms",
     load: 18,
-    expiryDate: "27.04.2026",
+    expiryDate: "02.05.2026",
     status: "online",
     config: "vless://37c06ef4-4884-4eb4-964d-64ef07f7e4c2@nl-ams-2.blook.network:443?flow=xtls-rprx-vision&fp=chrome&pbk=pSaBLgVfLqmeYgUOxvN1K9i55ChIDk4_i5MLQrOfVGU&security=reality&sid=714c1a42&sni=nl-ams-2.blook.network&spx=%2F&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20%D0%9D%D0%B8%D0%B4%D0%B5%D1%80%D0%BB%D0%B0%D0%BD%D0%B4%D1%8B%202"
   },
