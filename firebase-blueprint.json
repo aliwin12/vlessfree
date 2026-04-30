@@ -14,6 +14,9 @@
         "config": { "type": "string" },
         "country": { "type": "string", "description": "2-letter country code" },
         "city": { "type": "string", "description": "City name" },
+        "isComingSoon": { "type": "boolean" },
+        "isDisappearingSoon": { "type": "boolean" },
+        "isSpecial": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },

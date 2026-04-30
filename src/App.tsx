@@ -298,13 +298,23 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
   }, [keys]);
 
   const filteredKeys = keys.filter((key: any) => {
-    const matchesTab = activeTab === 'active' 
-      ? (key.status === 'online' || key.status === 'unstable')
-      : (key.status === 'offline');
-    
+    // Automatic inactivation check
+    const [day, month, year] = key.expiryDate.split('.').map(Number);
+    const expiry = new Date(year, month - 1, day);
+    expiry.setHours(23, 59, 59, 999);
+    const now = new Date();
+    const isExpired = expiry < now;
+
+    if (activeTab === 'active') {
+      return (key.status === 'online' || key.status === 'unstable') && !isExpired && !key.isComingSoon;
+    } else if (activeTab === 'comingSoon') {
+      return key.isComingSoon;
+    } else {
+      return (key.status === 'offline') || isExpired;
+    }
+  }).filter((key: any) => {
     const matchesCountry = !selectedCountry || key.location.startsWith(selectedCountry);
-    
-    return matchesTab && matchesCountry;
+    return matchesCountry;
   });
 
   // Pagination logic
@@ -382,28 +392,38 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
         <>
           {/* Tabs / Segmented Control */}
           <div className="flex justify-center mb-8 md:mb-16 shrink-0">
-        <div className="glass p-1 rounded-xl md:rounded-3xl flex gap-1 bg-white/5">
-          <button 
-            onClick={() => setActiveTab('active')}
-            className={`px-5 md:px-8 py-2 md:py-3 rounded-lg md:rounded-2xl text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-bold transition-all duration-300 ${
-              activeTab === 'active' 
-              ? 'bg-white text-black shadow-xl scale-[1.02]' 
-              : 'text-white/40 hover:text-white/60'
-            }`}
-          >
-            Активные
-          </button>
-          <button 
-            onClick={() => setActiveTab('inactive')}
-            className={`px-5 md:px-8 py-2 md:py-3 rounded-lg md:rounded-2xl text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-bold transition-all duration-300 ${
-              activeTab === 'inactive' 
-              ? 'bg-white text-black shadow-xl scale-[1.02]' 
-              : 'text-white/40 hover:text-white/60'
-            }`}
-          >
-            Неактивные
-          </button>
-        </div>
+          <div className="glass p-1 rounded-xl md:rounded-3xl flex gap-1 bg-white/5">
+            <button 
+              onClick={() => setActiveTab('active')}
+              className={`px-5 md:px-8 py-2 md:py-3 rounded-lg md:rounded-2xl text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-bold transition-all duration-300 ${
+                activeTab === 'active' 
+                ? 'bg-white text-black shadow-xl scale-[1.02]' 
+                : 'text-white/40 hover:text-white/60'
+              }`}
+            >
+              Активные
+            </button>
+            <button 
+              onClick={() => setActiveTab('comingSoon')}
+              className={`px-5 md:px-8 py-2 md:py-3 rounded-lg md:rounded-2xl text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-bold transition-all duration-300 ${
+                activeTab === 'comingSoon' 
+                ? 'bg-emerald-500 text-white shadow-xl scale-[1.02]' 
+                : 'text-white/40 hover:text-white/60'
+              }`}
+            >
+              Скоро будет
+            </button>
+            <button 
+              onClick={() => setActiveTab('inactive')}
+              className={`px-5 md:px-8 py-2 md:py-3 rounded-lg md:rounded-2xl text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-bold transition-all duration-300 ${
+                activeTab === 'inactive' 
+                ? 'bg-rose-500 text-white shadow-xl scale-[1.02]' 
+                : 'text-white/40 hover:text-white/60'
+              }`}
+            >
+              Неактивные
+            </button>
+          </div>
       </div>
 
       {/* Subscription Button */}
@@ -535,10 +555,20 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
                 )}
                 
                 <div className="flex justify-between items-start mb-4 md:mb-8 relative z-20">
-                  <div className={`w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-colors duration-500 ${key.status === 'offline' ? 'bg-rose-500/10 text-rose-500' : ''}`}>
+                  <div className={`w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-colors duration-500 ${key.status === 'offline' ? 'bg-rose-500/10 text-rose-500' : key.isComingSoon ? 'bg-emerald-500/10 text-emerald-500' : ''}`}>
                     <Globe className="w-4 h-4 md:w-6 md:h-6" />
                   </div>
                   <div className="flex gap-2">
+                    {key.isComingSoon && (
+                      <span className="px-2 py-1 rounded-lg bg-emerald-500 text-white text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                        COMING SOON
+                      </span>
+                    )}
+                    {key.isDisappearingSoon && !key.isComingSoon && (
+                      <span className="px-2 py-1 rounded-lg bg-rose-500 text-white text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(244,63,94,0.3)]">
+                        SOON OFFLINE
+                      </span>
+                    )}
                     {key.isSpecial && (
                       <span className="px-2 py-1 rounded-lg bg-amber-500 text-black text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)]">
                         SPECIAL
@@ -729,10 +759,10 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
             ) : (
               <>
                 <h3 className="text-2xl font-serif italic mb-2">
-                  {activeTab === 'active' ? 'Нет активных серверов' : 'Нет неактивных серверов'}
+                  {activeTab === 'active' ? 'Нет активных серверов' : activeTab === 'comingSoon' ? 'Пока нет серверов в разработке' : 'Нет неактивных серверов'}
                 </h3>
                 <p className="text-white/30 text-sm">
-                  {activeTab === 'active' ? 'Пожалуйста, подождите обновления списка.' : 'Все доступные узлы работают в штатном режиме.'}
+                  {activeTab === 'active' ? 'Пожалуйста, подождите обновления списка.' : activeTab === 'comingSoon' ? 'Мы скоро добавим новые высокоскоростные узлы.' : 'Все доступные узлы работают в штатном режиме.'}
                 </p>
               </>
             )}
@@ -1289,7 +1319,7 @@ function AppContent() {
   const [scrolled, setScrolled] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedKey, setSelectedKey] = useState<VlessKey | null>(null);
-  const [activeTab, setActiveTab] = useState<'active' | 'inactive'>('active');
+  const [activeTab, setActiveTab] = useState<'active' | 'inactive' | 'comingSoon'>('active');
   const [showMirror, setShowMirror] = useState(false);
   const [unlockedSpecial, setUnlockedSpecial] = useState(false);
   const location = useLocation();

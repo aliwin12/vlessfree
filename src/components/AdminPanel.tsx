@@ -36,6 +36,7 @@ export default function AdminPanel() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingWarningId, setEditingWarningId] = useState<string | null>(null);
   const [selectedServers, setSelectedServers] = useState<string[]>([]);
+  const [adminActiveTab, setAdminActiveTab] = useState<'active' | 'inactive'>('active');
   const [formData, setFormData] = useState({
     name: '',
     protocol: 'VLESS / REALITY',
@@ -47,7 +48,9 @@ export default function AdminPanel() {
     country: '',
     city: '',
     reason: '',
-    isSpecial: false
+    isSpecial: false,
+    isComingSoon: false,
+    isDisappearingSoon: false
   });
 
   const [warningFormData, setWarningFormData] = useState({
@@ -181,7 +184,19 @@ export default function AdminPanel() {
         setIsAdding(false);
       }
       setFormData({
-        name: '', protocol: 'VLESS / REALITY', latency: '', load: 0, expiryDate: '', status: 'online', config: '', country: '', city: '', reason: '', isSpecial: false
+        name: '', 
+        protocol: 'VLESS / REALITY', 
+        latency: '', 
+        load: 0, 
+        expiryDate: '', 
+        status: 'online', 
+        config: '', 
+        country: '', 
+        city: '', 
+        reason: '', 
+        isSpecial: false,
+        isComingSoon: false,
+        isDisappearingSoon: false
       });
     } catch (error) {
       handleFirestoreError(error, editingId ? OperationType.UPDATE : OperationType.CREATE, 'servers');
@@ -301,7 +316,9 @@ export default function AdminPanel() {
       country: server.country,
       city: server.city || '',
       reason: server.reason || '',
-      isSpecial: server.isSpecial || false
+      isSpecial: server.isSpecial || false,
+      isComingSoon: server.isComingSoon || false,
+      isDisappearingSoon: server.isDisappearingSoon || false
     });
     setIsAdding(true);
   };
@@ -584,6 +601,38 @@ export default function AdminPanel() {
                     <option value="offline" className="bg-neutral-900">Offline</option>
                   </select>
                 </div>
+                
+                <div className="flex flex-col justify-center gap-4">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input 
+                      type="checkbox"
+                      checked={formData.isSpecial}
+                      onChange={e => setFormData({...formData, isSpecial: e.target.checked})}
+                      className="w-5 h-5 rounded-lg border-white/10 bg-white/5 accent-white"
+                    />
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-white/60 group-hover:text-white transition-colors">Специальный (в папке)</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input 
+                      type="checkbox"
+                      checked={formData.isComingSoon}
+                      onChange={e => setFormData({...formData, isComingSoon: e.target.checked})}
+                      className="w-5 h-5 rounded-lg border-white/10 bg-white/5 accent-amber-500"
+                    />
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-white/60 group-hover:text-white transition-colors">Скоро будет</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <input 
+                      type="checkbox"
+                      checked={formData.isDisappearingSoon}
+                      onChange={e => setFormData({...formData, isDisappearingSoon: e.target.checked})}
+                      className="w-5 h-5 rounded-lg border-white/10 bg-white/5 accent-rose-500"
+                    />
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-white/60 group-hover:text-white transition-colors">Скоро исчезнет</span>
+                  </label>
+                </div>
               </div>
 
               <div className="space-y-6 mb-8">
@@ -684,6 +733,39 @@ export default function AdminPanel() {
         </div>
       )}
 
+      <div className="flex items-center gap-4 mb-12">
+        <button 
+          onClick={() => setAdminActiveTab('active')}
+          className={`flex-1 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all ${
+            adminActiveTab === 'active' ? 'bg-white text-black shadow-xl shadow-white/10' : 'bg-white/5 text-white/40 hover:bg-white/10'
+          }`}
+        >
+          Активные ({servers.filter(s => {
+            const [day, month, year] = s.expiryDate.split('.').map(Number);
+            const expiry = new Date(year, month - 1, day);
+            expiry.setHours(0, 0, 0, 0);
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            return s.status === 'online' && expiry >= now;
+          }).length})
+        </button>
+        <button 
+          onClick={() => setAdminActiveTab('inactive')}
+          className={`flex-1 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all ${
+            adminActiveTab === 'inactive' ? 'bg-rose-500 text-white shadow-xl shadow-rose-500/20' : 'bg-white/5 text-white/40 hover:bg-white/10'
+          }`}
+        >
+          Неактивные ({servers.filter(s => {
+            const [day, month, year] = s.expiryDate.split('.').map(Number);
+            const expiry = new Date(year, month - 1, day);
+            expiry.setHours(0, 0, 0, 0);
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            return s.status === 'offline' || expiry < now;
+          }).length})
+        </button>
+      </div>
+
       <div className="glass rounded-[40px] border border-white/10 overflow-hidden">
         <div className="overflow-x-auto no-scrollbar">
           <table className="w-full text-left border-collapse">
@@ -693,10 +775,27 @@ export default function AdminPanel() {
                   <input 
                     type="checkbox" 
                     onChange={e => {
-                      if (e.target.checked) setSelectedServers(servers.map(s => s.id));
+                      const filteredServers = servers.filter(s => {
+                        const [day, month, year] = s.expiryDate.split('.').map(Number);
+                        const expiry = new Date(year, month - 1, day);
+                        expiry.setHours(0, 0, 0, 0);
+                        const now = new Date();
+                        now.setHours(0, 0, 0, 0);
+                        const isActive = s.status === 'online' && expiry >= now;
+                        return adminActiveTab === 'active' ? isActive : !isActive;
+                      });
+                      if (e.target.checked) setSelectedServers(filteredServers.map(s => s.id));
                       else setSelectedServers([]);
                     }}
-                    checked={selectedServers.length === servers.length && servers.length > 0}
+                    checked={selectedServers.length > 0 && selectedServers.length === servers.filter(s => {
+                      const [day, month, year] = s.expiryDate.split('.').map(Number);
+                      const expiry = new Date(year, month - 1, day);
+                      expiry.setHours(0, 0, 0, 0);
+                      const now = new Date();
+                      now.setHours(0, 0, 0, 0);
+                      const isActive = s.status === 'online' && expiry >= now;
+                      return adminActiveTab === 'active' ? isActive : !isActive;
+                    }).length}
                     className="w-4 h-4 rounded border-white/10 bg-white/5 accent-white"
                   />
                 </th>
@@ -708,10 +807,18 @@ export default function AdminPanel() {
               </tr>
             </thead>
             <tbody>
-              {servers.map((server) => {
+              {servers.filter(s => {
+                const [day, month, year] = s.expiryDate.split('.').map(Number);
+                const expiry = new Date(year, month - 1, day);
+                expiry.setHours(0, 0, 0, 0);
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                const isActive = s.status === 'online' && expiry >= now;
+                return adminActiveTab === 'active' ? isActive : !isActive;
+              }).map((server) => {
                 const expiring = isExpiringSoon(server.expiryDate) && server.status !== 'offline';
                 return (
-                  <tr key={server.id} className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${selectedServers.includes(server.id) ? 'bg-white/[0.03]' : ''} ${expiring ? 'bg-amber-500/[0.03]' : ''} relative`}>
+                  <tr key={server.id} className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${selectedServers.includes(server.id) ? 'bg-white/[0.03]' : ''} ${expiring ? 'bg-amber-500/[0.03]' : ''} ${server.isComingSoon ? 'bg-emerald-500/[0.03]' : ''} relative`}>
                     <td className="p-6">
                       <input 
                         type="checkbox" 
@@ -726,6 +833,12 @@ export default function AdminPanel() {
                           <span className="font-serif italic text-lg">{server.name}</span>
                           {expiring && (
                             <AlertTriangle className="w-4 h-4 text-amber-500" />
+                          )}
+                          {server.isComingSoon && (
+                            <div className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500 text-[8px] font-bold uppercase tracking-widest">Будет</div>
+                          )}
+                          {server.isDisappearingSoon && (
+                            <div className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-500 text-[8px] font-bold uppercase tracking-widest">Уходит</div>
                           )}
                         </div>
                         <span className="text-[10px] text-white/20 font-mono tracking-tighter truncate max-w-[200px]">{server.config}</span>
@@ -759,6 +872,16 @@ export default function AdminPanel() {
                         <span className="px-3 py-1 rounded-full text-[8px] uppercase tracking-widest font-bold border w-fit bg-amber-500/10 text-amber-500 border-amber-500/20 flex items-center gap-1">
                           <AlertTriangle className="w-2.5 h-2.5" />
                           СКОРО ИСТЕКАЕТ
+                        </span>
+                      )}
+                      {server.isComingSoon && (
+                        <span className="px-3 py-1 rounded-full text-[8px] uppercase tracking-widest font-bold border w-fit bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                          СКОРО БУДЕТ
+                        </span>
+                      )}
+                      {server.isDisappearingSoon && (
+                        <span className="px-3 py-1 rounded-full text-[8px] uppercase tracking-widest font-bold border w-fit bg-rose-500/10 text-rose-500 border-rose-500/20">
+                          СКОРО ИСЧЕЗНЕТ
                         </span>
                       )}
                     </div>

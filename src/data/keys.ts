@@ -10,6 +10,8 @@ export interface VlessKey {
   status?: 'online' | 'unstable' | 'offline';
   reason?: string;
   isSpecial?: boolean;
+  isComingSoon?: boolean;
+  isDisappearingSoon?: boolean;
   subKeys?: { name: string; config: string; location: string }[];
   showMiniBanner?: boolean;
 }
