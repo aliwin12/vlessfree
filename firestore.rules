@@ -38,22 +38,16 @@ service cloud.firestore {
 
     // 1. Servers Collection
     function isValidServer(data) {
-      return data.name is string && data.name.size() <= 100 &&
+      return data.name is string &&
              data.protocol is string &&
-             (data.latency == null || data.latency is string) &&
-             data.load is number &&
-             data.expiryDate is string &&
-             data.status in ['online', 'offline'] &&
-             data.config is string && data.config.size() <= 2000 &&
-             data.country is string && data.country.size() == 2 &&
-             (data.city == null || data.city is string);
+             data.status is string &&
+             data.config is string;
     }
 
     match /servers/{serverId} {
       allow get, list: if true;
       allow create: if isAdmin() && 
-                      isValidServer(incoming()) &&
-                      incoming().createdAt == request.time;
+                      isValidServer(incoming());
       allow update: if isAdmin() && 
                       isValidServer(incoming());
       allow delete: if isAdmin();

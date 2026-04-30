@@ -754,7 +754,11 @@ export default function AdminPanel() {
           }`}
         >
           Активные ({servers.filter(s => {
-            const [day, month, year] = s.expiryDate.split('.').map(Number);
+            const parts = s.expiryDate?.split('.');
+            if (!parts || parts.length !== 3) return false;
+            const [day, month, year] = parts.map(Number);
+            if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+            
             const expiry = new Date(year, month - 1, day);
             expiry.setHours(23, 59, 59, 999);
             const now = new Date();
@@ -776,7 +780,11 @@ export default function AdminPanel() {
           }`}
         >
           Неактивные ({servers.filter(s => {
-            const [day, month, year] = s.expiryDate.split('.').map(Number);
+            const parts = s.expiryDate?.split('.');
+            if (!parts || parts.length !== 3) return true; // Invalid date counts as inactive if not coming soon
+            const [day, month, year] = parts.map(Number);
+            if (isNaN(day) || isNaN(month) || isNaN(year)) return true;
+
             const expiry = new Date(year, month - 1, day);
             expiry.setHours(23, 59, 59, 999);
             const now = new Date();
@@ -795,13 +803,21 @@ export default function AdminPanel() {
                     type="checkbox" 
                     onChange={e => {
                       const filteredServers = servers.filter(s => {
-                        const [day, month, year] = s.expiryDate.split('.').map(Number);
-                        const expiry = new Date(year, month - 1, day);
-                        expiry.setHours(23, 59, 59, 999);
+                        const parts = s.expiryDate?.split('.');
+                        let expiry: Date | null = null;
+                        if (parts && parts.length === 3) {
+                          const [day, month, year] = parts.map(Number);
+                          if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+                            expiry = new Date(year, month - 1, day);
+                            expiry.setHours(23, 59, 59, 999);
+                          }
+                        }
+                        
                         const now = new Date();
-                        const isActive = s.status === 'online' && expiry >= now && !s.isComingSoon;
+                        const isExpired = !expiry || expiry < now;
+                        const isActive = s.status === 'online' && !isExpired && !s.isComingSoon;
                         const isComing = s.isComingSoon;
-                        const isInactive = s.status === 'offline' || (expiry < now && !isComing);
+                        const isInactive = s.status === 'offline' || (isExpired && !isComing);
                         
                         if (adminActiveTab === 'active') return isActive;
                         if (adminActiveTab === 'comingSoon') return isComing;
@@ -811,13 +827,21 @@ export default function AdminPanel() {
                       else setSelectedServers([]);
                     }}
                     checked={selectedServers.length > 0 && selectedServers.length === servers.filter(s => {
-                      const [day, month, year] = s.expiryDate.split('.').map(Number);
-                      const expiry = new Date(year, month - 1, day);
-                      expiry.setHours(23, 59, 59, 999);
+                      const parts = s.expiryDate?.split('.');
+                      let expiry: Date | null = null;
+                      if (parts && parts.length === 3) {
+                        const [day, month, year] = parts.map(Number);
+                        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+                          expiry = new Date(year, month - 1, day);
+                          expiry.setHours(23, 59, 59, 999);
+                        }
+                      }
+                      
                       const now = new Date();
-                      const isActive = s.status === 'online' && expiry >= now && !s.isComingSoon;
+                      const isExpired = !expiry || expiry < now;
+                      const isActive = s.status === 'online' && !isExpired && !s.isComingSoon;
                       const isComing = s.isComingSoon;
-                      const isInactive = s.status === 'offline' || (expiry < now && !isComing);
+                      const isInactive = s.status === 'offline' || (isExpired && !isComing);
 
                       if (adminActiveTab === 'active') return isActive;
                       if (adminActiveTab === 'comingSoon') return isComing;
@@ -835,13 +859,21 @@ export default function AdminPanel() {
             </thead>
             <tbody>
               {servers.filter(s => {
-                const [day, month, year] = s.expiryDate.split('.').map(Number);
-                const expiry = new Date(year, month - 1, day);
-                expiry.setHours(23, 59, 59, 999);
+                const parts = s.expiryDate?.split('.');
+                let expiry: Date | null = null;
+                if (parts && parts.length === 3) {
+                  const [day, month, year] = parts.map(Number);
+                  if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+                    expiry = new Date(year, month - 1, day);
+                    expiry.setHours(23, 59, 59, 999);
+                  }
+                }
+                
                 const now = new Date();
-                const isActive = s.status === 'online' && expiry >= now && !s.isComingSoon;
+                const isExpired = !expiry || expiry < now;
+                const isActive = s.status === 'online' && !isExpired && !s.isComingSoon;
                 const isComing = s.isComingSoon;
-                const isInactive = s.status === 'offline' || (expiry < now && !isComing);
+                const isInactive = s.status === 'offline' || (isExpired && !isComing);
 
                 if (adminActiveTab === 'active') return isActive;
                 if (adminActiveTab === 'comingSoon') return isComing;

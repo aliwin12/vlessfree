@@ -299,19 +299,18 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
 
   const filteredKeys = keys.filter((key: any) => {
     // Automatic inactivation check
-    if (!key.expiryDate || typeof key.expiryDate !== 'string' || !key.expiryDate.includes('.')) {
-      return activeTab === 'inactive'; // No date = inactive/invalid
+    const parts = key.expiryDate?.split('.');
+    let expiry: Date | null = null;
+    if (parts && parts.length === 3) {
+      const [day, month, year] = parts.map(Number);
+      if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+        expiry = new Date(year, month - 1, day);
+        expiry.setHours(23, 59, 59, 999);
+      }
     }
-    const parts = key.expiryDate.split('.');
-    if (parts.length !== 3) return activeTab === 'inactive';
-    
-    const [day, month, year] = parts.map(Number);
-    if (isNaN(day) || isNaN(month) || isNaN(year)) return activeTab === 'inactive';
 
-    const expiry = new Date(year, month - 1, day);
-    expiry.setHours(23, 59, 59, 999);
     const now = new Date();
-    const isExpired = expiry < now;
+    const isExpired = !expiry || expiry < now;
 
     if (activeTab === 'active') {
       return (key.status === 'online' || key.status === 'unstable') && !isExpired && !key.isComingSoon;
