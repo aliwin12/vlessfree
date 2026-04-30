@@ -351,6 +351,23 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
     return diffDays <= 3 && diffDays >= 0;
   };
 
+  const isCriticallyExpiring = (expiryDate: string) => {
+    if (!expiryDate || typeof expiryDate !== 'string' || !expiryDate.includes('.')) return false;
+    const parts = expiryDate.split('.');
+    if (parts.length !== 3) return false;
+    const [day, month, year] = parts.map(Number);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+
+    // We assume expiry is at 23:59:59 of the given day
+    const expiry = new Date(year, month - 1, day, 23, 59, 59, 999);
+    const now = new Date();
+    
+    const diffMs = expiry.getTime() - now.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    
+    return diffHours <= 12 && diffHours > 0;
+  };
+
   return (
     <main className="relative pt-32 md:pt-56 pb-28 md:pb-20 px-4 md:px-6 max-w-7xl mx-auto min-h-screen flex flex-col">
       {/* Hero Section */}
@@ -575,7 +592,7 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
                         COMING SOON
                       </span>
                     )}
-                    {key.isDisappearingSoon && !key.isComingSoon && (
+                    {(key.isDisappearingSoon || isCriticallyExpiring(key.expiryDate)) && !key.isComingSoon && (
                       <span className="px-2 py-1 rounded-lg bg-rose-500 text-white text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(244,63,94,0.3)]">
                         SOON OFFLINE
                       </span>

@@ -358,6 +358,22 @@ export default function AdminPanel() {
     return diffDays <= 3 && diffDays >= 0;
   };
 
+  const isCriticallyExpiring = (expiryDate: string) => {
+    if (!expiryDate || typeof expiryDate !== 'string' || !expiryDate.includes('.')) return false;
+    const parts = expiryDate.split('.');
+    if (parts.length !== 3) return false;
+    const [day, month, year] = parts.map(Number);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+
+    const expiry = new Date(year, month - 1, day, 23, 59, 59, 999);
+    const now = new Date();
+    
+    const diffMs = expiry.getTime() - now.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    
+    return diffHours <= 12 && diffHours > 0;
+  };
+
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-black">
       <RefreshCw className="w-8 h-8 animate-spin text-white/20" />
@@ -894,7 +910,7 @@ export default function AdminPanel() {
                       <div className="flex flex-col relative">
                         <div className="flex items-center gap-2">
                           <span className="font-serif italic text-lg">{server.name}</span>
-                          {expiring && (
+                          {(expiring || isCriticallyExpiring(server.expiryDate)) && (
                             <AlertTriangle className="w-4 h-4 text-amber-500" />
                           )}
                           {server.isComingSoon && (
@@ -942,7 +958,7 @@ export default function AdminPanel() {
                           СКОРО БУДЕТ
                         </span>
                       )}
-                      {server.isDisappearingSoon && (
+                      {(server.isDisappearingSoon || isCriticallyExpiring(server.expiryDate)) && !server.isComingSoon && (
                         <span className="px-3 py-1 rounded-full text-[8px] uppercase tracking-widest font-bold border w-fit bg-rose-500/10 text-rose-500 border-rose-500/20">
                           СКОРО ИСЧЕЗНЕТ
                         </span>
