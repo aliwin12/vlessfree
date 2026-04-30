@@ -169,6 +169,16 @@ export default function AdminPanel() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Determine which tab the server should belong to after save
+      const [day, month, year] = formData.expiryDate.split('.').map(Number);
+      const expiry = new Date(year, month - 1, day);
+      expiry.setHours(23, 59, 59, 999);
+      const now = new Date();
+      
+      const willBeComingSoon = formData.isComingSoon;
+      const willBeActive = formData.status === 'online' && expiry >= now && !willBeComingSoon;
+      const willBeInactive = formData.status === 'offline' || (expiry < now && !willBeComingSoon);
+
       if (editingId) {
         await updateDoc(doc(db, 'servers', editingId), {
           ...formData,
@@ -183,6 +193,12 @@ export default function AdminPanel() {
         });
         setIsAdding(false);
       }
+
+      // Automatically switch to the correct tab so the user sees the server
+      if (willBeComingSoon) setAdminActiveTab('comingSoon');
+      else if (willBeActive) setAdminActiveTab('active');
+      else if (willBeInactive) setAdminActiveTab('inactive');
+
       setFormData({
         name: '', 
         protocol: 'VLESS / REALITY', 
@@ -198,6 +214,8 @@ export default function AdminPanel() {
         isComingSoon: false,
         isDisappearingSoon: false
       });
+      
+      alert(editingId ? "Изменения сохранены" : "Сервер успешно добавлен");
     } catch (error) {
       handleFirestoreError(error, editingId ? OperationType.UPDATE : OperationType.CREATE, 'servers');
     }
@@ -324,8 +342,12 @@ export default function AdminPanel() {
   };
 
   const isExpiringSoon = (expiryDate: string) => {
-    if (!expiryDate) return false;
-    const [day, month, year] = expiryDate.split('.').map(Number);
+    if (!expiryDate || typeof expiryDate !== 'string' || !expiryDate.includes('.')) return false;
+    const parts = expiryDate.split('.');
+    if (parts.length !== 3) return false;
+    const [day, month, year] = parts.map(Number);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+    
     const expiry = new Date(year, month - 1, day);
     const now = new Date();
     // Set both to start of day for accurate day difference

@@ -299,7 +299,15 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
 
   const filteredKeys = keys.filter((key: any) => {
     // Automatic inactivation check
-    const [day, month, year] = key.expiryDate.split('.').map(Number);
+    if (!key.expiryDate || typeof key.expiryDate !== 'string' || !key.expiryDate.includes('.')) {
+      return activeTab === 'inactive'; // No date = inactive/invalid
+    }
+    const parts = key.expiryDate.split('.');
+    if (parts.length !== 3) return activeTab === 'inactive';
+    
+    const [day, month, year] = parts.map(Number);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return activeTab === 'inactive';
+
     const expiry = new Date(year, month - 1, day);
     expiry.setHours(23, 59, 59, 999);
     const now = new Date();
@@ -328,8 +336,12 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
   }, [activeTab, selectedCountry]);
 
   const isExpiringSoon = (expiryDate: string) => {
-    if (!expiryDate) return false;
-    const [day, month, year] = expiryDate.split('.').map(Number);
+    if (!expiryDate || typeof expiryDate !== 'string' || !expiryDate.includes('.')) return false;
+    const parts = expiryDate.split('.');
+    if (parts.length !== 3) return false;
+    const [day, month, year] = parts.map(Number);
+    if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+
     const expiry = new Date(year, month - 1, day);
     const now = new Date();
     // Set both to start of day for accurate day difference
