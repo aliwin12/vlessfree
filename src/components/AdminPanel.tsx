@@ -36,7 +36,7 @@ export default function AdminPanel() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingWarningId, setEditingWarningId] = useState<string | null>(null);
   const [selectedServers, setSelectedServers] = useState<string[]>([]);
-  const [adminActiveTab, setAdminActiveTab] = useState<'active' | 'inactive'>('active');
+  const [adminActiveTab, setAdminActiveTab] = useState<'active' | 'inactive' | 'comingSoon'>('active');
   const [formData, setFormData] = useState({
     name: '',
     protocol: 'VLESS / REALITY',
@@ -656,15 +656,6 @@ export default function AdminPanel() {
                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:border-white/30 transition-all outline-none"
                   />
                 </div>
-                <label className="flex items-center gap-3 cursor-pointer group p-2">
-                  <input 
-                    type="checkbox"
-                    checked={formData.isSpecial}
-                    onChange={e => setFormData({...formData, isSpecial: e.target.checked})}
-                    className="w-5 h-5 rounded-lg border-white/10 bg-white/5 checked:bg-white accent-white"
-                  />
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-white/60 group-hover:text-white transition-colors">Специальный (пароль нужен)</span>
-                </label>
               </div>
 
               <button 
@@ -743,11 +734,18 @@ export default function AdminPanel() {
           Активные ({servers.filter(s => {
             const [day, month, year] = s.expiryDate.split('.').map(Number);
             const expiry = new Date(year, month - 1, day);
-            expiry.setHours(0, 0, 0, 0);
+            expiry.setHours(23, 59, 59, 999);
             const now = new Date();
-            now.setHours(0, 0, 0, 0);
-            return s.status === 'online' && expiry >= now;
+            return s.status === 'online' && expiry >= now && !s.isComingSoon;
           }).length})
+        </button>
+        <button 
+          onClick={() => setAdminActiveTab('comingSoon')}
+          className={`flex-1 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all ${
+            adminActiveTab === 'comingSoon' ? 'bg-emerald-500 text-white shadow-xl shadow-emerald-500/10' : 'bg-white/5 text-white/40 hover:bg-white/10'
+          }`}
+        >
+          Скоро будет ({servers.filter(s => s.isComingSoon).length})
         </button>
         <button 
           onClick={() => setAdminActiveTab('inactive')}
@@ -758,10 +756,9 @@ export default function AdminPanel() {
           Неактивные ({servers.filter(s => {
             const [day, month, year] = s.expiryDate.split('.').map(Number);
             const expiry = new Date(year, month - 1, day);
-            expiry.setHours(0, 0, 0, 0);
+            expiry.setHours(23, 59, 59, 999);
             const now = new Date();
-            now.setHours(0, 0, 0, 0);
-            return s.status === 'offline' || expiry < now;
+            return s.status === 'offline' || (expiry < now && !s.isComingSoon);
           }).length})
         </button>
       </div>
@@ -778,11 +775,15 @@ export default function AdminPanel() {
                       const filteredServers = servers.filter(s => {
                         const [day, month, year] = s.expiryDate.split('.').map(Number);
                         const expiry = new Date(year, month - 1, day);
-                        expiry.setHours(0, 0, 0, 0);
+                        expiry.setHours(23, 59, 59, 999);
                         const now = new Date();
-                        now.setHours(0, 0, 0, 0);
-                        const isActive = s.status === 'online' && expiry >= now;
-                        return adminActiveTab === 'active' ? isActive : !isActive;
+                        const isActive = s.status === 'online' && expiry >= now && !s.isComingSoon;
+                        const isComing = s.isComingSoon;
+                        const isInactive = s.status === 'offline' || (expiry < now && !isComing);
+                        
+                        if (adminActiveTab === 'active') return isActive;
+                        if (adminActiveTab === 'comingSoon') return isComing;
+                        return isInactive;
                       });
                       if (e.target.checked) setSelectedServers(filteredServers.map(s => s.id));
                       else setSelectedServers([]);
@@ -790,11 +791,15 @@ export default function AdminPanel() {
                     checked={selectedServers.length > 0 && selectedServers.length === servers.filter(s => {
                       const [day, month, year] = s.expiryDate.split('.').map(Number);
                       const expiry = new Date(year, month - 1, day);
-                      expiry.setHours(0, 0, 0, 0);
+                      expiry.setHours(23, 59, 59, 999);
                       const now = new Date();
-                      now.setHours(0, 0, 0, 0);
-                      const isActive = s.status === 'online' && expiry >= now;
-                      return adminActiveTab === 'active' ? isActive : !isActive;
+                      const isActive = s.status === 'online' && expiry >= now && !s.isComingSoon;
+                      const isComing = s.isComingSoon;
+                      const isInactive = s.status === 'offline' || (expiry < now && !isComing);
+
+                      if (adminActiveTab === 'active') return isActive;
+                      if (adminActiveTab === 'comingSoon') return isComing;
+                      return isInactive;
                     }).length}
                     className="w-4 h-4 rounded border-white/10 bg-white/5 accent-white"
                   />
@@ -810,11 +815,15 @@ export default function AdminPanel() {
               {servers.filter(s => {
                 const [day, month, year] = s.expiryDate.split('.').map(Number);
                 const expiry = new Date(year, month - 1, day);
-                expiry.setHours(0, 0, 0, 0);
+                expiry.setHours(23, 59, 59, 999);
                 const now = new Date();
-                now.setHours(0, 0, 0, 0);
-                const isActive = s.status === 'online' && expiry >= now;
-                return adminActiveTab === 'active' ? isActive : !isActive;
+                const isActive = s.status === 'online' && expiry >= now && !s.isComingSoon;
+                const isComing = s.isComingSoon;
+                const isInactive = s.status === 'offline' || (expiry < now && !isComing);
+
+                if (adminActiveTab === 'active') return isActive;
+                if (adminActiveTab === 'comingSoon') return isComing;
+                return isInactive;
               }).map((server) => {
                 const expiring = isExpiringSoon(server.expiryDate) && server.status !== 'offline';
                 return (
