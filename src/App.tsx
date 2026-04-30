@@ -644,12 +644,6 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
                       <Calendar className="w-3 h-3" />
                       <span>До: {key.expiryDate}</span>
                     </div>
-                    {isExpiringSoon(key.expiryDate) && key.status !== 'offline' && (
-                      <span className={`${isCriticallyExpiring(key.expiryDate) ? 'text-rose-500 animate-pulse' : 'text-amber-500'} opacity-100 flex items-center gap-1`}>
-                        <AlertTriangle className="w-3 h-3" />
-                        {isCriticallyExpiring(key.expiryDate) ? 'Отключится сегодня' : 'Истекает скоро'}
-                      </span>
-                    )}
                   </div>
                 </div>
 

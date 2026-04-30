@@ -947,12 +947,10 @@ export default function AdminPanel() {
                       }`}>
                         {server.status}
                       </span>
-                      {(expiring || isCriticallyExpiring(server.expiryDate)) && (
-                        <span className={`px-3 py-1 rounded-full text-[8px] uppercase tracking-widest font-bold border w-fit flex items-center gap-1 ${
-                          isCriticallyExpiring(server.expiryDate) ? 'bg-rose-500/10 text-rose-500 border-rose-500/20 animate-pulse' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-                        }`}>
+                      {isCriticallyExpiring(server.expiryDate) && (
+                        <span className="px-3 py-1 rounded-full text-[8px] uppercase tracking-widest font-bold border w-fit flex items-center gap-1 bg-rose-500/10 text-rose-500 border-rose-500/20 animate-pulse">
                           <AlertTriangle className="w-2.5 h-2.5" />
-                          {isCriticallyExpiring(server.expiryDate) ? 'ИСТЕКАЕТ СЕГОДНЯ' : 'СКОРО ИСТЕКАЕТ'}
+                          ИСТЕКАЕТ СЕГОДНЯ
                         </span>
                       )}
                       {server.isComingSoon && (
