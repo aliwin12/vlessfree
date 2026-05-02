@@ -1315,7 +1315,7 @@ function AppContent() {
 
       const fetchGeo = async (url: string) => {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout for each
+        const timeoutId = setTimeout(() => controller.abort(), 4000); 
         try {
           const res = await fetch(url, { signal: controller.signal });
           clearTimeout(timeoutId);
@@ -1328,29 +1328,33 @@ function AppContent() {
       };
 
       try {
-        // Try chain of services
-        try {
-          geoData = await fetchGeo('https://ipapi.co/json/');
-        } catch (e) {
+        const services = [
+          'https://ipapi.co/json/',
+          'https://freeipapi.com/api/json',
+          'https://ipwho.is/',
+          'https://api.db-ip.com/v2/free/self'
+        ];
+
+        for (const url of services) {
           try {
-            geoData = await fetchGeo('https://ipwho.is/');
-          } catch (e2) {
-            try {
-              geoData = await fetchGeo('https://api.db-ip.com/v2/free/self');
-            } catch (e3) {
-              // Last resort: simple IP only
-              const ipOnly = await fetchGeo('https://api.ipify.org?format=json');
-              geoData = { ip: ipOnly.ip, country_name: 'Unknown' };
-            }
+            geoData = await fetchGeo(url);
+            if (geoData) break;
+          } catch (e) {
+            continue;
           }
+        }
+
+        if (!geoData) {
+          const ipOnly = await fetchGeo('https://api.ipify.org?format=json');
+          geoData = { ip: ipOnly.ip };
         }
       } catch (e) {
         console.warn('All geolocation services failed', e);
       }
 
       if (geoData) {
-        userIp = geoData.ip || geoData.query || 'Unknown';
-        country = geoData.country_name || geoData.country || 'Unknown';
+        userIp = geoData.ip || geoData.query || geoData.ipAddress || 'Unknown';
+        country = geoData.country_name || geoData.country || geoData.countryName || 'Unknown';
       }
 
       try {
