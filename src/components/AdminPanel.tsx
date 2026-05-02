@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db, auth, googleProvider, signInWithPopup, signOut, serversCollection, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, handleFirestoreError, OperationType } from '../lib/firebase';
-import { Trash2, Edit3, Plus, LogOut, Shield, ChevronRight, Save, X, Globe, Activity, Calendar, ExternalLink, RefreshCw, Layers, AlertTriangle, Bell, Eye, EyeOff, Info } from 'lucide-react';
+import { db, auth, googleProvider, signInWithPopup, signOut, serversCollection, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, handleFirestoreError, OperationType, limit, where, getDocs } from '../lib/firebase';
+import { Trash2, Edit3, Plus, LogOut, Shield, ChevronRight, Save, X, Globe, Activity, Calendar, ExternalLink, RefreshCw, Layers, AlertTriangle, Bell, Eye, EyeOff, Info, UserX, Users, MapPin, MonitorSmartphone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 
@@ -31,12 +31,15 @@ export default function AdminPanel() {
   const [isImporting, setIsImporting] = useState(false);
   const [servers, setServers] = useState<any[]>([]);
   const [warnings, setWarnings] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
+  const [visits, setVisits] = useState<any[]>([]);
+  const [blockedIps, setBlockedIps] = useState<any[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [isAddingWarning, setIsAddingWarning] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingWarningId, setEditingWarningId] = useState<string | null>(null);
   const [selectedServers, setSelectedServers] = useState<string[]>([]);
-  const [adminActiveTab, setAdminActiveTab] = useState<'active' | 'inactive' | 'comingSoon'>('active');
+  const [adminActiveTab, setAdminActiveTab] = useState<'active' | 'inactive' | 'comingSoon' | 'reports' | 'visits' | 'blocked'>('active');
   const [formData, setFormData] = useState({
     name: '',
     protocol: 'VLESS / REALITY',
@@ -105,10 +108,37 @@ export default function AdminPanel() {
       handleFirestoreError(error, OperationType.LIST, 'warnings');
     });
 
+    const reportsQuery = query(collection(db, 'reports'), orderBy('createdAt', 'desc'));
+    const unsubscribeReports = onSnapshot(reportsQuery, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      setReports(docs);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'reports');
+    });
+
+    const visitsQuery = query(collection(db, 'visits'), orderBy('visitedAt', 'desc'), limit(100));
+    const unsubscribeVisits = onSnapshot(visitsQuery, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      setVisits(docs);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'visits');
+    });
+
+    const blockedQuery = query(collection(db, 'blocked_ips'), orderBy('blockedAt', 'desc'));
+    const unsubscribeBlocked = onSnapshot(blockedQuery, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      setBlockedIps(docs);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'blocked_ips');
+    });
+
     return () => {
       unsubscribeAuth();
       unsubscribeDocs();
       unsubscribeWarnings();
+      unsubscribeReports();
+      unsubscribeVisits();
+      unsubscribeBlocked();
     };
   }, []);
 
@@ -289,6 +319,57 @@ export default function AdminPanel() {
         await deleteDoc(doc(db, 'warnings', id));
       } catch (error) {
         handleFirestoreError(error, OperationType.DELETE, 'warnings');
+      }
+    }
+  };
+
+  const handleUpdateReportStatus = async (reportId: string, status: string) => {
+    try {
+      await updateDoc(doc(db, 'reports', reportId), { status });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'reports');
+    }
+  };
+
+  const handleDeleteReport = async (reportId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm("Удалить этот репорт?")) {
+      try {
+        await deleteDoc(doc(db, 'reports', reportId));
+      } catch (error) {
+        handleFirestoreError(error, OperationType.DELETE, 'reports');
+      }
+    }
+  };
+
+  const handleBlockIp = async (ip: string) => {
+    if (window.confirm(`Заблокировать IP ${ip}?`)) {
+      try {
+        // First check if already blocked
+        const q = query(collection(db, 'blocked_ips'), where('ip', '==', ip));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          alert("Этот IP уже заблокирован");
+          return;
+        }
+
+        await addDoc(collection(db, 'blocked_ips'), {
+          ip,
+          blockedAt: serverTimestamp(),
+          reason: 'Заблокирован админом'
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, 'blocked_ips');
+      }
+    }
+  };
+
+  const handleUnblockIp = async (id: string) => {
+    if (window.confirm("Разблокировать этот IP?")) {
+      try {
+        await deleteDoc(doc(db, 'blocked_ips', id));
+      } catch (error) {
+        handleFirestoreError(error, OperationType.DELETE, 'blocked_ips');
       }
     }
   };
@@ -807,13 +888,210 @@ export default function AdminPanel() {
             return s.status === 'offline' || (expiry < now && !s.isComingSoon);
           }).length})
         </button>
+        <button 
+          onClick={() => setAdminActiveTab('reports')}
+          className={`flex-1 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all ${
+            adminActiveTab === 'reports' ? 'bg-amber-500 text-black shadow-xl shadow-amber-500/20' : 'bg-white/5 text-white/40 hover:bg-white/10'
+          }`}
+        >
+          Репорты ({reports.filter(r => r.status === 'pending').length})
+        </button>
+        <button 
+          onClick={() => setAdminActiveTab('visits')}
+          className={`flex-1 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all ${
+            adminActiveTab === 'visits' ? 'bg-amber-500 text-black shadow-xl shadow-amber-500/20' : 'bg-white/5 text-white/40 hover:bg-white/10'
+          }`}
+        >
+          Визиты
+        </button>
+        <button 
+          onClick={() => setAdminActiveTab('blocked')}
+          className={`flex-1 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all ${
+            adminActiveTab === 'blocked' ? 'bg-amber-500 text-black shadow-xl shadow-amber-500/20' : 'bg-white/5 text-white/40 hover:bg-white/10'
+          }`}
+        >
+          Бан ({blockedIps.length})
+        </button>
       </div>
 
       <div className="glass rounded-[40px] border border-white/10 overflow-hidden">
-        <div className="overflow-x-auto no-scrollbar">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-white/10 bg-white/5">
+        {adminActiveTab === 'reports' ? (
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5">
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Сервер</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Пользователь</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Причина</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Описание</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Статус</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reports.map((report) => (
+                  <tr key={report.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                    <td className="p-6">
+                      <div className="font-serif italic">{report.serverName}</div>
+                      <div className="text-[10px] opacity-40">{report.createdAt?.toDate?.().toLocaleString() || 'Неизвестно'}</div>
+                    </td>
+                    <td className="p-6">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 group">
+                          <code className="text-[10px] text-amber-500">{report.userIp}</code>
+                          <button 
+                            onClick={() => handleBlockIp(report.userIp)}
+                            className="opacity-0 group-hover:opacity-100 p-1 rounded bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all"
+                            title="Заблокировать IP"
+                          >
+                            <UserX className="w-3 h-3" />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1 text-[9px] opacity-40">
+                          <Globe className="w-2.5 h-2.5" />
+                          <span>{report.country}</span>
+                        </div>
+                        <div className="text-[9px] opacity-40 max-w-[150px] truncate" title={report.browser}>
+                          {report.browser}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-6">
+                      <span className={`px-2 py-1 rounded-lg text-[10px] font-bold ${
+                        report.reason === 'not_working' ? 'bg-rose-500/10 text-rose-500' :
+                        report.reason === 'info_error' ? 'bg-amber-500/10 text-amber-500' :
+                        report.reason === 'slow_speed' ? 'bg-purple-500/10 text-purple-500' : 'bg-white/10 text-white/60'
+                      }`}>
+                        {report.reason === 'not_working' ? 'Не работает' :
+                         report.reason === 'info_error' ? 'Инфо ошибка' :
+                         report.reason === 'slow_speed' ? 'Медленно' : 'Другое'}
+                      </span>
+                    </td>
+                    <td className="p-6 text-xs text-white/60 max-w-xs">{report.description || '-'}</td>
+                    <td className="p-6">
+                      <select 
+                        value={report.status}
+                        onChange={(e) => handleUpdateReportStatus(report.id, e.target.value)}
+                        className="bg-black/20 border border-white/10 rounded-lg text-xs p-2 focus:outline-none focus:border-white/20"
+                      >
+                        <option value="pending">Ожидает</option>
+                        <option value="resolved">Решено</option>
+                        <option value="dismissed">Отклонено</option>
+                      </select>
+                    </td>
+                    <td className="p-6 text-right">
+                      <button 
+                        onClick={(e) => handleDeleteReport(report.id, e)}
+                        className="p-3 rounded-xl bg-white/5 hover:bg-rose-500/10 hover:text-rose-500 transition-all"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {reports.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-12 text-center text-white/20 italic">Нет активных репортов</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : adminActiveTab === 'visits' ? (
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5">
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">IP / Страна</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Браузер</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Время</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visits.map((visit) => (
+                  <tr key={visit.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                    <td className="p-6">
+                      <div className="flex items-center gap-2 mb-1">
+                        <code className="text-xs text-amber-500">{visit.userIp}</code>
+                        <span className="text-[10px] opacity-40 flex items-center gap-1">
+                          <MapPin className="w-2.5 h-2.5" />
+                          {visit.country}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-6">
+                      <div className="flex items-center gap-2 text-xs opacity-60">
+                        <MonitorSmartphone className="w-3 h-3" />
+                        <span className="max-w-xs truncate" title={visit.browser}>{visit.browser}</span>
+                      </div>
+                    </td>
+                    <td className="p-6 text-xs opacity-40">
+                      {visit.visitedAt?.toDate?.().toLocaleString() || 'Неизвестно'}
+                    </td>
+                    <td className="p-6">
+                      <button 
+                        onClick={() => handleBlockIp(visit.userIp)}
+                        className="p-2 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all"
+                        title="Заблокировать"
+                      >
+                        <UserX className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {visits.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="p-12 text-center text-white/20 italic">Нет логов посещений</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : adminActiveTab === 'blocked' ? (
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5">
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">IP</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Дата блока</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Причина</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40 text-right">Разблокировать</th>
+                </tr>
+              </thead>
+              <tbody>
+                {blockedIps.map((b) => (
+                  <tr key={b.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                    <td className="p-6">
+                      <code className="text-rose-500 font-bold">{b.ip}</code>
+                    </td>
+                    <td className="p-6 text-xs opacity-40">
+                      {b.blockedAt?.toDate?.().toLocaleString() || 'Неизвестно'}
+                    </td>
+                    <td className="p-6 text-xs opacity-60 italic">{b.reason}</td>
+                    <td className="p-6 text-right">
+                      <button 
+                        onClick={() => handleUnblockIp(b.id)}
+                        className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {blockedIps.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="p-12 text-center text-white/20 italic">Черный список пуст</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5">
                 <th className="p-6">
                   <input 
                     type="checkbox" 
@@ -988,7 +1266,8 @@ export default function AdminPanel() {
             </tbody>
           </table>
         </div>
-      </div>
+      )}
     </div>
-  );
+  </div>
+);
 }

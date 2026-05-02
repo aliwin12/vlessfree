@@ -43,6 +43,46 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["text", "type", "active", "replaceContent", "createdAt"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "User report about a server issue",
+      "type": "object",
+      "properties": {
+        "serverId": { "type": "string" },
+        "serverName": { "type": "string" },
+        "reason": { "type": "string", "enum": ["not_working", "info_error", "slow_speed", "other"] },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "resolved", "dismissed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "userIp": { "type": "string" },
+        "browser": { "type": "string" },
+        "country": { "type": "string" }
+      },
+      "required": ["serverId", "serverName", "reason", "status", "createdAt"]
+    },
+    "BlockedIP": {
+      "title": "Blocked IP",
+      "description": "IP addresses blocked from the system",
+      "type": "object",
+      "properties": {
+        "ip": { "type": "string" },
+        "reason": { "type": "string" },
+        "blockedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["ip", "blockedAt"]
+    },
+    "Visit": {
+      "title": "Site Visit",
+      "description": "Log of user visits",
+      "type": "object",
+      "properties": {
+        "userIp": { "type": "string" },
+        "browser": { "type": "string" },
+        "country": { "type": "string" },
+        "visitedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userIp", "visitedAt"]
     }
   },
   "firestore": {
@@ -57,6 +97,18 @@
     "/warnings/{warningId}": {
       "schema": "Warning",
       "description": "System-wide alerts"
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "User submitted server issues"
+    },
+    "/blocked_ips/{ipId}": {
+      "schema": "BlockedIP",
+      "description": "IP blacklist"
+    },
+    "/visits/{visitId}": {
+      "schema": "Visit",
+      "description": "Visitor logs"
     }
   }
 }

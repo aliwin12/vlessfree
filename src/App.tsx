@@ -9,8 +9,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { MOCK_KEYS, VlessKey } from './data/keys';
-import { db, collection, query, orderBy, onSnapshot, handleFirestoreError, OperationType } from './lib/firebase';
+import { db, collection, query, orderBy, onSnapshot, handleFirestoreError, OperationType, addDoc, serverTimestamp, getDocs, where } from './lib/firebase';
 import AdminPanel from './components/AdminPanel';
+import ReportPage from './components/ReportPage';
 
 const UPDATES = [
   {
@@ -122,12 +123,20 @@ function Header({ scrolled }: { scrolled: boolean }) {
           </Link>
           
           {/* Desktop Button */}
-          <Link 
-            to="/how-to-use" 
-            className="hidden md:block absolute right-0 px-4 py-2 rounded-xl bg-white/5 hover:bg-white hover:text-black text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10"
-          >
-            Как установить VPN
-          </Link>
+          <div className="hidden md:flex absolute right-0 items-center gap-2">
+            <Link 
+              to="/report" 
+              className="px-4 py-2 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-rose-500/20"
+            >
+              Репорты
+            </Link>
+            <Link 
+              to="/how-to-use" 
+              className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white hover:text-black text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10"
+            >
+              Как установить VPN
+            </Link>
+          </div>
         </div>
       </div>
     </header>
@@ -169,6 +178,18 @@ function BottomNav() {
             <Globe className={`w-5 h-5 ${isActive('/') ? 'glow-text' : ''}`} />
           </motion.div>
           <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/') ? 'opacity-100' : 'opacity-60'}`}>Сервера</span>
+        </Link>
+        <Link 
+          to="/report" 
+          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/report') ? 'text-white' : 'text-white/30'}`}
+        >
+          <motion.div 
+            whileTap={{ scale: 0.9 }}
+            className={`p-1.5 rounded-xl transition-all duration-300 ${isActive('/report') ? 'bg-white/10' : ''}`}
+          >
+            <AlertTriangle className={`w-5 h-5 ${isActive('/report') ? 'glow-text' : ''}`} />
+          </motion.div>
+          <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/report') ? 'opacity-100' : 'opacity-60'}`}>Репорт</span>
         </Link>
         <Link 
           to="/how-to-use" 
@@ -1287,6 +1308,76 @@ function AppContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const initApp = async () => {
+      let userIp = 'Unknown';
+      let country = 'Unknown';
+      let geoData: any = null;
+
+      const fetchGeo = async (url: string) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3s timeout for each
+        try {
+          const res = await fetch(url, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (!res.ok) throw new Error('Network response was not ok');
+          return res.json();
+        } catch (e) {
+          clearTimeout(timeoutId);
+          throw e;
+        }
+      };
+
+      try {
+        // Try chain of services
+        try {
+          geoData = await fetchGeo('https://ipapi.co/json/');
+        } catch (e) {
+          try {
+            geoData = await fetchGeo('https://ipwho.is/');
+          } catch (e2) {
+            try {
+              geoData = await fetchGeo('https://api.db-ip.com/v2/free/self');
+            } catch (e3) {
+              // Last resort: simple IP only
+              const ipOnly = await fetchGeo('https://api.ipify.org?format=json');
+              geoData = { ip: ipOnly.ip, country_name: 'Unknown' };
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('All geolocation services failed', e);
+      }
+
+      if (geoData) {
+        userIp = geoData.ip || geoData.query || 'Unknown';
+        country = geoData.country_name || geoData.country || 'Unknown';
+      }
+
+      try {
+        // Check if blocked
+        if (userIp !== 'Unknown') {
+          const blockedSnap = await getDocs(query(collection(db, 'blocked_ips'), where('ip', '==', userIp)));
+          if (!blockedSnap.empty) {
+            document.body.innerHTML = '<div style="height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#050505;color:white;font-family:serif;font-style:italic;padding:2rem;text-align:center;"><div style="width:80px;height:80px;background:rgba(244,63,94,0.1);border-radius:24px;display:flex;align-items:center;justify-content:center;margin-bottom:2rem;"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div><h1 style="font-size:2rem;margin-bottom:1rem;">Доступ ограничен</h1><p style="opacity:0.4;max-width:400px;line-height:1.6;">Ваш IP-адрес был заблокирован за нарушение правил использования сервиса или подозрительную активность.</p></div>';
+            return;
+          }
+        }
+
+        // Log visit
+        await addDoc(collection(db, 'visits'), {
+          userIp,
+          browser: navigator.userAgent,
+          country,
+          visitedAt: serverTimestamp()
+        });
+      } catch (e) {
+        console.error('Visit log logic failed', e);
+      }
+    };
+    initApp();
+  }, []);
+
+  useEffect(() => {
     const q = query(collection(db, 'warnings'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
@@ -1497,17 +1588,28 @@ function AppContent() {
                 </div>
               </div>
 
-              <button 
-                onClick={() => handleCopy(selectedKey.id, selectedKey.config)}
-                className={`w-full py-4 md:py-5 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${
-                  copiedId === selectedKey.id 
-                  ? 'bg-emerald-500 text-white' 
-                  : 'bg-white text-black'
-                }`}
-              >
-                {copiedId === selectedKey.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copiedId === selectedKey.id ? 'Скопировано' : 'Копировать ключ'}
-              </button>
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => handleCopy(selectedKey.id, selectedKey.config)}
+                  className={`w-full py-4 md:py-5 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${
+                    copiedId === selectedKey.id 
+                    ? 'bg-emerald-500 text-white' 
+                    : 'bg-white text-black'
+                  }`}
+                >
+                  {copiedId === selectedKey.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  {copiedId === selectedKey.id ? 'Скопировано' : 'Копировать ключ'}
+                </button>
+
+                <Link
+                  to={`/report?serverId=${selectedKey.id}&serverName=${encodeURIComponent(selectedKey.name)}`}
+                  className="w-full py-3 md:py-4 rounded-xl md:rounded-2xl text-[8px] md:text-[10px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-white/5 text-white/40 hover:bg-white/10 hover:text-rose-500 border border-white/5"
+                  onClick={() => setSelectedKey(null)}
+                >
+                  <AlertTriangle className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                  Сообщить о проблеме
+                </Link>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -1550,6 +1652,7 @@ function AppContent() {
           />
         } />
         <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/report" element={<ReportPage />} />
       </Routes>
     </div>
   );

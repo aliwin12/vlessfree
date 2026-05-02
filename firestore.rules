@@ -77,7 +77,33 @@ service cloud.firestore {
       allow write: if isVerified() && request.auth.token.email == 'bubinadubina5@gmail.com';
     }
 
-    // 4. Test Path (Internal)
+    // 4. Reports Collection
+    function isValidReport(data) {
+      return data.serverId is string &&
+             data.serverName is string &&
+             data.reason in ['not_working', 'info_error', 'slow_speed', 'other'] &&
+             data.status in ['pending', 'resolved', 'dismissed'];
+    }
+
+    match /reports/{reportId} {
+      allow create: if isValidId(incoming().serverId) && 
+                      incoming().createdAt == request.time;
+      allow get, list, update, delete: if isAdmin();
+    }
+
+    // 5. Visits Collection
+    match /visits/{visitId} {
+      allow create: if true; // Everyone can log a visit (client side)
+      allow get, list, update, delete: if isAdmin();
+    }
+
+    // 6. Blocked IPs
+    match /blocked_ips/{ipId} {
+      allow read: if true; // Publicly readable so client can check if they are blocked
+      allow write: if isAdmin();
+    }
+
+    // 7. Test Path (Internal)
     match /test/connection {
       allow read: if true;
     }
