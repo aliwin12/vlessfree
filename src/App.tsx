@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, Calendar, X, AlertTriangle, Monitor, Smartphone, Terminal, Info, ChevronRight, Download, ExternalLink, Menu, Share2, Folder, ChevronDown, Bell } from 'lucide-react';
+import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, Calendar, X, AlertTriangle, Monitor, Smartphone, Terminal, Info, ChevronRight, Download, ExternalLink, Menu, Share2, Folder, ChevronDown, Bell, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -12,6 +12,7 @@ import { MOCK_KEYS, VlessKey } from './data/keys';
 import { db, collection, query, orderBy, onSnapshot, handleFirestoreError, OperationType, addDoc, serverTimestamp, getDocs, where } from './lib/firebase';
 import AdminPanel from './components/AdminPanel';
 import ReportPage from './components/ReportPage';
+import SuggestServerPage from './components/SuggestServerPage';
 
 const UPDATES = [
   {
@@ -125,6 +126,13 @@ function Header({ scrolled }: { scrolled: boolean }) {
           {/* Desktop Button */}
           <div className="hidden md:flex absolute right-0 items-center gap-2">
             <Link 
+              to="/suggest" 
+              className="px-4 py-2 rounded-xl bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-black text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-amber-500/20 flex items-center gap-2"
+            >
+              <Plus size={12} />
+              Добавить сервер
+            </Link>
+            <Link 
               to="/report" 
               className="px-4 py-2 rounded-xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-rose-500/20"
             >
@@ -178,6 +186,18 @@ function BottomNav() {
             <Globe className={`w-5 h-5 ${isActive('/') ? 'glow-text' : ''}`} />
           </motion.div>
           <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/') ? 'opacity-100' : 'opacity-60'}`}>Сервера</span>
+        </Link>
+        <Link 
+          to="/suggest" 
+          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/suggest') ? 'text-white' : 'text-white/30'}`}
+        >
+          <motion.div 
+            whileTap={{ scale: 0.9 }}
+            className={`p-1.5 rounded-xl transition-all duration-300 ${isActive('/suggest') ? 'bg-amber-500/20' : ''}`}
+          >
+            <Plus className={`w-5 h-5 ${isActive('/suggest') ? 'text-amber-500' : ''}`} />
+          </motion.div>
+          <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/suggest') ? 'opacity-100 text-amber-500' : 'opacity-60'}`}>Добавить</span>
         </Link>
         <Link 
           to="/report" 
@@ -1320,7 +1340,12 @@ function AppContent() {
           const res = await fetch(url, { signal: controller.signal });
           clearTimeout(timeoutId);
           if (!res.ok) throw new Error('Network response was not ok');
-          return res.json();
+          const data = await res.json();
+          // Normalize data structure
+          return {
+            ip: data.ip || data.query || data.ipAddress || data.address || null,
+            country: data.country_name || data.country || data.countryName || data.country_code || null
+          };
         } catch (e) {
           clearTimeout(timeoutId);
           throw e;
@@ -1332,29 +1357,34 @@ function AppContent() {
           'https://ipapi.co/json/',
           'https://freeipapi.com/api/json',
           'https://ipwho.is/',
-          'https://api.db-ip.com/v2/free/self'
+          'https://api.db-ip.com/v2/free/self',
+          'https://ip-api.com/json/'
         ];
 
         for (const url of services) {
           try {
-            geoData = await fetchGeo(url);
-            if (geoData) break;
+            const normalized = await fetchGeo(url);
+            if (normalized.ip) {
+              geoData = normalized;
+              break;
+            }
           } catch (e) {
             continue;
           }
         }
 
         if (!geoData) {
-          const ipOnly = await fetchGeo('https://api.ipify.org?format=json');
-          geoData = { ip: ipOnly.ip };
+          const res = await fetch('https://api.ipify.org?format=json');
+          const data = await res.json();
+          geoData = { ip: data.ip, country: 'Unknown' };
         }
       } catch (e) {
         console.warn('All geolocation services failed', e);
       }
 
       if (geoData) {
-        userIp = geoData.ip || geoData.query || geoData.ipAddress || 'Unknown';
-        country = geoData.country_name || geoData.country || geoData.countryName || 'Unknown';
+        userIp = geoData.ip || 'Unknown';
+        country = geoData.country || 'Unknown';
       }
 
       try {
@@ -1657,6 +1687,7 @@ function AppContent() {
         } />
         <Route path="/admin" element={<AdminPanel />} />
         <Route path="/report" element={<ReportPage />} />
+        <Route path="/suggest" element={<SuggestServerPage />} />
       </Routes>
     </div>
   );

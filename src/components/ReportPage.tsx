@@ -98,7 +98,11 @@ export default function ReportPage() {
         const res = await fetch(url, { signal: controller.signal });
         clearTimeout(timeoutId);
         if (!res.ok) throw new Error();
-        return res.json();
+        const data = await res.json();
+        return {
+          ip: data.ip || data.query || data.ipAddress || data.address || null,
+          country: data.country_name || data.country || data.countryName || data.country_code || null
+        };
       } catch (e) {
         clearTimeout(timeoutId);
         throw e;
@@ -111,25 +115,28 @@ export default function ReportPage() {
         'https://ipapi.co/json/',
         'https://freeipapi.com/api/json',
         'https://ipwho.is/',
-        'https://api.db-ip.com/v2/free/self'
+        'https://api.db-ip.com/v2/free/self',
+        'https://ip-api.com/json/'
       ];
 
       for (const url of services) {
         try {
           data = await fetchGeo(url);
-          if (data) break;
+          if (data && data.ip) break;
         } catch (e) {
           continue;
         }
       }
       
       if (!data) {
-        data = await fetchGeo('https://api.ipify.org?format=json');
+        const res = await fetch('https://api.ipify.org?format=json');
+        const ipData = await res.json();
+        data = { ip: ipData.ip, country: 'Unknown' };
       }
       
       if (data) {
-        country = data.country_name || data.country || data.countryName || 'Unknown';
-        ip = data.ip || data.query || data.ipAddress || 'Unknown';
+        country = data.country || 'Unknown';
+        ip = data.ip || 'Unknown';
       }
     } catch (e) {
       console.warn('Metadata fetch failed on all services');

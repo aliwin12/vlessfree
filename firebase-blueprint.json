@@ -83,6 +83,23 @@
         "visitedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userIp", "visitedAt"]
+    },
+    "ServerSuggestion": {
+      "title": "Server Suggestion",
+      "description": "User suggested server for the platform",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "protocol": { "type": "string" },
+        "country": { "type": "string" },
+        "city": { "type": "string" },
+        "config": { "type": "string" },
+        "suggestedBy": { "type": "string", "description": "Email or identifier of suggester" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "userIp": { "type": "string" }
+      },
+      "required": ["name", "protocol", "country", "city", "config", "status", "createdAt"]
     }
   },
   "firestore": {
@@ -109,6 +126,10 @@
     "/visits/{visitId}": {
       "schema": "Visit",
       "description": "Visitor logs"
+    },
+    "/server_suggestions/{suggestionId}": {
+      "schema": "ServerSuggestion",
+      "description": "Queue for user suggested servers"
     }
   }
 }

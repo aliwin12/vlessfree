@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth, googleProvider, signInWithPopup, signOut, serversCollection, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, handleFirestoreError, OperationType, limit, where, getDocs } from '../lib/firebase';
-import { Trash2, Edit3, Plus, LogOut, Shield, ChevronRight, Save, X, Globe, Activity, Calendar, ExternalLink, RefreshCw, Layers, AlertTriangle, Bell, Eye, EyeOff, Info, UserX, Users, MapPin, MonitorSmartphone } from 'lucide-react';
+import { Trash2, Edit3, Plus, LogOut, Shield, ChevronRight, Save, X, Globe, Activity, Calendar, ExternalLink, RefreshCw, Layers, AlertTriangle, Bell, Eye, EyeOff, Info, UserX, Users, MapPin, MonitorSmartphone, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 
@@ -33,13 +33,14 @@ export default function AdminPanel() {
   const [warnings, setWarnings] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [visits, setVisits] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [blockedIps, setBlockedIps] = useState<any[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [isAddingWarning, setIsAddingWarning] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingWarningId, setEditingWarningId] = useState<string | null>(null);
   const [selectedServers, setSelectedServers] = useState<string[]>([]);
-  const [adminActiveTab, setAdminActiveTab] = useState<'active' | 'inactive' | 'comingSoon' | 'reports' | 'visits' | 'blocked'>('active');
+  const [adminActiveTab, setAdminActiveTab] = useState<'active' | 'inactive' | 'comingSoon' | 'reports' | 'visits' | 'blocked' | 'suggestions'>('active');
   const [formData, setFormData] = useState({
     name: '',
     protocol: 'VLESS / REALITY',
@@ -132,6 +133,14 @@ export default function AdminPanel() {
       handleFirestoreError(error, OperationType.LIST, 'blocked_ips');
     });
 
+    const suggestionsQuery = query(collection(db, 'server_suggestions'), orderBy('createdAt', 'desc'));
+    const unsubscribeSuggestions = onSnapshot(suggestionsQuery, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      setSuggestions(docs);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'server_suggestions');
+    });
+
     return () => {
       unsubscribeAuth();
       unsubscribeDocs();
@@ -139,6 +148,7 @@ export default function AdminPanel() {
       unsubscribeReports();
       unsubscribeVisits();
       unsubscribeBlocked();
+      unsubscribeSuggestions();
     };
   }, []);
 
@@ -338,6 +348,59 @@ export default function AdminPanel() {
         await deleteDoc(doc(db, 'reports', reportId));
       } catch (error) {
         handleFirestoreError(error, OperationType.DELETE, 'reports');
+      }
+    }
+  };
+
+  const handleApproveSuggestion = async (suggestion: any) => {
+    try {
+      // 1. Create the actual server
+      await addDoc(serversCollection, {
+        name: suggestion.name,
+        protocol: suggestion.protocol,
+        country: suggestion.country,
+        city: suggestion.city,
+        config: suggestion.config,
+        latency: '30ms', // Initial default
+        load: 10, // Initial default
+        status: 'online',
+        expiryDate: '01.01.2027', // Set a far date or handle differently
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      // 2. Mark suggestion as approved
+      await updateDoc(doc(db, 'server_suggestions', suggestion.id), {
+        status: 'approved',
+        updatedAt: serverTimestamp()
+      });
+
+      alert(`Сервер "${suggestion.name}" успешно одобрен и добавлен!`);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.CREATE, 'servers');
+    }
+  };
+
+  const handleRejectSuggestion = async (suggestionId: string) => {
+    if (window.confirm("Отклонить это предложение?")) {
+      try {
+        await updateDoc(doc(db, 'server_suggestions', suggestionId), {
+          status: 'rejected',
+          updatedAt: serverTimestamp()
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.UPDATE, 'server_suggestions');
+      }
+    }
+  };
+
+  const handleDeleteSuggestion = async (suggestionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm("Удалить предложение окончательно?")) {
+      try {
+        await deleteDoc(doc(db, 'server_suggestions', suggestionId));
+      } catch (error) {
+        handleFirestoreError(error, OperationType.DELETE, 'server_suggestions');
       }
     }
   };
@@ -905,6 +968,14 @@ export default function AdminPanel() {
           Визиты
         </button>
         <button 
+          onClick={() => setAdminActiveTab('suggestions')}
+          className={`flex-1 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all ${
+            adminActiveTab === 'suggestions' ? 'bg-emerald-500 text-white shadow-xl shadow-emerald-500/20' : 'bg-white/5 text-white/40 hover:bg-white/10'
+          }`}
+        >
+          Предложки ({suggestions.filter(s => s.status === 'pending').length})
+        </button>
+        <button 
           onClick={() => setAdminActiveTab('blocked')}
           className={`flex-1 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all ${
             adminActiveTab === 'blocked' ? 'bg-amber-500 text-black shadow-xl shadow-amber-500/20' : 'bg-white/5 text-white/40 hover:bg-white/10'
@@ -1043,6 +1114,91 @@ export default function AdminPanel() {
                 {visits.length === 0 && (
                   <tr>
                     <td colSpan={4} className="p-12 text-center text-white/20 italic">Нет логов посещений</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : adminActiveTab === 'suggestions' ? (
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5">
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Сервер</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Предложил</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Конфиг</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Статус</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40 text-right">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {suggestions.map((s) => (
+                  <tr key={s.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                    <td className="p-6">
+                      <div className="font-bold flex items-center gap-2">
+                        {s.name}
+                        <span className="text-[10px] opacity-40 font-normal">{s.country} - {s.city}</span>
+                      </div>
+                      <div className="text-[10px] opacity-40 mt-1">
+                        {s.createdAt?.toDate?.().toLocaleString() || 'Неизвестно'}
+                      </div>
+                    </td>
+                    <td className="p-6">
+                      <div className="text-xs">{s.suggestedBy || 'Аноним'}</div>
+                      <div className="text-[9px] opacity-40 mt-1 flex items-center gap-1">
+                        <code className="text-amber-500/60">{s.userIp}</code>
+                        <span>({s.userCountry})</span>
+                      </div>
+                    </td>
+                    <td className="p-6">
+                      <div className="max-w-[200px] truncate text-[10px] font-mono opacity-60" title={s.config}>
+                        {s.config}
+                      </div>
+                    </td>
+                    <td className="p-6">
+                      <span className={`px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider ${
+                        s.status === 'pending' ? 'bg-amber-500/10 text-amber-500' :
+                        s.status === 'approved' ? 'bg-emerald-500/10 text-emerald-500' :
+                        'bg-rose-500/10 text-rose-500'
+                      }`}>
+                        {s.status === 'pending' ? 'Ожидание' :
+                         s.status === 'approved' ? 'Одобрено' : 'Отклонено'}
+                      </span>
+                    </td>
+                    <td className="p-6">
+                      <div className="flex justify-end gap-2">
+                        {s.status === 'pending' && (
+                          <>
+                            <button 
+                              onClick={() => handleApproveSuggestion(s)}
+                              className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all"
+                              title="Одобрить"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleRejectSuggestion(s.id)}
+                              className="p-2 rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white transition-all"
+                              title="Отклонить"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                        <button 
+                          onClick={(e) => handleDeleteSuggestion(s.id, e)}
+                          className="p-2 rounded-lg bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all"
+                          title="Удалить навсегда"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {suggestions.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="p-12 text-center text-white/20 italic">Список предложений пуст</td>
                   </tr>
                 )}
               </tbody>
