@@ -105,8 +105,11 @@ service cloud.firestore {
 
     // 7. Server Suggestions
     function isValidSuggestion(data) {
-      return data.name is string && data.name.size() <= 64 &&
+      return data.displayId is string && data.displayId.size() == 6 &&
+             data.name is string && data.name.size() <= 64 &&
              data.protocol is string &&
+             (data.suggestedBy == null || data.suggestedBy is string) &&
+             (data.expiryDate == null || data.expiryDate is string) &&
              data.country is string &&
              data.city is string &&
              data.config is string && data.config.size() <= 2000 &&
@@ -120,7 +123,22 @@ service cloud.firestore {
       allow get, list, update, delete: if isAdmin();
     }
 
-    // 8. Test Path (Internal)
+    // 8. Server Removals
+    function isValidRemoval(data) {
+      return data.serverId is string &&
+             data.suggestionId is string &&
+             data.reason is string &&
+             data.status in ['pending', 'processed', 'rejected'];
+    }
+
+    match /server_removals/{removalId} {
+      allow create: if isValidRemoval(incoming()) &&
+                      incoming().status == 'pending' &&
+                      incoming().createdAt == request.time;
+      allow get, list, update, delete: if isAdmin();
+    }
+
+    // 9. Test Path (Internal)
     match /test/connection {
       allow read: if true;
     }

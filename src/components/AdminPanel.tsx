@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth, googleProvider, signInWithPopup, signOut, serversCollection, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, handleFirestoreError, OperationType, limit, where, getDocs } from '../lib/firebase';
-import { Trash2, Edit3, Plus, LogOut, Shield, ChevronRight, Save, X, Globe, Activity, Calendar, ExternalLink, RefreshCw, Layers, AlertTriangle, Bell, Eye, EyeOff, Info, UserX, Users, MapPin, MonitorSmartphone, Check } from 'lucide-react';
+import { Trash2, Edit3, Plus, LogOut, Shield, ChevronRight, Save, X, Globe, Activity, Calendar, ExternalLink, RefreshCw, Layers, AlertTriangle, Bell, Eye, EyeOff, Info, UserX, Users, MapPin, MonitorSmartphone, Check, Hash, Copy, Terminal } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 
@@ -34,13 +34,14 @@ export default function AdminPanel() {
   const [reports, setReports] = useState<any[]>([]);
   const [visits, setVisits] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [removals, setRemovals] = useState<any[]>([]);
   const [blockedIps, setBlockedIps] = useState<any[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [isAddingWarning, setIsAddingWarning] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingWarningId, setEditingWarningId] = useState<string | null>(null);
   const [selectedServers, setSelectedServers] = useState<string[]>([]);
-  const [adminActiveTab, setAdminActiveTab] = useState<'active' | 'inactive' | 'comingSoon' | 'reports' | 'visits' | 'blocked' | 'suggestions'>('active');
+  const [adminActiveTab, setAdminActiveTab] = useState<'active' | 'inactive' | 'comingSoon' | 'reports' | 'visits' | 'blocked' | 'suggestions' | 'removals'>('active');
   const [formData, setFormData] = useState({
     name: '',
     protocol: 'VLESS / REALITY',
@@ -141,6 +142,14 @@ export default function AdminPanel() {
       handleFirestoreError(error, OperationType.LIST, 'server_suggestions');
     });
 
+    const removalsQuery = query(collection(db, 'server_removals'), orderBy('createdAt', 'desc'));
+    const unsubscribeRemovals = onSnapshot(removalsQuery, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      setRemovals(docs);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'server_removals');
+    });
+
     return () => {
       unsubscribeAuth();
       unsubscribeDocs();
@@ -149,6 +158,7 @@ export default function AdminPanel() {
       unsubscribeVisits();
       unsubscribeBlocked();
       unsubscribeSuggestions();
+      unsubscribeRemovals();
     };
   }, []);
 
@@ -364,7 +374,7 @@ export default function AdminPanel() {
         latency: '30ms', // Initial default
         load: 10, // Initial default
         status: 'online',
-        expiryDate: '01.01.2027', // Set a far date or handle differently
+        expiryDate: suggestion.expiryDate || '01.01.2027', // Use suggested or default
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -401,6 +411,17 @@ export default function AdminPanel() {
         await deleteDoc(doc(db, 'server_suggestions', suggestionId));
       } catch (error) {
         handleFirestoreError(error, OperationType.DELETE, 'server_suggestions');
+      }
+    }
+  };
+
+  const handleDeleteRemoval = async (removalId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm("Удалить запрос на удаление?")) {
+      try {
+        await deleteDoc(doc(db, 'server_removals', removalId));
+      } catch (error) {
+        handleFirestoreError(error, OperationType.DELETE, 'server_removals');
       }
     }
   };
@@ -976,6 +997,14 @@ export default function AdminPanel() {
           Предложки ({suggestions.filter(s => s.status === 'pending').length})
         </button>
         <button 
+          onClick={() => setAdminActiveTab('removals')}
+          className={`flex-1 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all ${
+            adminActiveTab === 'removals' ? 'bg-rose-500 text-white shadow-xl shadow-rose-500/20' : 'bg-white/5 text-white/40 hover:bg-white/10'
+          }`}
+        >
+          Удаление ({removals.filter(r => r.status === 'pending').length})
+        </button>
+        <button 
           onClick={() => setAdminActiveTab('blocked')}
           className={`flex-1 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all ${
             adminActiveTab === 'blocked' ? 'bg-amber-500 text-black shadow-xl shadow-amber-500/20' : 'bg-white/5 text-white/40 hover:bg-white/10'
@@ -1124,8 +1153,9 @@ export default function AdminPanel() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-white/10 bg-white/5">
-                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Сервер</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">ID / Сервер</th>
                   <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Предложил</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Метаданные</th>
                   <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Конфиг</th>
                   <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Статус</th>
                   <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40 text-right">Действия</th>
@@ -1135,24 +1165,58 @@ export default function AdminPanel() {
                 {suggestions.map((s) => (
                   <tr key={s.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
                     <td className="p-6">
-                      <div className="font-bold flex items-center gap-2">
-                        {s.name}
-                        <span className="text-[10px] opacity-40 font-normal">{s.country} - {s.city}</span>
-                      </div>
-                      <div className="text-[10px] opacity-40 mt-1">
-                        {s.createdAt?.toDate?.().toLocaleString() || 'Неизвестно'}
+                      <div className="flex flex-col gap-1">
+                        <div className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[9px] font-black w-fit uppercase tracking-tighter">
+                          #{s.displayId}
+                        </div>
+                        <div className="font-bold flex items-center gap-2">
+                          {s.name}
+                          <span className="text-[10px] opacity-40 font-normal">{s.country} - {s.city}</span>
+                        </div>
+                        <div className="text-[9px] opacity-40">
+                          {s.createdAt?.toDate?.().toLocaleString() || 'Неизвестно'}
+                        </div>
                       </div>
                     </td>
                     <td className="p-6">
-                      <div className="text-xs">{s.suggestedBy || 'Аноним'}</div>
+                      <div className="text-xs font-bold">{s.suggestedBy || 'Аноним'}</div>
                       <div className="text-[9px] opacity-40 mt-1 flex items-center gap-1">
-                        <code className="text-amber-500/60">{s.userIp}</code>
+                        <code className="text-amber-500/100">{s.userIp}</code>
                         <span>({s.userCountry})</span>
                       </div>
                     </td>
                     <td className="p-6">
-                      <div className="max-w-[200px] truncate text-[10px] font-mono opacity-60" title={s.config}>
-                        {s.config}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2 text-[10px] text-white/60">
+                          <Terminal className="w-3 h-3 text-amber-500" />
+                          <span>{s.protocol}</span>
+                        </div>
+                        {s.expiryDate && (
+                          <div className="flex items-center gap-2 text-[10px] text-emerald-500/60">
+                            <Calendar className="w-3 h-3" />
+                            <span>До {s.expiryDate}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-[10px] text-white/40 max-w-[150px] truncate" title={s.browser}>
+                          <MonitorSmartphone className="w-3 h-3" />
+                          <span className="truncate">{s.browser || 'Нет данных'}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-6">
+                      <div className="relative group/config">
+                        <div className="max-w-[180px] truncate text-[9px] font-mono p-2 bg-white/5 rounded border border-white/5 cursor-help" title={s.config}>
+                          {s.config}
+                        </div>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(s.config);
+                            alert("Конфиг скопирован!");
+                          }}
+                          className="absolute -top-2 -right-2 p-1.5 rounded-lg bg-white text-black opacity-0 group-hover/config:opacity-100 transition-opacity shadow-lg"
+                        >
+                          <Copy size={10} />
+                        </button>
                       </div>
                     </td>
                     <td className="p-6">
@@ -1199,6 +1263,64 @@ export default function AdminPanel() {
                 {suggestions.length === 0 && (
                   <tr>
                     <td colSpan={5} className="p-12 text-center text-white/20 italic">Список предложений пуст</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : adminActiveTab === 'removals' ? (
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5">
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Сервер / ID Заявки</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Причина</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Пользователь</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Время</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40 text-right">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {removals.map((r) => (
+                  <tr key={r.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                    <td className="p-6">
+                      <div className="font-bold text-rose-500">{r.serverId}</div>
+                      <div className="text-[10px] opacity-40 mt-1 flex items-center gap-1 group cursor-help">
+                        <Hash className="w-2.5 h-2.5" />
+                        <span>{r.suggestionId}</span>
+                        {/* Status Check if suggestion ID exists */}
+                        {suggestions.some(s => s.displayId === r.suggestionId) ? (
+                          <div className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 text-[7px] font-black uppercase tracking-tighter ml-2">Verified ID</div>
+                        ) : (
+                          <div className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-500 text-[7px] font-black uppercase tracking-tighter ml-2">Unverified ID</div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-6">
+                      <div className="text-xs text-white/60 max-w-xs">{r.reason}</div>
+                    </td>
+                    <td className="p-6">
+                      <div className="flex flex-col gap-1">
+                        <code className="text-[10px] text-amber-500/60">{r.userIp}</code>
+                        <div className="text-[9px] opacity-30 italic">{r.userCountry}</div>
+                      </div>
+                    </td>
+                    <td className="p-6 text-[10px] opacity-40">
+                      {r.createdAt?.toDate?.().toLocaleString() || 'Неизвестно'}
+                    </td>
+                    <td className="p-6 text-right">
+                      <button 
+                        onClick={(e) => handleDeleteRemoval(r.id, e)}
+                        className="p-3 rounded-xl bg-white/5 hover:bg-rose-500/10 hover:text-rose-500 transition-all font-bold uppercase tracking-widest text-[9px]"
+                      >
+                        Удалить запрос
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {removals.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="p-12 text-center text-white/20 italic">Нет запросов на удаление</td>
                   </tr>
                 )}
               </tbody>

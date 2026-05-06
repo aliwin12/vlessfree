@@ -13,6 +13,7 @@ import { db, collection, query, orderBy, onSnapshot, handleFirestoreError, Opera
 import AdminPanel from './components/AdminPanel';
 import ReportPage from './components/ReportPage';
 import SuggestServerPage from './components/SuggestServerPage';
+import RequestRemovalPage from './components/RequestRemovalPage';
 
 const UPDATES = [
   {
@@ -1688,6 +1689,7 @@ function AppContent() {
         <Route path="/admin" element={<AdminPanel />} />
         <Route path="/report" element={<ReportPage />} />
         <Route path="/suggest" element={<SuggestServerPage />} />
+        <Route path="/remove-server" element={<RequestRemovalPage />} />
       </Routes>
     </div>
   );

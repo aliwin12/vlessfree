@@ -89,17 +89,33 @@
       "description": "User suggested server for the platform",
       "type": "object",
       "properties": {
+        "displayId": { "type": "string", "description": "6-digit unique identifier" },
         "name": { "type": "string" },
         "protocol": { "type": "string" },
         "country": { "type": "string" },
         "city": { "type": "string" },
         "config": { "type": "string" },
         "suggestedBy": { "type": "string", "description": "Email or identifier of suggester" },
+        "expiryDate": { "type": "string", "description": "When the server expires" },
         "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
         "createdAt": { "type": "string", "format": "date-time" },
         "userIp": { "type": "string" }
       },
-      "required": ["name", "protocol", "country", "city", "config", "status", "createdAt"]
+      "required": ["displayId", "name", "protocol", "country", "city", "config", "status", "createdAt"]
+    },
+    "ServerRemovalRequest": {
+      "title": "Server Removal Request",
+      "description": "User request to remove their suggested server",
+      "type": "object",
+      "properties": {
+        "serverId": { "type": "string" },
+        "suggestionId": { "type": "string" },
+        "reason": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "processed", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "userIp": { "type": "string" }
+      },
+      "required": ["serverId", "suggestionId", "reason", "status", "createdAt"]
     }
   },
   "firestore": {
@@ -130,6 +146,10 @@
     "/server_suggestions/{suggestionId}": {
       "schema": "ServerSuggestion",
       "description": "Queue for user suggested servers"
+    },
+    "/server_removals/{removalId}": {
+      "schema": "ServerRemovalRequest",
+      "description": "Requests for server removal"
     }
   }
 }

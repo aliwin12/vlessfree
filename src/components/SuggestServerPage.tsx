@@ -1,13 +1,18 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { ChevronLeft, Send, RefreshCw, CheckCircle2, Globe, Activity, Terminal, MapPin } from 'lucide-react';
-import { db, collection, addDoc, handleFirestoreError, OperationType, serverTimestamp } from '../lib/firebase';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
+import { ChevronLeft, Send, RefreshCw, CheckCircle2, Globe, Activity, Terminal, MapPin, AlertTriangle, Shield, Copy, Check } from 'lucide-react';
+import { db, collection, addDoc, handleFirestoreError, OperationType, serverTimestamp, doc, getDoc } from '../lib/firebase';
 
 export default function SuggestServerPage() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [generatedId, setGeneratedId] = useState('');
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+  const [copied, setCopied] = useState(false);
+  const [historyItems, setHistoryItems] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -15,8 +20,54 @@ export default function SuggestServerPage() {
     country: '',
     city: '',
     config: '',
-    suggestedBy: ''
+    suggestedBy: '',
+    expiryDate: ''
   });
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      const localHistory = JSON.parse(localStorage.getItem('my_suggestions') || '[]');
+      if (localHistory.length === 0) return;
+
+      const updatedHistory = await Promise.all(localHistory.map(async (item: any) => {
+        try {
+          const docSnap = await getDoc(doc(db, 'server_suggestions', item.id));
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            return { ...item, status: data.status };
+          }
+          return item;
+        } catch (e) {
+          return item;
+        }
+      }));
+
+      // Update localStorage with fresh statuses
+      localStorage.setItem('my_suggestions', JSON.stringify(updatedHistory));
+      setHistoryItems(updatedHistory);
+    };
+
+    fetchHistory();
+  }, []);
+
+  useEffect(() => {
+    const hasAccepted = localStorage.getItem('disclaimer_accepted');
+    if (!hasAccepted) {
+      setShowDisclaimer(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showDisclaimer && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [showDisclaimer, countdown]);
+
+  const handleAccept = () => {
+    localStorage.setItem('disclaimer_accepted', 'true');
+    setShowDisclaimer(false);
+  };
 
   const getClientMetadata = async () => {
     const browser = navigator.userAgent;
@@ -75,15 +126,27 @@ export default function SuggestServerPage() {
     return { browser, country, ip };
   };
 
+  const generateDisplayId = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
+  const copyId = () => {
+    navigator.clipboard.writeText(generatedId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
 
     setIsSubmitting(true);
     try {
+      const displayId = generateDisplayId();
       const metadata = await getClientMetadata();
-      await addDoc(collection(db, 'server_suggestions'), {
+      const docRef = await addDoc(collection(db, 'server_suggestions'), {
         ...formData,
+        displayId,
         status: 'pending',
         createdAt: serverTimestamp(),
         userIp: metadata.ip,
@@ -91,8 +154,22 @@ export default function SuggestServerPage() {
         userCountry: metadata.country
       });
 
+      setGeneratedId(displayId);
+
+      // Save to local history
+      const newHistoryItem = {
+        id: docRef.id,
+        displayId,
+        name: formData.name,
+        createdAt: new Date().toISOString(),
+        status: 'pending'
+      };
+      const history = JSON.parse(localStorage.getItem('my_suggestions') || '[]');
+      history.push(newHistoryItem);
+      localStorage.setItem('my_suggestions', JSON.stringify(history));
+      setHistoryItems(history);
+
       setIsSuccess(true);
-      setTimeout(() => navigate('/'), 3000);
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'server_suggestions');
     } finally {
@@ -111,22 +188,42 @@ export default function SuggestServerPage() {
           <div className="w-20 h-20 bg-emerald-500/20 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-emerald-500/10">
             <CheckCircle2 className="w-10 h-10 text-emerald-500" />
           </div>
-          <h2 className="text-3xl font-serif italic mb-4">Спасибо за вклад!</h2>
-          <p className="text-white/40 leading-relaxed text-sm">
-            Ваш сервер отправлен на проверку. После одобрения администратором он появится в общем списке.
+          <h2 className="text-3xl font-serif italic mb-4">Предложение отправлено!</h2>
+          <p className="text-white/40 leading-relaxed text-sm mb-8">
+            Ваш сервер отправлен на проверку. Пожалуйста, сохраните этот ID — он понадобится для удаления или отслеживания статуса.
           </p>
-          <div className="mt-8 pt-8 border-t border-white/5">
-            <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: "100%" }}
-                transition={{ duration: 3 }}
-                className="h-full bg-emerald-500"
-              />
+
+          <div className="bg-white/5 rounded-2xl p-6 border border-white/5 mb-8 group relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <p className="text-[10px] uppercase font-bold tracking-widest text-white/20 mb-2">ID заявки</p>
+            <div className="flex items-center justify-center gap-4">
+              <span className="text-4xl font-mono font-black tracking-[0.2em] text-amber-500 selection:bg-amber-500 selection:text-black">
+                {generatedId}
+              </span>
+              <button 
+                onClick={copyId}
+                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                title="Скопировать"
+              >
+                {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
+              </button>
             </div>
-            <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-white/20 mt-4">
-              Перенаправление на главную...
-            </p>
+            {copied && <p className="text-[10px] text-emerald-500 mt-2 font-bold uppercase tracking-widest">Скопировано!</p>}
+          </div>
+
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate('/')}
+              className="w-full py-4 rounded-xl bg-white text-black font-bold uppercase tracking-widest text-[10px] hover:scale-[1.02] transition-transform"
+            >
+              Вернуться на главную
+            </button>
+            <Link
+              to="/remove-server"
+              className="block w-full py-4 rounded-xl border border-white/10 text-white/40 font-bold uppercase tracking-widest text-[10px] hover:bg-white/5 transition-colors"
+            >
+              Запрос на удаление
+            </Link>
           </div>
         </motion.div>
       </div>
@@ -135,6 +232,84 @@ export default function SuggestServerPage() {
 
   return (
     <div className="pt-32 pb-20 px-4 max-w-2xl mx-auto min-h-screen">
+      <AnimatePresence>
+        {showDisclaimer && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          >
+            <div className="absolute inset-0 bg-[#050505]/95 backdrop-blur-sm" />
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="glass max-w-lg w-full rounded-[40px] p-8 md:p-12 relative border border-white/5 overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 p-8 opacity-5">
+                <AlertTriangle size={160} />
+              </div>
+
+              <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center mb-8">
+                <Shield className="w-8 h-8 text-amber-500" />
+              </div>
+
+              <h2 className="text-3xl font-serif italic mb-6">⚠️ Пожалуйста, прочтите текст внизу</h2>
+              
+              <div className="space-y-4 mb-10">
+                <div className="flex gap-4">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <p className="text-sm text-white/60 leading-relaxed">
+                    Если обнаружится, что информация о сервере неверна/сервер не рабочий, то, администрация отклонит заявку на добавление сервера.
+                  </p>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <p className="text-sm text-white/60 leading-relaxed">
+                    Название сервера не должно содержать нецензурную лексику, чужие личные данные, и т.д., при нарушении этого правила, будет выдан запрет на заявку на 1 день, затем на 3 дня, 7 дней, 14 д (максимум).
+                  </p>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <p className="text-sm text-white/60 leading-relaxed">
+                    Администрация может отклонить заявку по своему усмотрению, не объясняя причины.
+                  </p>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <p className="text-sm text-white/60 leading-relaxed">
+                    Администрация может проигнорировать/отклонить заявку, если она уже существует.
+                  </p>
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                  <p className="text-sm text-white/60 leading-relaxed">
+                    Администрация может удалить сервер в любое время, если посчитает это необходимым.
+                  </p>
+                </div>
+                <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10">
+                  <p className="text-xs text-white/80 leading-relaxed">
+                    Если вы хотите, чтобы ваш сервер был удалён, <Link to="/remove-server" className="text-amber-500 font-bold hover:underline">отправьте запрос на удаление</Link>.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                disabled={countdown > 0}
+                onClick={handleAccept}
+                className={`w-full py-5 rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-[0.2em] transition-all text-[10px] ${
+                  countdown > 0
+                  ? 'bg-white/5 text-white/20 cursor-not-allowed'
+                  : 'bg-white text-black hover:scale-[1.02]'
+                }`}
+              >
+                {countdown > 0 ? `Подождите ${countdown}с...` : 'Я принимаю условия'}
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.button 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -160,7 +335,7 @@ export default function SuggestServerPage() {
           </div>
           <div>
             <h1 className="text-2xl font-serif italic tracking-tighter">Предложить сервер</h1>
-            <p className="text-white/40 text-xs">Помогите сообществу расширить сеть</p>
+            <p className="text-white/40 text-xs text-balance">Добавьте свою конфигурацию в нашу сеть</p>
           </div>
         </div>
 
@@ -172,13 +347,13 @@ export default function SuggestServerPage() {
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-amber-500 transition-colors">
-                  <Activity size={16} />
+                  <Terminal size={16} />
                 </div>
                 <input
                   required
                   value={formData.name}
                   onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Напр. Singapore Highspeed"
+                  placeholder="Singapore Highspeed"
                   className="w-full bg-white/2 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all font-medium"
                 />
               </div>
@@ -215,7 +390,7 @@ export default function SuggestServerPage() {
                   maxLength={2}
                   value={formData.country}
                   onChange={e => setFormData({ ...formData, country: e.target.value.toUpperCase() })}
-                  placeholder="RU, SG, US, DE..."
+                  placeholder="SG, US, DE..."
                   className="w-full bg-white/2 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all uppercase font-mono font-bold tracking-widest"
                 />
               </div>
@@ -233,7 +408,7 @@ export default function SuggestServerPage() {
                   required
                   value={formData.city}
                   onChange={e => setFormData({ ...formData, city: e.target.value })}
-                  placeholder="Напр. Moscow"
+                  placeholder="Singapore"
                   className="w-full bg-white/2 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all font-medium"
                 />
               </div>
@@ -256,6 +431,18 @@ export default function SuggestServerPage() {
                 className="w-full h-32 bg-white/2 border border-white/5 rounded-2xl pt-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all resize-none font-mono text-[11px]"
               />
             </div>
+          </div>
+
+          <div className="space-y-4">
+            <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
+              Активен до (Опционально)
+            </label>
+            <input
+              type="date"
+              value={formData.expiryDate}
+              onChange={e => setFormData({ ...formData, expiryDate: e.target.value })}
+              className="w-full bg-white/2 border border-white/5 rounded-2xl p-4 text-sm focus:outline-none focus:border-white/20 transition-all text-white/60"
+            />
           </div>
 
           <div className="space-y-4">
@@ -293,6 +480,42 @@ export default function SuggestServerPage() {
           </div>
         </form>
       </motion.div>
+
+      {/* Local History Section */}
+      <div className="mt-12 space-y-6">
+        <h3 className="text-sm font-serif italic text-white/40 ml-1">Ваша история предложений</h3>
+        <div className="space-y-3">
+          {historyItems.length > 0 ? (
+            [...historyItems].reverse().map((item: any) => (
+              <div key={item.id} className="glass p-4 rounded-2xl flex items-center justify-between group">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold">{item.name}</span>
+                    <span className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest bg-white/5 text-white/40">
+                      ID: {item.displayId}
+                    </span>
+                  </div>
+                  <div className="text-[9px] text-white/20 mt-1">
+                    {new Date(item.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+                <div className={`px-2 py-1 rounded text-[8px] font-bold uppercase tracking-widest ${
+                  item.status === 'pending' ? 'text-amber-500 bg-amber-500/10' :
+                  item.status === 'approved' ? 'text-emerald-500 bg-emerald-500/10' :
+                  'text-rose-500 bg-rose-500/10'
+                }`}>
+                  {item.status === 'pending' ? 'Ожидание' : item.status === 'approved' ? 'Одобрено' : 'Отклонено'}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-8 text-center text-[10px] uppercase tracking-widest text-white/10 font-bold border border-dashed border-white/5 rounded-2xl">
+              История пуста
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
+
