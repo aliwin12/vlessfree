@@ -97,7 +97,7 @@ const getThirtyDaysFromNow = () => {
   return `${day}.${month}.${year}`;
 };
 
-const parseSubText = (text: string) => {
+const parseSubText = (text: string, defaultExpiryDate?: string) => {
   let decodedText = text.trim();
   
   if (!decodedText.includes('vless://') && !decodedText.includes('vmess://') && !decodedText.includes('trojan://') && !decodedText.includes('ss://')) {
@@ -196,7 +196,7 @@ const parseSubText = (text: string) => {
         protocol,
         latency: '30ms',
         load: Math.floor(Math.random() * 20) + 5,
-        expiryDate: getThirtyDaysFromNow(),
+        expiryDate: defaultExpiryDate || getThirtyDaysFromNow(),
         status: 'online',
         config: line,
         country: countryCode,
@@ -259,6 +259,7 @@ export default function AdminPanel() {
   const [unpackedConfigs, setUnpackedConfigs] = useState<any[]>([]);
   const [isFetchingSub, setIsFetchingSub] = useState(false);
   const [clearOldServersOnSubImport, setClearOldServersOnSubImport] = useState(false);
+  const [defaultSubExpiryDate, setDefaultSubExpiryDate] = useState(getThirtyDaysFromNow());
 
   const navigate = useNavigate();
 
@@ -387,7 +388,7 @@ export default function AdminPanel() {
       }
       const data = await response.json();
       if (data.content) {
-        const parsed = parseSubText(data.content);
+        const parsed = parseSubText(data.content, defaultSubExpiryDate);
         if (parsed.length === 0) {
           alert("Не удалось найти конфигурации по этой ссылке. Возможно, она пустая или неправильного формата.");
         } else {
@@ -410,7 +411,7 @@ export default function AdminPanel() {
       alert("Пожалуйста, вставьте текст/Base64 подписку");
       return;
     }
-    const parsed = parseSubText(subRawInput);
+    const parsed = parseSubText(subRawInput, defaultSubExpiryDate);
     if (parsed.length === 0) {
       alert("Не удалось обнаружить конфигурации VPN в тексте. Убедитесь, что текст содержит ссылки VLESS/VMESS/Trojan или Base64-код.");
     } else {
@@ -1183,6 +1184,35 @@ export default function AdminPanel() {
                 <button type="button" onClick={() => setIsUnpackingSub(false)} className="p-2 hover:bg-white/10 rounded-full">
                   <X className="w-6 h-6" />
                 </button>
+              </div>
+
+              {/* Expiry date setting BEFORE unpack */}
+              <div className="bg-indigo-500/5 border border-indigo-500/10 p-6 rounded-3xl mb-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-2">
+                      <Calendar className="w-4.5 h-4.5" /> Дата окончания активности серверов (для всей партии)
+                    </h3>
+                    <p className="text-xs text-white/40 font-normal">
+                      Укажите дату активности серверов ДО распаковки. Новые серверы будут автоматически иметь этот срок. Изменение этой даты также обновит сроки для всех серверов ниже.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <input 
+                      type="text"
+                      required
+                      value={defaultSubExpiryDate}
+                      onChange={e => {
+                        setDefaultSubExpiryDate(e.target.value);
+                        if (unpackedConfigs.length > 0) {
+                          setUnpackedConfigs(prev => prev.map(c => ({ ...c, expiryDate: e.target.value })));
+                        }
+                      }}
+                      placeholder="ДД.ММ.ГГГГ"
+                      className="bg-black/45 border border-white/10 rounded-2xl px-5 py-3 focus:border-indigo-500/30 transition-all outline-none text-xs font-mono font-bold text-center w-40 text-indigo-300 placeholder-white/20"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Selection Mode tabs */}
