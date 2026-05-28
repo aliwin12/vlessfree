@@ -95,13 +95,12 @@
         "country": { "type": "string" },
         "city": { "type": "string" },
         "config": { "type": "string" },
-        "suggestedBy": { "type": "string", "description": "Email or identifier of suggester" },
         "expiryDate": { "type": "string", "description": "When the server expires" },
         "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
         "createdAt": { "type": "string", "format": "date-time" },
         "userIp": { "type": "string" }
       },
-      "required": ["displayId", "name", "protocol", "country", "city", "config", "status", "createdAt"]
+      "required": ["displayId", "name", "protocol", "country", "city", "config", "expiryDate", "status", "createdAt"]
     },
     "ServerRemovalRequest": {
       "title": "Server Removal Request",

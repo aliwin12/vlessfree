@@ -108,8 +108,7 @@ service cloud.firestore {
       return data.displayId is string && data.displayId.size() == 6 &&
              data.name is string && data.name.size() <= 64 &&
              data.protocol is string &&
-             (data.suggestedBy == null || data.suggestedBy is string) &&
-             (data.expiryDate == null || data.expiryDate is string) &&
+             data.expiryDate is string &&
              data.country is string &&
              data.city is string &&
              data.config is string && data.config.size() <= 2000 &&

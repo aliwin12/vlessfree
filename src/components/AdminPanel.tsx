@@ -1154,7 +1154,6 @@ export default function AdminPanel() {
               <thead>
                 <tr className="border-b border-white/10 bg-white/5">
                   <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">ID / Сервер</th>
-                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Предложил</th>
                   <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Метаданные</th>
                   <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Конфиг</th>
                   <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Статус</th>
@@ -1179,11 +1178,11 @@ export default function AdminPanel() {
                       </div>
                     </td>
                     <td className="p-6">
-                      <div className="text-xs font-bold">{s.suggestedBy || 'Аноним'}</div>
-                      <div className="text-[9px] opacity-40 mt-1 flex items-center gap-1">
+                      <div className="text-[9px] opacity-40 flex items-center gap-1">
                         <code className="text-amber-500/100">{s.userIp}</code>
                         <span>({s.userCountry})</span>
                       </div>
+                      <div className="text-[8px] opacity-20 mt-1 max-w-[120px] truncate">{s.browser}</div>
                     </td>
                     <td className="p-6">
                       <div className="flex flex-col gap-2">

@@ -108,14 +108,6 @@ function Header({ scrolled }: { scrolled: boolean }) {
           </Link>
 
           <Link to="/" className="flex items-center gap-2 md:gap-3">
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-white/10 flex items-center justify-center rounded-lg md:rounded-xl overflow-hidden shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-              <img 
-                src="https://s10.iimage.su/s/17/gzMssIvxlmD4o7bBXdXbwchG1mLsp8EHi8CdMFJ2o.png" 
-                alt="vlessfree logo" 
-                className="w-full h-full object-contain p-1"
-                referrerPolicy="no-referrer"
-              />
-            </div>
             <img 
               src="https://s10.iimage.su/s/17/gW7gsFfxcyoojRD4cNLejI21W6YZc62Ieh9AfziAL.png" 
               alt="vlessfree" 

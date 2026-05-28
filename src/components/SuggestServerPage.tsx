@@ -20,7 +20,6 @@ export default function SuggestServerPage() {
     country: '',
     city: '',
     config: '',
-    suggestedBy: '',
     expiryDate: ''
   });
 
@@ -435,25 +434,14 @@ export default function SuggestServerPage() {
 
           <div className="space-y-4">
             <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-              Активен до (Опционально)
+              Активен до
             </label>
             <input
+              required
               type="date"
               value={formData.expiryDate}
               onChange={e => setFormData({ ...formData, expiryDate: e.target.value })}
               className="w-full bg-white/2 border border-white/5 rounded-2xl p-4 text-sm focus:outline-none focus:border-white/20 transition-all text-white/60"
-            />
-          </div>
-
-          <div className="space-y-4">
-            <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-              Ваш ник / Телеграм (Опционально)
-            </label>
-            <input
-              value={formData.suggestedBy}
-              onChange={e => setFormData({ ...formData, suggestedBy: e.target.value })}
-              placeholder="@username"
-              className="w-full bg-white/2 border border-white/5 rounded-2xl p-4 text-sm focus:outline-none focus:border-white/20 transition-all"
             />
           </div>
 
