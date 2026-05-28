@@ -25,6 +25,193 @@ const countryMapping: Record<string, string> = {
   'Бразилия': 'BR'
 };
 
+const flagToCountryCode: Record<string, { code: string; name: string; city: string }> = {
+  '🇳🇱': { code: 'NL', name: 'Нидерланды', city: 'Амстердам' },
+  '🇩🇪': { code: 'DE', name: 'Германия', city: 'Франкфурт' },
+  '🇫🇮': { code: 'FI', name: 'Финляндия', city: 'Хельсинки' },
+  '🇺🇸': { code: 'US', name: 'США', city: 'Вашингтон' },
+  '🇬🇧': { code: 'UK', name: 'Великобритания', city: 'Лондон' },
+  '🇲🇩': { code: 'MD', name: 'Молдова', city: 'Кишинев' },
+  '🇮🇳': { code: 'IN', name: 'Индия', city: 'Мумбаи' },
+  '🇰🇿': { code: 'KZ', name: 'Казахстан', city: 'Алматы' },
+  '🇷🇺': { code: 'RU', name: 'Россия', city: 'Москва' },
+  '🇸🇪': { code: 'SE', name: 'Швеция', city: 'Стокгольм' },
+  '🇹🇷': { code: 'TR', name: 'Турция', city: 'Стамбул' },
+  '🇯🇵': { code: 'JP', name: 'Япония', city: 'Токио' },
+  '🇧🇷': { code: 'BR', name: 'Бразилия', city: 'Сан-Паулу' },
+  '🇫🇷': { code: 'FR', name: 'Франция', city: 'Париж' },
+  '🇵🇱': { code: 'PL', name: 'Польша', city: 'Варшава' },
+  '🇺🇦': { code: 'UA', name: 'Украина', city: 'Киев' }
+};
+
+const textToCountryCode: Record<string, { code: string; name: string; city: string }> = {
+  'netherlands': { code: 'NL', name: 'Нидерланды', city: 'Амстердам' },
+  'nl': { code: 'NL', name: 'Нидерланды', city: 'Амстердам' },
+  'нидерланды': { code: 'NL', name: 'Нидерланды', city: 'Амстердам' },
+  'germany': { code: 'DE', name: 'Германия', city: 'Франкфурт' },
+  'de': { code: 'DE', name: 'Германия', city: 'Франкфурт' },
+  'германия': { code: 'DE', name: 'Германия', city: 'Франкфурт' },
+  'finland': { code: 'FI', name: 'Финляндия', city: 'Хельсинки' },
+  'fi': { code: 'FI', name: 'Финляндия', city: 'Хельсинки' },
+  'финляндия': { code: 'FI', name: 'Финляндия', city: 'Хельсинки' },
+  'финлядия': { code: 'FI', name: 'Финляндия', city: 'Хельсинки' },
+  'usa': { code: 'US', name: 'США', city: 'Вашингтон' },
+  'us': { code: 'US', name: 'США', city: 'Вашингтон' },
+  'сша': { code: 'US', name: 'США', city: 'Вашингтон' },
+  'moldova': { code: 'MD', name: 'Молдова', city: 'Кишинев' },
+  'md': { code: 'MD', name: 'Молдова', city: 'Кишинев' },
+  'молдова': { code: 'MD', name: 'Молдова', city: 'Кишинев' },
+  'india': { code: 'IN', name: 'Индия', city: 'Мумбаи' },
+  'in': { code: 'IN', name: 'Индия', city: 'Мумбаи' },
+  'индия': { code: 'IN', name: 'Индия', city: 'Мумбаи' },
+  'kazakhstan': { code: 'KZ', name: 'Казахстан', city: 'Алматы' },
+  'kz': { code: 'KZ', name: 'Казахстан', city: 'Алматы' },
+  'казахстан': { code: 'KZ', name: 'Казахстан', city: 'Алматы' },
+  'russia': { code: 'RU', name: 'Россия', city: 'Москва' },
+  'ru': { code: 'RU', name: 'Россия', city: 'Москва' },
+  'россия': { code: 'RU', name: 'Россия', city: 'Москва' },
+  'sweden': { code: 'SE', name: 'Швеция', city: 'Стокгольм' },
+  'se': { code: 'SE', name: 'Швеция', city: 'Стокгольм' },
+  'швеция': { code: 'SE', name: 'Швеция', city: 'Стокгольм' },
+  'turkey': { code: 'TR', name: 'Турция', city: 'Стамбул' },
+  'tr': { code: 'TR', name: 'Турция', city: 'Стамбул' },
+  'турция': { code: 'TR', name: 'Турция', city: 'Стамбул' },
+  'poland': { code: 'PL', name: 'Польша', city: 'Варшава' },
+  'pl': { code: 'PL', name: 'Польша', city: 'Варшава' },
+  'польша': { code: 'PL', name: 'Польша', city: 'Варшава' },
+  'france': { code: 'FR', name: 'Франция', city: 'Париж' },
+  'fr': { code: 'FR', name: 'Франция', city: 'Париж' },
+  'франция': { code: 'FR', name: 'Франция', city: 'Париж' },
+  'united kingdom': { code: 'UK', name: 'Великобритания', city: 'Лондон' },
+  'uk': { code: 'UK', name: 'Великобритания', city: 'Лондон' },
+  'gb': { code: 'UK', name: 'Великобритания', city: 'Лондон' },
+  'великобритания': { code: 'UK', name: 'Великобритания', city: 'Лондон' }
+};
+
+const getThirtyDaysFromNow = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 30);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}.${month}.${year}`;
+};
+
+const parseSubText = (text: string) => {
+  let decodedText = text.trim();
+  
+  if (!decodedText.includes('vless://') && !decodedText.includes('vmess://') && !decodedText.includes('trojan://') && !decodedText.includes('ss://')) {
+    try {
+      decodedText = atob(decodedText.replace(/_/g, '/').replace(/-/g, '+').trim());
+    } catch (e) {
+      console.warn("Base64 decoding failed or raw input isn't base64", e);
+    }
+  }
+
+  const lines = decodedText.split(/[\r\n]+/);
+  const parsedItems: any[] = [];
+  let serverCounter = 1;
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    
+    const isVless = line.startsWith('vless://');
+    const isVmess = line.startsWith('vmess://');
+    const isTrojan = line.startsWith('trojan://');
+    const isSS = line.startsWith('ss://');
+
+    if (isVless || isVmess || isTrojan || isSS) {
+      let protocol = 'VLESS / REALITY';
+      if (isVmess) protocol = 'VMESS';
+      if (isTrojan) protocol = 'Trojan';
+      if (isSS) protocol = 'Shadowsocks';
+
+      let remark = '';
+      if (line.includes('#')) {
+        const hashPart = line.split('#')[1];
+        try {
+          remark = decodeURIComponent(hashPart);
+        } catch (e) {
+          remark = hashPart;
+        }
+      }
+
+      let countryCode = 'NL';
+      let cityName = 'Амстердам';
+      
+      const lowerRemark = remark.toLowerCase();
+      let matchedEmoji = false;
+
+      for (const [flag, info] of Object.entries(flagToCountryCode)) {
+        if (remark.includes(flag)) {
+          countryCode = info.code;
+          cityName = info.city;
+          matchedEmoji = true;
+          break;
+        }
+      }
+
+      if (!matchedEmoji) {
+        const words = lowerRemark.split(/[^a-zA-Zа-яА-ЯёЁ\d]+/);
+        for (const w of words) {
+          if (w && textToCountryCode[w]) {
+            countryCode = textToCountryCode[w].code;
+            cityName = textToCountryCode[w].city;
+            matchedEmoji = true;
+            break;
+          }
+        }
+      }
+
+      if (!matchedEmoji) {
+        for (const [text, info] of Object.entries(textToCountryCode)) {
+          if (lowerRemark.includes(text)) {
+            countryCode = info.code;
+            cityName = info.city;
+            matchedEmoji = true;
+            break;
+          }
+        }
+      }
+
+      if (!matchedEmoji) {
+        try {
+          const hostPart = line.split('//')[1]?.split('@')[1]?.split(':')[0];
+          if (hostPart) {
+            const parts = hostPart.split('.');
+            const tld = parts[parts.length - 1]?.toLowerCase();
+            if (tld && textToCountryCode[tld]) {
+              countryCode = textToCountryCode[tld].code;
+              cityName = textToCountryCode[tld].city;
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      parsedItems.push({
+        name: `Server №${serverCounter++}`,
+        protocol,
+        latency: '30ms',
+        load: Math.floor(Math.random() * 20) + 5,
+        expiryDate: getThirtyDaysFromNow(),
+        status: 'online',
+        config: line,
+        country: countryCode,
+        city: cityName,
+        reason: '',
+        isSpecial: false,
+        isComingSoon: false,
+        isDisappearingSoon: false
+      });
+    }
+  }
+
+  return parsedItems;
+};
+
 export default function AdminPanel() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -64,6 +251,14 @@ export default function AdminPanel() {
     active: true,
     replaceContent: false
   });
+
+  // Subscription unpacking state variables
+  const [isUnpackingSub, setIsUnpackingSub] = useState(false);
+  const [subUrlInput, setSubUrlInput] = useState('');
+  const [subRawInput, setSubRawInput] = useState('');
+  const [unpackedConfigs, setUnpackedConfigs] = useState<any[]>([]);
+  const [isFetchingSub, setIsFetchingSub] = useState(false);
+  const [clearOldServersOnSubImport, setClearOldServersOnSubImport] = useState(false);
 
   const navigate = useNavigate();
 
@@ -180,6 +375,90 @@ export default function AdminPanel() {
   };
 
   const handleLogout = () => signOut(auth);
+
+  const fetchSubscriptionUrl = async () => {
+    if (!subUrlInput.trim()) return;
+    setIsFetchingSub(true);
+    try {
+      const response = await fetch(`/api/fetch-subscription?url=${encodeURIComponent(subUrlInput.trim())}`);
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.error || `Ошибка со статусом: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.content) {
+        const parsed = parseSubText(data.content);
+        if (parsed.length === 0) {
+          alert("Не удалось найти конфигурации по этой ссылке. Возможно, она пустая или неправильного формата.");
+        } else {
+          setUnpackedConfigs(parsed);
+          alert(`Успешно получено и распаковано ${parsed.length} конфигураций!`);
+        }
+      } else {
+        throw new Error("Сервер вернул пустой ответ");
+      }
+    } catch (error: any) {
+      console.error("Error fetching sub url:", error);
+      alert(`Не удалось загрузить подписку: ${error.message || error}`);
+    } finally {
+      setIsFetchingSub(false);
+    }
+  };
+
+  const handleParseRawText = () => {
+    if (!subRawInput.trim()) {
+      alert("Пожалуйста, вставьте текст/Base64 подписку");
+      return;
+    }
+    const parsed = parseSubText(subRawInput);
+    if (parsed.length === 0) {
+      alert("Не удалось обнаружить конфигурации VPN в тексте. Убедитесь, что текст содержит ссылки VLESS/VMESS/Trojan или Base64-код.");
+    } else {
+      setUnpackedConfigs(parsed);
+      alert(`Успешно распаковано ${parsed.length} конфигураций!`);
+    }
+  };
+
+  const handleBulkImport = async () => {
+    if (unpackedConfigs.length === 0) return;
+    
+    if (clearOldServersOnSubImport) {
+      if (!window.confirm(`Вы уверены, что хотите удалить все существующие серверы (${servers.length}) перед импортом новых? Это действие необратимо.`)) {
+        return;
+      }
+    }
+    
+    setLoading(true);
+    try {
+      if (clearOldServersOnSubImport) {
+        // Delete all existing servers
+        for (const s of servers) {
+          await deleteDoc(doc(db, 'servers', s.id));
+        }
+      }
+
+      // Add each unpacked config to firebase!
+      for (const item of unpackedConfigs) {
+        await addDoc(serversCollection, {
+          ...item,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      }
+
+      alert(`Успешно импортировано ${unpackedConfigs.length} серверов!`);
+      // Reset state on successful import
+      setIsUnpackingSub(false);
+      setUnpackedConfigs([]);
+      setSubUrlInput('');
+      setSubRawInput('');
+    } catch (error) {
+      console.error("Bulk import failed:", error);
+      alert("Ошибка при импорте серверов: " + (error instanceof Error ? error.message : "Неизвестная ошибка"));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const importMockData = async () => {
     if (!window.confirm("Это импортирует 13 стандартных серверов. Продолжить?")) return;
@@ -615,6 +894,21 @@ export default function AdminPanel() {
         >
           <Bell className="w-5 h-5" /> Добавить объявление
         </button>
+
+        <button 
+          onClick={() => {
+            setIsUnpackingSub(!isUnpackingSub);
+            setIsAdding(false);
+            setIsAddingWarning(false);
+          }}
+          className={`px-6 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center gap-3 transition-all border ${
+            isUnpackingSub 
+              ? 'bg-indigo-500 border-indigo-500/20 text-white shadow-xl shadow-indigo-500/10' 
+              : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20 hover:bg-indigo-500 hover:text-white'
+          }`}
+        >
+          <RefreshCw className={`w-5 h-5 ${isFetchingSub ? 'animate-spin' : ''}`} /> Распаковать подписку
+        </button>
         
         {servers.length === 0 && (
           <button 
@@ -868,6 +1162,235 @@ export default function AdminPanel() {
                 <Save className="w-5 h-5" /> Сохранить изменения
               </button>
             </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isUnpackingSub && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden mb-12"
+          >
+            <div className="glass p-8 rounded-[40px] border border-indigo-500/20">
+              <div className="flex justify-between items-center mb-8">
+                <div className="flex items-center gap-3">
+                  <RefreshCw className="w-6 h-6 text-indigo-400" />
+                  <h2 className="text-xl font-serif italic text-indigo-400">Распаковка и автоматическая нумерация подписки</h2>
+                </div>
+                <button type="button" onClick={() => setIsUnpackingSub(false)} className="p-2 hover:bg-white/10 rounded-full">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Selection Mode tabs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                {/* Method 1: Fetch via Proxy */}
+                <div className="bg-white/5 p-6 rounded-3xl border border-white/5 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-300 mb-2 flex items-center gap-2">
+                      <Globe className="w-4 h-4" /> Загрузить по ссылке (без CORS)
+                    </h3>
+                    <p className="text-xs text-white/40 mb-4 font-normal">
+                      Вставьте внешнюю HTTP ссылку подписки. Наш сервер скачает её содержимое и расшифрует (Base64 или сырой список).
+                    </p>
+                    <input 
+                      type="url"
+                      value={subUrlInput}
+                      onChange={e => setSubUrlInput(e.target.value)}
+                      placeholder="https://example.com/sub/... или t.me/..."
+                      className="w-full bg-black/45 border border-white/10 rounded-2xl px-5 py-4 focus:border-indigo-500/30 transition-all outline-none text-sm placeholder-white/20"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isFetchingSub || !subUrlInput}
+                    onClick={fetchSubscriptionUrl}
+                    className="mt-4 w-full py-4 rounded-2xl bg-indigo-500 hover:bg-indigo-600 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    {isFetchingSub ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
+                    {isFetchingSub ? 'Загрузка...' : 'Загрузить и распознать'}
+                  </button>
+                </div>
+
+                {/* Method 2: Manual Paste */}
+                <div className="bg-white/5 p-6 rounded-3xl border border-white/5 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-300 mb-2 flex items-center gap-2">
+                      <Terminal className="w-4 h-4" /> Вставить содержимое напрямую
+                    </h3>
+                    <p className="text-xs text-white/40 mb-4 font-normal">
+                      Если ссылка не открывается или вы скопировали ответ из клиента, вставьте его текст (Base64 строку или список ссылок vless://).
+                    </p>
+                    <textarea 
+                      value={subRawInput}
+                      onChange={e => setSubRawInput(e.target.value)}
+                      placeholder="vmxlc3M6Ly8... или список vless://..."
+                      rows={3}
+                      className="w-full bg-black/45 border border-white/10 rounded-2xl px-5 py-3 focus:border-indigo-500/30 transition-all outline-none font-mono text-xs placeholder-white/20"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!subRawInput}
+                    onClick={handleParseRawText}
+                    className="mt-4 w-full py-4 rounded-2xl bg-white text-black hover:bg-white/90 font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    <Check className="w-4 h-4" /> Распаковать сырой текст
+                  </button>
+                </div>
+              </div>
+
+              {/* Options */}
+              <div className="bg-indigo-500/5 border border-indigo-500/10 p-5 rounded-3xl flex flex-wrap items-center justify-between gap-4 mb-8">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input 
+                    type="checkbox"
+                    checked={clearOldServersOnSubImport}
+                    onChange={e => setClearOldServersOnSubImport(e.target.checked)}
+                    className="w-5 h-5 rounded-lg border-indigo-500/30 bg-black accent-indigo-500 cursor-pointer"
+                  />
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-white group-hover:text-indigo-300 transition-colors">Очистить текущие серверы перед импортом</span>
+                    <p className="text-[10px] text-white/30 font-normal mt-0.5">Включите, чтобы заменить все текущие серверы новыми из подписки (полная перезапись списка)</p>
+                  </div>
+                </label>
+              </div>
+
+              {/* Grid / list of unpacked configs */}
+              {unpackedConfigs.length > 0 && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                    <h3 className="text-sm uppercase tracking-wider font-bold text-white/80">
+                      Результат распознавания ({unpackedConfigs.length} серверов, пронумерованы от #1)
+                    </h3>
+                    <button 
+                      type="button"
+                      onClick={() => setUnpackedConfigs([])} 
+                      className="text-white/40 hover:text-rose-400 text-xs font-bold uppercase tracking-wider border border-white/10 px-3 py-1.5 rounded-xl hover:border-rose-500/20"
+                    >
+                      Сбросить
+                    </button>
+                  </div>
+
+                  <div className="max-h-[500px] overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                    {unpackedConfigs.map((item, idx) => (
+                      <div key={idx} className="bg-white/5 hover:bg-white/[0.07] border border-white/5 p-5 rounded-2xl flex flex-col lg:flex-row items-start lg:items-center gap-4 transition-all-300">
+                        {/* Index */}
+                        <div className="w-8 h-8 rounded-full bg-indigo-500/10 text-indigo-300 flex items-center justify-center font-bold text-xs shrink-0">
+                          {idx + 1}
+                        </div>
+
+                        {/* Config Name Input & detected country flag */}
+                        <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                          {/* Name Box */}
+                          <div className="space-y-1">
+                            <label className="text-[8px] uppercase tracking-wider text-white/40">Название</label>
+                            <input 
+                              type="text"
+                              required
+                              value={item.name}
+                              onChange={e => {
+                                const list = [...unpackedConfigs];
+                                list[idx].name = e.target.value;
+                                setUnpackedConfigs(list);
+                              }}
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 focus:border-indigo-500/30 transition-all outline-none text-xs font-medium"
+                            />
+                          </div>
+
+                          {/* Country Selector Code */}
+                          <div className="space-y-1">
+                            <label className="text-[8px] uppercase tracking-wider text-white/40">Страна (Код)</label>
+                            <input 
+                              type="text"
+                              required
+                              maxLength={2}
+                              value={item.country}
+                              onChange={e => {
+                                const list = [...unpackedConfigs];
+                                list[idx].country = e.target.value.toUpperCase();
+                                setUnpackedConfigs(list);
+                              }}
+                              placeholder="NL"
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 focus:border-indigo-500/30 transition-all outline-none text-xs font-bold font-mono text-indigo-300"
+                            />
+                          </div>
+
+                          {/* City Box */}
+                          <div className="space-y-1">
+                            <label className="text-[8px] uppercase tracking-wider text-white/40">Город</label>
+                            <input 
+                              type="text"
+                              value={item.city || ''}
+                              onChange={e => {
+                                const list = [...unpackedConfigs];
+                                list[idx].city = e.target.value;
+                                setUnpackedConfigs(list);
+                              }}
+                              placeholder="Город"
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 focus:border-indigo-500/30 transition-all outline-none text-xs"
+                            />
+                          </div>
+
+                          {/* Expiry date */}
+                          <div className="space-y-1">
+                            <label className="text-[8px] uppercase tracking-wider text-white/40">Активен до</label>
+                            <input 
+                              type="text"
+                              value={item.expiryDate}
+                              onChange={e => {
+                                const list = [...unpackedConfigs];
+                                list[idx].expiryDate = e.target.value;
+                                setUnpackedConfigs(list);
+                              }}
+                              placeholder="DD.MM.YYYY"
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 focus:border-indigo-500/30 transition-all outline-none text-xs font-mono"
+                            />
+                          </div>
+                        </div>
+
+                        {/* More fields or details */}
+                        <div className="flex items-center gap-3 shrink-0 self-end lg:self-center">
+                          <span className="text-[10px] bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-indigo-300 font-mono">
+                            {item.protocol}
+                          </span>
+                          
+                          {/* Trash button to exclude */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const list = unpackedConfigs.filter((_, i) => i !== idx);
+                              // Renumber them starting from #1!
+                              const renumbered = list.map((server, listIdx) => ({
+                                ...server,
+                                name: `Server №${listIdx + 1}`
+                              }));
+                              setUnpackedConfigs(renumbered);
+                            }}
+                            className="p-2 bg-rose-500/10 hover:bg-rose-500 hover:text-white border border-rose-500/20 text-rose-500 rounded-xl transition-all cursor-pointer"
+                            title="Exclude from import"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Bulk Import button */}
+                  <button
+                    type="button"
+                    onClick={handleBulkImport}
+                    className="w-full py-5 rounded-3xl bg-indigo-500 text-white hover:bg-indigo-600 shadow-[0_20px_40px_rgba(99,102,241,0.15)] font-bold uppercase tracking-widest flex items-center justify-center gap-3 transition-all transform hover:scale-[1.01] cursor-pointer"
+                  >
+                    <Check className="w-5 h-5" /> Импортировать {unpackedConfigs.length} серверов в Firestore
+                  </button>
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

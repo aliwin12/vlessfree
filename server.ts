@@ -31,6 +31,35 @@ async function startServer() {
     res.sendFile(path.join(process.cwd(), 'public', 'robots.txt'));
   });
 
+  // Proxy endpoint to fetch subscription urls (to avoid CORS)
+  app.get('/api/fetch-subscription', async (req, res) => {
+    const { url } = req.query;
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({ error: 'Missing subscription URL parameter' });
+    }
+
+    try {
+      console.log(`Fetching subscription URL: ${url}`);
+      // Native fetch in Node 18+
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'v2rayN/Telegram@vlessfree',
+          'Accept': '*/*'
+        }
+      });
+
+      if (!response.ok) {
+        return res.status(response.status).json({ error: `Failed to fetch from target URL. Status: ${response.status}` });
+      }
+
+      const text = await response.text();
+      return res.json({ content: text });
+    } catch (error: any) {
+      console.error("Failed to fetch subscription:", error);
+      return res.status(500).json({ error: error.message || 'Internal connection error' });
+    }
+  });
+
   // Subscription endpoint for VLESS clients
   app.get('/suball', async (req, res) => {
     let servers: any[] = [];
