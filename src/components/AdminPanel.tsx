@@ -97,7 +97,7 @@ const getThirtyDaysFromNow = () => {
   return `${day}.${month}.${year}`;
 };
 
-const parseSubText = (text: string, defaultExpiryDate?: string) => {
+const parseSubText = (text: string, defaultExpiryDate?: string, startingNumber = 1) => {
   let decodedText = text.trim();
   
   if (!decodedText.includes('vless://') && !decodedText.includes('vmess://') && !decodedText.includes('trojan://') && !decodedText.includes('ss://')) {
@@ -110,7 +110,7 @@ const parseSubText = (text: string, defaultExpiryDate?: string) => {
 
   const lines = decodedText.split(/[\r\n]+/);
   const parsedItems: any[] = [];
-  let serverCounter = 1;
+  let serverCounter = startingNumber;
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
@@ -263,6 +263,26 @@ export default function AdminPanel() {
 
   const navigate = useNavigate();
 
+  const getStartingNumber = () => {
+    if (clearOldServersOnSubImport || servers.length === 0) {
+      return 1;
+    }
+    let maxNum = 0;
+    for (const s of servers) {
+      const name = s.name || '';
+      const matches = name.match(/(\d+)/g);
+      if (matches) {
+        for (const match of matches) {
+          const num = parseInt(match);
+          if (num > maxNum) {
+            maxNum = num;
+          }
+        }
+      }
+    }
+    return maxNum + 1;
+  };
+
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged((u) => {
       if (u && ADMIN_EMAILS.includes(u.email || '')) {
@@ -388,7 +408,8 @@ export default function AdminPanel() {
       }
       const data = await response.json();
       if (data.content) {
-        const parsed = parseSubText(data.content, defaultSubExpiryDate);
+        const startNum = getStartingNumber();
+        const parsed = parseSubText(data.content, defaultSubExpiryDate, startNum);
         if (parsed.length === 0) {
           alert("Не удалось найти конфигурации по этой ссылке. Возможно, она пустая или неправильного формата.");
         } else {
@@ -411,7 +432,8 @@ export default function AdminPanel() {
       alert("Пожалуйста, вставьте текст/Base64 подписку");
       return;
     }
-    const parsed = parseSubText(subRawInput, defaultSubExpiryDate);
+    const startNum = getStartingNumber();
+    const parsed = parseSubText(subRawInput, defaultSubExpiryDate, startNum);
     if (parsed.length === 0) {
       alert("Не удалось обнаружить конфигурации VPN в тексте. Убедитесь, что текст содержит ссылки VLESS/VMESS/Trojan или Base64-код.");
     } else {
@@ -1393,10 +1415,10 @@ export default function AdminPanel() {
                             type="button"
                             onClick={() => {
                               const list = unpackedConfigs.filter((_, i) => i !== idx);
-                              // Renumber them starting from #1!
+                              const startNum = getStartingNumber();
                               const renumbered = list.map((server, listIdx) => ({
                                 ...server,
-                                name: `Server №${listIdx + 1}`
+                                name: `Server №${startNum + listIdx}`
                               }));
                               setUnpackedConfigs(renumbered);
                             }}
