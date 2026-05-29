@@ -3,6 +3,7 @@
     { "source": "/sitemap.xml", "destination": "/public/sitemap.xml" },
     { "source": "/robots.txt", "destination": "/public/robots.txt" },
     { "source": "/suball", "destination": "/api/suball" },
+    { "source": "/api/fetch-subscription", "destination": "/api/fetch-subscription" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
