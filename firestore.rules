@@ -137,6 +137,16 @@ service cloud.firestore {
       allow get, list, update, delete: if isAdmin();
     }
 
+    // 10. Settings Collection
+    function isValidSetting(data) {
+      return data.value is string && data.value.size() <= 1000;
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidSetting(incoming());
+    }
+
     // 9. Test Path (Internal)
     match /test/connection {
       allow read: if true;

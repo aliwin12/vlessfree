@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import fs from 'fs';
 
 const firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf8'));
@@ -29,6 +29,25 @@ async function startServer() {
   app.get('/robots.txt', (req, res) => {
     res.setHeader('Content-Type', 'text/plain');
     res.sendFile(path.join(process.cwd(), 'public', 'robots.txt'));
+  });
+
+  // Versions Android Plain Text endpoint
+  app.get(['/versionsandroid', '/api/versionsandroid'], async (req, res) => {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    let versionText = 'v0.1 ok';
+    try {
+      const docRef = doc(db, 'settings', 'versionsandroid');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data && typeof data.value === 'string') {
+          versionText = data.value;
+        }
+      }
+    } catch (error) {
+      console.error("Error loading versionsandroid server-side:", error);
+    }
+    res.send(versionText);
   });
 
   // Proxy endpoint to fetch subscription urls (to avoid CORS)

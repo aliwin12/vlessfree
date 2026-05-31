@@ -14,6 +14,9 @@ import AdminPanel from './components/AdminPanel';
 import ReportPage from './components/ReportPage';
 import SuggestServerPage from './components/SuggestServerPage';
 import RequestRemovalPage from './components/RequestRemovalPage';
+import VersionsAndroidPage from './components/VersionsAndroidPage';
+import AndroidVerAppPage from './components/AndroidVerAppPage';
+import AndroidPage from './components/AndroidPage';
 
 const UPDATES = [
   {
@@ -404,6 +407,23 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
 
   return (
     <main className="relative pt-32 md:pt-56 pb-28 md:pb-20 px-4 md:px-6 max-w-7xl mx-auto min-h-screen flex flex-col">
+      {/* Top Image Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="w-full mb-8 md:mb-12 max-w-3xl mx-auto"
+      >
+        <div className="w-full overflow-hidden rounded-xl md:rounded-2xl border border-white/10 shadow-[0_0_50px_rgba(255,255,255,0.05)] bg-black flex items-center justify-center" id="promo-banner-container">
+          <img 
+            src="https://i.ibb.co/zTfFjQtT/2026-05-29-223524.png" 
+            alt="Promo Banner" 
+            className="w-full max-w-xl h-auto block object-contain"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+      </motion.div>
+
       {/* Hero Section */}
       <section className="mb-8 md:mb-16 text-center shrink-0">
         <motion.div
@@ -420,10 +440,6 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
           </p>
         </motion.div>
       </section>
-      <div style={{ display: 'none' }} id="corruption-gate"> { /*
-            Актуальны�      {(keys.length > 0 && !replaceWithWarning) ? (
-          */ } </div>
-      
       {/* Warnings Section */}
       <AnimatePresence>
         {activeWarnings.map((warning: any) => (
@@ -491,7 +507,7 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
       {/* Subscription Button */}
       <div className="flex flex-col items-center justify-center mb-8 md:mb-12 shrink-0">
         <a 
-          href="/suball" 
+          href="https://vlessfree.vercel.app/suball" 
           target="_blank" 
           rel="noopener noreferrer"
           className="glass group relative px-8 py-4 rounded-3xl bg-gradient-to-br from-white/10 to-transparent border border-white/10 hover:border-white/30 transition-all duration-500 overflow-hidden"
@@ -1643,14 +1659,16 @@ function AppContent() {
       </AnimatePresence>
 
       {/* Background Atmosphere */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[120px] rounded-full" />
-        <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-purple-500/5 blur-[100px] rounded-full" />
-      </div>
+      {location.pathname !== '/versionsandroid' && location.pathname !== '/android' && location.pathname !== '/androidverapp' && (
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[120px] rounded-full" />
+          <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-purple-500/5 blur-[100px] rounded-full" />
+        </div>
+      )}
 
-      <Header scrolled={scrolled} />
-      <BottomNav />
+      {location.pathname !== '/versionsandroid' && location.pathname !== '/android' && location.pathname !== '/androidverapp' && <Header scrolled={scrolled} />}
+      {location.pathname !== '/versionsandroid' && location.pathname !== '/android' && location.pathname !== '/androidverapp' && <BottomNav />}
 
       <Routes>
         <Route path="/" element={
@@ -1682,6 +1700,16 @@ function AppContent() {
         <Route path="/report" element={<ReportPage />} />
         <Route path="/suggest" element={<SuggestServerPage />} />
         <Route path="/remove-server" element={<RequestRemovalPage />} />
+        <Route path="/versionsandroid" element={<VersionsAndroidPage />} />
+        <Route path="/androidverapp" element={<AndroidVerAppPage />} />
+        <Route path="/android" element={
+          <AndroidPage 
+            keys={keys} 
+            warnings={warnings}
+            handleCopy={handleCopy} 
+            copiedId={copiedId} 
+          />
+        } />
       </Routes>
     </div>
   );

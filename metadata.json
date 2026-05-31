@@ -1,5 +1,6 @@
 {
   "name": "vlessfree",
   "description": "A platform for free VLESS configuration keys.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -115,6 +115,15 @@
         "userIp": { "type": "string" }
       },
       "required": ["serverId", "suggestionId", "reason", "status", "createdAt"]
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "App generic settings document",
+      "type": "object",
+      "properties": {
+        "value": { "type": "string" }
+      },
+      "required": ["value"]
     }
   },
   "firestore": {
@@ -149,6 +158,10 @@
     "/server_removals/{removalId}": {
       "schema": "ServerRemovalRequest",
       "description": "Requests for server removal"
+    },
+    "/settings/{settingId}": {
+      "schema": "Setting",
+      "description": "General settings document"
     }
   }
 }

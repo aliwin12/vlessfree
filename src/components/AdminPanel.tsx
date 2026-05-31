@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db, auth, googleProvider, signInWithPopup, signOut, serversCollection, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, handleFirestoreError, OperationType, limit, where, getDocs } from '../lib/firebase';
+import { db, auth, googleProvider, signInWithPopup, signOut, serversCollection, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, serverTimestamp, handleFirestoreError, OperationType, limit, where, getDocs, getDoc } from '../lib/firebase';
+import { setDoc } from 'firebase/firestore';
 import { Trash2, Edit3, Plus, LogOut, Shield, ChevronRight, Save, X, Globe, Activity, Calendar, ExternalLink, RefreshCw, Layers, AlertTriangle, Bell, Eye, EyeOff, Info, UserX, Users, MapPin, MonitorSmartphone, Check, Hash, Copy, Terminal } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
@@ -228,7 +229,9 @@ export default function AdminPanel() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingWarningId, setEditingWarningId] = useState<string | null>(null);
   const [selectedServers, setSelectedServers] = useState<string[]>([]);
-  const [adminActiveTab, setAdminActiveTab] = useState<'active' | 'inactive' | 'comingSoon' | 'reports' | 'visits' | 'blocked' | 'suggestions' | 'removals'>('active');
+  const [adminActiveTab, setAdminActiveTab] = useState<'active' | 'inactive' | 'comingSoon' | 'reports' | 'visits' | 'blocked' | 'suggestions' | 'removals' | 'versionsandroid'>('active');
+  const [versionsAndroidText, setVersionsAndroidText] = useState('v0.1 ok');
+  const [isSavingVersionsAndroid, setIsSavingVersionsAndroid] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     protocol: 'VLESS / REALITY',
@@ -366,6 +369,22 @@ export default function AdminPanel() {
       handleFirestoreError(error, OperationType.LIST, 'server_removals');
     });
 
+    const fetchVersionsAndroid = async () => {
+      try {
+        const docRef = doc(db, 'settings', 'versionsandroid');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data && typeof data.value === 'string') {
+            setVersionsAndroidText(data.value);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading versionsandroid settings:", error);
+      }
+    };
+    fetchVersionsAndroid();
+
     return () => {
       unsubscribeAuth();
       unsubscribeDocs();
@@ -377,6 +396,24 @@ export default function AdminPanel() {
       unsubscribeRemovals();
     };
   }, []);
+
+  const handleSaveVersionsAndroid = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingVersionsAndroid(true);
+    try {
+      const docRef = doc(db, 'settings', 'versionsandroid');
+      await setDoc(docRef, {
+        value: versionsAndroidText,
+        updatedAt: serverTimestamp()
+      });
+      alert('Версия Android успешно сохранена!');
+    } catch (error) {
+      console.error("Error saving versionsandroid settings:", error);
+      alert('Ошибка при сохранении: ' + (error instanceof Error ? error.message : String(error)));
+    } finally {
+      setIsSavingVersionsAndroid(false);
+    }
+  };
 
   const handleLogin = async () => {
     try {
@@ -1587,6 +1624,14 @@ export default function AdminPanel() {
         >
           Бан ({blockedIps.length})
         </button>
+        <button 
+          onClick={() => setAdminActiveTab('versionsandroid')}
+          className={`flex-1 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all ${
+            adminActiveTab === 'versionsandroid' ? 'bg-indigo-500 text-white shadow-xl shadow-indigo-500/10' : 'bg-white/5 text-white/40 hover:bg-white/10'
+          }`}
+        >
+          Версия Android
+        </button>
       </div>
 
       <div className="glass rounded-[40px] border border-white/10 overflow-hidden">
@@ -1938,6 +1983,35 @@ export default function AdminPanel() {
                 )}
               </tbody>
             </table>
+          </div>
+        ) : adminActiveTab === 'versionsandroid' ? (
+          <div className="p-8 md:p-12">
+            <div className="max-w-xl">
+              <h2 className="text-xl font-serif italic mb-2">Настройки версии Android</h2>
+              <p className="text-white/40 text-xs mb-8">Управление текстовым содержимым страницы /versionsandroid</p>
+              
+              <form onSubmit={handleSaveVersionsAndroid} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-2">Текст (например, v0.1 ok)</label>
+                  <input 
+                    required
+                    type="text"
+                    value={versionsAndroidText}
+                    onChange={e => setVersionsAndroidText(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:border-indigo-500/30 transition-all outline-none font-mono text-white"
+                  />
+                </div>
+                
+                <button 
+                  type="submit"
+                  disabled={isSavingVersionsAndroid}
+                  className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-bold uppercase tracking-widest flex items-center justify-center gap-3 hover:scale-[1.01] transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {isSavingVersionsAndroid ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                  {isSavingVersionsAndroid ? 'Сохранение...' : 'Сохранить изменения'}
+                </button>
+              </form>
+            </div>
           </div>
         ) : (
           <div className="overflow-x-auto no-scrollbar">
