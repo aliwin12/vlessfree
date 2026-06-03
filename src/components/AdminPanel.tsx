@@ -703,17 +703,24 @@ export default function AdminPanel() {
 
   const handleApproveSuggestion = async (suggestion: any) => {
     try {
-      // 1. Create the actual server
+      // 1. Create the actual server with user posting fields
       await addDoc(serversCollection, {
         name: suggestion.name,
-        protocol: suggestion.protocol,
-        country: suggestion.country,
-        city: suggestion.city,
+        protocol: suggestion.protocol || 'VLESS',
+        country: suggestion.country || 'SG',
+        city: suggestion.city || 'Singapore',
         config: suggestion.config,
         latency: '30ms', // Initial default
         load: 10, // Initial default
         status: 'online',
         expiryDate: suggestion.expiryDate || '01.01.2027', // Use suggested or default
+        isUserPost: suggestion.userId ? true : false,
+        userId: suggestion.userId || null,
+        username: suggestion.username || null,
+        displayName: suggestion.displayName || null,
+        avatarUrl: suggestion.avatarUrl || null,
+        postType: suggestion.postType || 'vless',
+        scheduledAt: suggestion.scheduledAt || null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -724,7 +731,7 @@ export default function AdminPanel() {
         updatedAt: serverTimestamp()
       });
 
-      alert(`Сервер "${suggestion.name}" успешно одобрен и добавлен!`);
+      alert(`Сервер/пост "${suggestion.name}" успешно одобрен и опубликован!`);
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'servers');
     }

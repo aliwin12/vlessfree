@@ -4,12 +4,12 @@
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, Calendar, X, AlertTriangle, Monitor, Smartphone, Terminal, Info, ChevronRight, Download, ExternalLink, Menu, Share2, Folder, ChevronDown, Bell, Plus } from 'lucide-react';
+import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, Calendar, X, AlertTriangle, Monitor, Smartphone, Terminal, Info, ChevronRight, Download, ExternalLink, Menu, Share2, Folder, ChevronDown, Bell, Plus, LogIn, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { MOCK_KEYS, VlessKey } from './data/keys';
-import { db, collection, query, orderBy, onSnapshot, handleFirestoreError, OperationType, addDoc, serverTimestamp, getDocs, where } from './lib/firebase';
+import { db, auth, doc, getDoc, collection, query, orderBy, onSnapshot, handleFirestoreError, OperationType, addDoc, serverTimestamp, getDocs, where } from './lib/firebase';
 import AdminPanel from './components/AdminPanel';
 import ReportPage from './components/ReportPage';
 import SuggestServerPage from './components/SuggestServerPage';
@@ -18,6 +18,8 @@ import VersionsAndroidPage from './components/VersionsAndroidPage';
 import AndroidVerAppPage from './components/AndroidVerAppPage';
 import AndroidPage from './components/AndroidPage';
 import AppAboutPage from './components/AppAboutPage';
+import AuthPage from './components/AuthPage';
+import UserProfilePage from './components/UserProfilePage';
 
 const UPDATES = [
   {
@@ -95,7 +97,15 @@ const UPDATES = [
   }
 ];
 
-function Header({ scrolled }: { scrolled: boolean }) {
+function Header({ 
+  scrolled, 
+  currentUser, 
+  userProfile 
+}: { 
+  scrolled: boolean; 
+  currentUser: any; 
+  userProfile: any; 
+}) {
   return (
     <header className={`fixed top-0 left-0 right-0 z-[60] transition-all duration-500 ${
       scrolled ? 'py-2 md:py-4 glass border-b' : 'py-3 md:py-8 bg-transparent md:bg-transparent glass md:glass-none border-b md:border-none'
@@ -104,13 +114,23 @@ function Header({ scrolled }: { scrolled: boolean }) {
         <div className="w-full flex justify-center items-center relative">
           {/* Left Controls */}
           <div className="hidden md:flex absolute left-0 items-center gap-2">
-            <Link 
-              to="/updates" 
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white hover:text-black text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10"
-            >
-              <RefreshCw className="w-3 h-3" />
-              Обновления
-            </Link>
+            {currentUser && userProfile ? (
+              <Link 
+                to={`/user/${userProfile.username}`} 
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500 hover:text-white text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-indigo-500/20"
+              >
+                <User className="w-3.5 h-3.5" />
+                Ваш профиль
+              </Link>
+            ) : (
+              <Link 
+                to="/login" 
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white hover:text-black text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                Войти
+              </Link>
+            )}
             <Link 
               to="/app" 
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white hover:text-black text-[10px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10"
@@ -157,7 +177,13 @@ function Header({ scrolled }: { scrolled: boolean }) {
   );
 }
 
-function BottomNav() {
+function BottomNav({ 
+  currentUser, 
+  userProfile 
+}: { 
+  currentUser: any; 
+  userProfile: any; 
+}) {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
 
@@ -169,18 +195,33 @@ function BottomNav() {
       className="md:hidden fixed bottom-0 left-0 right-0 z-[60] glass border-t pb-safe backdrop-blur-2xl"
     >
       <div className="flex justify-around items-center h-14 md:h-16">
-        <Link 
-          to="/updates" 
-          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/updates') ? 'text-white' : 'text-white/30'}`}
-        >
-          <motion.div 
-            whileTap={{ scale: 0.9 }}
-            className={`p-1.5 rounded-xl transition-all duration-300 ${isActive('/updates') ? 'bg-white/10' : ''}`}
+        {currentUser && userProfile ? (
+          <Link 
+            to={`/user/${userProfile.username}`} 
+            className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive(`/user/${userProfile.username}`) ? 'text-white' : 'text-white/30'}`}
           >
-            <RefreshCw className={`w-5 h-5 ${isActive('/updates') ? 'glow-text' : ''}`} />
-          </motion.div>
-          <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/updates') ? 'opacity-100' : 'opacity-60'}`}>Обновы</span>
-        </Link>
+            <motion.div 
+              whileTap={{ scale: 0.9 }}
+              className={`p-1.5 rounded-xl transition-all duration-300 ${isActive(`/user/${userProfile.username}`) ? 'bg-indigo-500/20' : ''}`}
+            >
+              <User className={`w-5 h-5 ${isActive(`/user/${userProfile.username}`) ? 'text-indigo-400' : ''}`} />
+            </motion.div>
+            <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive(`/user/${userProfile.username}`) ? 'opacity-100 text-indigo-400' : 'opacity-60'}`}>Профиль</span>
+          </Link>
+        ) : (
+          <Link 
+            to="/login" 
+            className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/login') ? 'text-white' : 'text-white/30'}`}
+          >
+            <motion.div 
+              whileTap={{ scale: 0.9 }}
+              className={`p-1.5 rounded-xl transition-all duration-300 ${isActive('/login') ? 'bg-white/10' : ''}`}
+            >
+              <LogIn className={`w-5 h-5 ${isActive('/login') ? 'glow-text' : ''}`} />
+            </motion.div>
+            <span className={`text-[9px] font-bold uppercase tracking-wider transition-all duration-300 ${isActive('/login') ? 'opacity-100' : 'opacity-60'}`}>Войти</span>
+          </Link>
+        )}
         <Link 
           to="/" 
           className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-all duration-300 ${isActive('/') ? 'text-white' : 'text-white/30'}`}
@@ -294,6 +335,7 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [creatorFilter, setCreatorFilter] = useState<'all' | 'official' | 'community'>('all');
   const navigate = useNavigate();
   const itemsPerPage = 12;
 
@@ -359,6 +401,14 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
     const now = new Date();
     const isExpired = !expiry || expiry < now;
 
+    // Filter out future scheduled publications
+    if (key.scheduledAt) {
+      const schedTime = new Date(key.scheduledAt);
+      if (schedTime > now) {
+        return false;
+      }
+    }
+
     if (activeTab === 'active') {
       return (key.status === 'online' || key.status === 'unstable') && !isExpired && !key.isComingSoon;
     } else if (activeTab === 'comingSoon') {
@@ -369,6 +419,13 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
   }).filter((key: any) => {
     const matchesCountry = !selectedCountry || key.location.startsWith(selectedCountry);
     return matchesCountry;
+  }).filter((key: any) => {
+    if (creatorFilter === 'official') {
+      return !key.isUserPost;
+    } else if (creatorFilter === 'community') {
+      return !!key.isUserPost;
+    }
+    return true; // 'all'
   });
 
   // Pagination logic
@@ -379,7 +436,7 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, selectedCountry]);
+  }, [activeTab, selectedCountry, creatorFilter]);
 
   const isExpiringSoon = (expiryDate: string) => {
     if (!expiryDate || typeof expiryDate !== 'string' || !expiryDate.includes('.')) return false;
@@ -540,7 +597,7 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
       </div>
 
       {/* Country Filter Dropdown */}
-      <div className="flex justify-center mb-8 md:mb-12 relative z-[60]">
+      <div className="flex flex-col items-center gap-4 mb-8 md:mb-12 relative z-[60]">
         <div className="relative">
           <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -603,6 +660,40 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
             )}
           </AnimatePresence>
         </div>
+
+        {/* Creator filter buttons */}
+        <div className="glass p-1 rounded-2xl flex bg-white/5 border border-white/5">
+          <button
+            onClick={() => setCreatorFilter('all')}
+            className={`px-4 py-2 rounded-xl text-[9px] uppercase tracking-wider font-bold transition-all duration-300 ${
+              creatorFilter === 'all'
+                ? 'bg-white text-black shadow-lg'
+                : 'text-white/40 hover:text-white'
+            }`}
+          >
+            Все
+          </button>
+          <button
+            onClick={() => setCreatorFilter('official')}
+            className={`px-4 py-2 rounded-xl text-[9px] uppercase tracking-wider font-bold transition-all duration-300 ${
+              creatorFilter === 'official'
+                ? 'bg-amber-500 text-black shadow-lg'
+                : 'text-white/40 hover:text-white'
+            }`}
+          >
+            От vlessfree
+          </button>
+          <button
+            onClick={() => setCreatorFilter('community')}
+            className={`px-4 py-2 rounded-xl text-[9px] uppercase tracking-wider font-bold transition-all duration-300 ${
+              creatorFilter === 'community'
+                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'
+                : 'text-white/40 hover:text-white'
+            }`}
+          >
+            От пользователей
+          </button>
+        </div>
       </div>
 
       {/* Nodes Grid / Empty State */}
@@ -626,165 +717,204 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
               exit={{ opacity: 0, y: -20 }}
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"
             >
-            {currentItems.map((key: any, index: number) => (
-              <motion.div
-                key={key.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + index * 0.05 }}
-                className={`glass rounded-[20px] md:rounded-[32px] p-4 md:p-8 group hover:border-white/30 transition-all duration-500 ${key.status === 'offline' ? 'opacity-60 grayscale' : ''} relative overflow-hidden`}
-              >
-                {isExpiringSoon(key.expiryDate) && key.status !== 'offline' && (
-                  <div className="absolute top-0 left-0 w-full h-1 bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)] z-30" />
-                )}
-                
-                {key.isSpecial && !unlockedSpecial && (
-                  <div className="absolute inset-0 z-10 backdrop-blur-md bg-black/20 pointer-events-none" />
-                )}
-                
-                <div className="flex justify-between items-start mb-4 md:mb-8 relative z-20">
-                  <div className={`w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-colors duration-500 ${key.status === 'offline' ? 'bg-rose-500/10 text-rose-500' : key.isComingSoon ? 'bg-emerald-500/10 text-emerald-500' : ''}`}>
-                    <Globe className="w-4 h-4 md:w-6 md:h-6" />
-                  </div>
-                  <div className="flex gap-2">
-                    {key.isComingSoon && (
-                      <span className="px-2 py-1 rounded-lg bg-emerald-500 text-white text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-                        COMING SOON
-                      </span>
-                    )}
-                    {(key.isDisappearingSoon || isCriticallyExpiring(key.expiryDate)) && !key.isComingSoon && (
-                      <motion.span 
-                        animate={isCriticallyExpiring(key.expiryDate) ? { opacity: [1, 0.5, 1], scale: [1, 1.05, 1] } : {}}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="px-2 py-1 rounded-lg bg-rose-500 text-white text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(244,63,94,0.4)]"
+            {currentItems.map((key: any, index: number) => {
+              const isSub = key.postType === 'subscription';
+              return (
+                <motion.div
+                  key={key.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + index * 0.05 }}
+                  className={`glass rounded-[20px] md:rounded-[32px] p-4 md:p-8 group hover:border-white/30 transition-all duration-500 ${
+                    key.status === 'offline' ? 'opacity-60 grayscale' : ''
+                  } ${
+                    isSub ? 'border-emerald-500/20 bg-emerald-500/[0.015]' : ''
+                  } relative overflow-hidden`}
+                >
+                  {isExpiringSoon(key.expiryDate) && key.status !== 'offline' && !isSub && (
+                    <div className="absolute top-0 left-0 w-full h-1 bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)] z-30" />
+                  )}
+                  
+                  {key.isSpecial && !unlockedSpecial && (
+                    <div className="absolute inset-0 z-10 backdrop-blur-md bg-black/20 pointer-events-none" />
+                  )}
+                  
+                  <div className="flex justify-between items-start mb-4 md:mb-8 relative z-20">
+                    <div className={`w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-colors duration-500 ${
+                      key.status === 'offline' ? 'bg-rose-500/10 text-rose-500' : 
+                      key.isComingSoon ? 'bg-emerald-500/10 text-emerald-500' : 
+                      isSub ? 'bg-emerald-500/10 text-emerald-400' : ''
+                    }`}>
+                      {isSub ? <Folder className="w-4 h-4 md:w-6 md:h-6" /> : <Globe className="w-4 h-4 md:w-6 md:h-6" />}
+                    </div>
+                    <div className="flex gap-2">
+                      {isSub && (
+                        <span className="px-2 py-1 rounded-lg bg-emerald-500 text-white text-[8px] md:text-[9px] uppercase tracking-widest font-black shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                          ПАПКА-ПОДПИСКА
+                        </span>
+                      )}
+                      {key.isComingSoon && (
+                        <span className="px-2 py-1 rounded-lg bg-emerald-500 text-white text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                          COMING SOON
+                        </span>
+                      )}
+                      {(key.isDisappearingSoon || isCriticallyExpiring(key.expiryDate)) && !key.isComingSoon && !isSub && (
+                        <motion.span 
+                          animate={isCriticallyExpiring(key.expiryDate) ? { opacity: [1, 0.5, 1], scale: [1, 1.05, 1] } : {}}
+                          transition={{ duration: 2, repeat: Infinity }}
+                          className="px-2 py-1 rounded-lg bg-rose-500 text-white text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(244,63,94,0.4)]"
+                        >
+                          СКОРО ИСЧЕЗНЕТ
+                        </motion.span>
+                      )}
+                      {key.isSpecial && (
+                        <span className="px-2 py-1 rounded-lg bg-amber-500 text-black text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+                          SPECIAL
+                        </span>
+                      )}
+                      <button 
+                        onClick={() => key.isSpecial && !unlockedSpecial ? handleSpecialClick(key) : setSelectedKey(key)}
+                        className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 hover:opacity-100 transition-opacity"
                       >
-                        СКОРО ИСЧЕЗНЕТ
-                      </motion.span>
-                    )}
-                    {key.isSpecial && (
-                      <span className="px-2 py-1 rounded-lg bg-amber-500 text-black text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(245,158,11,0.3)]">
-                        SPECIAL
+                        Подробнее
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-1 md:mb-2 relative z-20">
+                    <h3 className="text-xl md:text-2xl font-serif italic tracking-tight selectable">{key.name}</h3>
+                    {key.status === 'unstable' && (
+                      <span className="px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-[7px] md:text-[8px] uppercase tracking-widest font-bold border border-amber-500/20">
+                        Нестабильный
                       </span>
                     )}
-                    <button 
-                      onClick={() => key.isSpecial && !unlockedSpecial ? handleSpecialClick(key) : setSelectedKey(key)}
-                      className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 hover:opacity-100 transition-opacity"
-                    >
-                      Подробнее
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 mb-1 md:mb-2 relative z-20">
-                  <h3 className="text-xl md:text-2xl font-serif italic tracking-tight selectable">{key.name}</h3>
-                  {key.status === 'unstable' && (
-                    <span className="px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 text-[7px] md:text-[8px] uppercase tracking-widest font-bold border border-amber-500/20">
-                      Нестабильный
-                    </span>
-                  )}
-                  {key.status === 'offline' && (
-                    <span className="px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-500 text-[7px] md:text-[8px] uppercase tracking-widest font-bold border border-rose-500/20">
-                      Отключен
-                    </span>
-                  )}
-                </div>
-                
-                <div className={key.isSpecial && !unlockedSpecial ? 'blur-sm select-none pointer-events-none' : ''}>
-                  <p className="text-xs md:text-sm text-white/40 mb-4 md:mb-6 selectable">{key.location}</p>
-
-                  {key.reason && (
-                    <div className="bg-rose-500/5 border border-rose-500/10 rounded-lg md:rounded-xl p-3 md:p-4 mb-4 md:mb-6">
-                      <p className="text-[9px] md:text-[10px] text-rose-500/60 uppercase tracking-widest font-bold mb-1">Причина:</p>
-                      <p className="text-[11px] md:text-xs text-rose-500/80">{key.reason}</p>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-3 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 mb-6 md:mb-8">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-3 h-3" />
-                      <span>До: {key.expiryDate}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3 relative z-20">
-                  <button
-                    onClick={() => {
-                      if (key.isSpecial) {
-                        handleSpecialClick(key);
-                      } else {
-                        handleCopy(key.id, key.config);
-                      }
-                    }}
-                    disabled={key.status === 'offline'}
-                    className={`w-full py-3.5 md:py-4 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${
-                      key.status === 'offline'
-                      ? 'bg-white/5 text-white/20 cursor-not-allowed'
-                      : copiedId === key.id 
-                      ? 'bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
-                      : key.isSpecial && !unlockedSpecial
-                      ? 'bg-amber-500 text-black hover:bg-amber-400'
-                      : key.isSpecial && unlockedSpecial
-                      ? 'bg-white/10 hover:bg-white hover:text-black'
-                      : 'bg-white/5 hover:bg-white hover:text-black'
-                    }`}
-                  >
-                    {key.isSpecial && !unlockedSpecial ? (
-                      <div className="flex items-center gap-2">
-                        <Lock className="w-4 h-4" /> Разблокировать
-                      </div>
-                    ) : key.isSpecial && unlockedSpecial ? (
-                      <div className="flex items-center gap-2">
-                        <Folder className="w-4 h-4" /> Открыть папку
-                      </div>
-                    ) : (
-                      <AnimatePresence mode="wait">
-                        {copiedId === key.id ? (
-                          <motion.div
-                            key="check"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            className="flex items-center gap-2"
-                          >
-                            <Check className="w-4 h-4" /> Скопировано!
-                          </motion.div>
-                        ) : (
-                          <motion.div
-                            key="copy"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            className="flex items-center gap-2"
-                          >
-                            <Copy className="w-4 h-4" /> Копировать конфигурацию
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                    {key.status === 'offline' && (
+                      <span className="px-1.5 py-0.5 rounded-full bg-rose-500/10 text-rose-500 text-[7px] md:text-[8px] uppercase tracking-widest font-bold border border-rose-500/20">
+                        Отключен
+                      </span>
                     )}
-                  </button>
+                  </div>
+                  
+                  <div className={key.isSpecial && !unlockedSpecial ? 'blur-sm select-none pointer-events-none' : ''}>
+                    <p className="text-xs md:text-sm text-white/40 mb-4 md:mb-6 selectable">
+                      {isSub ? 'Нигде • Общая папка-подписка без пароля' : key.location}
+                    </p>
 
-                  <button
-                    onClick={() => {
-                      if (key.isSpecial) {
-                        handleSpecialClick(key);
-                      } else {
-                        handleShare(key);
-                      }
-                    }}
-                    disabled={key.status === 'offline'}
-                    className={`w-full py-3 md:py-3.5 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 border border-white/10 ${
-                      key.status === 'offline'
-                      ? 'opacity-20 cursor-not-allowed'
-                      : 'bg-white/5 hover:bg-white/10'
-                    }`}
-                  >
-                    {key.isSpecial ? <Folder className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
-                    {key.isSpecial ? 'Просмотреть содержимое' : 'Поделиться'}
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+                    {key.reason && (
+                      <div className="bg-rose-500/5 border border-rose-500/10 rounded-lg md:rounded-xl p-3 md:p-4 mb-4 md:mb-6">
+                        <p className="text-[9px] md:text-[10px] text-rose-500/60 uppercase tracking-widest font-bold mb-1">Причина:</p>
+                        <p className="text-[11px] md:text-xs text-rose-500/80">{key.reason}</p>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3 text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30 mb-6 md:mb-8">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-3 h-3" />
+                        <span>До: {key.expiryDate}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3 relative z-20">
+                    <button
+                      onClick={() => {
+                        if (key.isSpecial) {
+                          handleSpecialClick(key);
+                        } else {
+                          handleCopy(key.id, key.config);
+                        }
+                      }}
+                      disabled={key.status === 'offline'}
+                      className={`w-full py-3.5 md:py-4 rounded-xl md:rounded-2xl text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${
+                        key.status === 'offline'
+                        ? 'bg-white/5 text-white/20 cursor-not-allowed'
+                        : copiedId === key.id 
+                        ? 'bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]' 
+                        : key.isSpecial && !unlockedSpecial
+                        ? 'bg-amber-500 text-black hover:bg-amber-400'
+                        : key.isSpecial && unlockedSpecial
+                        ? 'bg-white/10 hover:bg-white hover:text-black'
+                        : isSub
+                        ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-white hover:border-transparent'
+                        : 'bg-white/5 hover:bg-white hover:text-black'
+                      }`}
+                    >
+                      {key.isSpecial && !unlockedSpecial ? (
+                        <div className="flex items-center gap-2">
+                          <Lock className="w-4 h-4" /> Разблокировать
+                        </div>
+                      ) : key.isSpecial && unlockedSpecial ? (
+                        <div className="flex items-center gap-2">
+                          <Folder className="w-4 h-4" /> Открыть папку
+                        </div>
+                      ) : (
+                        <AnimatePresence mode="wait">
+                          {copiedId === key.id ? (
+                            <motion.div
+                              key="check"
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.8 }}
+                              className="flex items-center gap-2"
+                            >
+                              <Check className="w-4 h-4" /> Скопировано!
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key="copy"
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.8 }}
+                              className="flex items-center gap-2"
+                            >
+                              <Copy className="w-4 h-4" /> {isSub ? 'Скопировать подписку' : 'Копировать конфигурацию'}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (key.isSpecial) {
+                          handleSpecialClick(key);
+                        } else {
+                          handleShare(key);
+                        }
+                      }}
+                      disabled={key.status === 'offline'}
+                      className={`w-full py-3 md:py-3.5 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 border border-white/10 ${
+                        key.status === 'offline'
+                        ? 'opacity-20 cursor-not-allowed'
+                        : 'bg-white/5 hover:bg-white/10'
+                      }`}
+                    >
+                      {key.isSpecial ? <Folder className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
+                      {key.isSpecial ? 'Просмотреть содержимое' : isSub ? 'Поделиться подпиской' : 'Поделиться'}
+                    </button>
+
+                    {key.isUserPost && key.userId && (
+                      <Link 
+                        to={`/user/${key.username}`}
+                        className="flex items-center gap-2 mt-4 pt-4 border-t border-white/5 hover:text-indigo-400 text-white/50 transition-colors pointer-events-auto relative z-40"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <img 
+                          src={key.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${key.username}`} 
+                          className="w-5 h-5 rounded-full bg-white/10 border border-white/10" 
+                          alt="" 
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="flex flex-col items-start leading-none text-left">
+                          <span className="text-[7px] text-white/30 uppercase tracking-widest font-semibold mb-0.5">Добавил:</span>
+                          <span className="text-[10px] font-bold text-white/80 font-mono">@{key.username}</span>
+                        </div>
+                      </Link>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
             </motion.div>
 
             {/* Pagination Controls */}
@@ -1346,6 +1476,38 @@ function AppContent() {
   const [warnings, setWarnings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // User States
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      setCurrentUser(user);
+      if (user) {
+        setLoadingProfile(true);
+        try {
+          const profileDocSnap = await getDoc(doc(db, 'users', user.uid));
+          if (profileDocSnap.exists()) {
+            setUserProfile(profileDocSnap.data());
+          } else {
+            setUserProfile(null);
+          }
+        } catch (e) {
+          console.error("Error loading header user profile:", e);
+          setUserProfile(null);
+        } finally {
+          setLoadingProfile(false);
+        }
+      } else {
+        setUserProfile(null);
+        setLoadingProfile(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   useEffect(() => {
     const initApp = async () => {
       let userIp = 'Unknown';
@@ -1608,18 +1770,26 @@ function AppContent() {
               </button>
 
               <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl md:rounded-3xl bg-white/5 flex items-center justify-center mb-6 md:mb-8">
-                <Globe className="w-6 h-6 md:w-8 md:h-8" />
+                {selectedKey.postType === 'subscription' ? (
+                  <Folder className="w-6 h-6 md:w-8 md:h-8 text-emerald-400" />
+                ) : (
+                  <Globe className="w-6 h-6 md:w-8 md:h-8" />
+                )}
               </div>
 
               <h2 className="text-2xl md:text-3xl font-serif italic mb-1 md:mb-2 tracking-tighter selectable">
                 {selectedKey.name}
               </h2>
-              <p className="text-white/40 text-xs md:text-sm mb-6 md:mb-8 selectable">{selectedKey.location}</p>
+              <p className="text-white/40 text-xs md:text-sm mb-6 md:mb-8 selectable">
+                {selectedKey.postType === 'subscription' ? 'Нигде • Общая папка-подписка без пароля' : selectedKey.location}
+              </p>
 
               <div className="space-y-3 md:space-y-4 mb-8 md:mb-10">
                 <div className="flex justify-between items-center py-3 md:py-4 border-b border-white/5">
                   <span className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30">Протокол</span>
-                  <span className="text-xs md:text-sm font-mono selectable">{selectedKey.protocol}</span>
+                  <span className="text-xs md:text-sm font-mono selectable">
+                    {selectedKey.postType === 'subscription' ? 'Subscription Link' : selectedKey.protocol}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center py-3 md:py-4 border-b border-white/5">
                   <span className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30">Активен до</span>
@@ -1639,6 +1809,25 @@ function AppContent() {
                      selectedKey.status === 'unstable' ? 'Нестабильный' : 'Offline'}
                   </span>
                 </div>
+
+                {selectedKey.isUserPost && selectedKey.userId && (
+                  <div className="flex justify-between items-center py-3 md:py-4 border-b border-white/5">
+                    <span className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-30">Автор публикации</span>
+                    <Link 
+                      to={`/user/${selectedKey.username}`}
+                      className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-mono text-xs font-bold transition-all relative z-50"
+                      onClick={() => setSelectedKey(null)}
+                    >
+                      <img 
+                        src={selectedKey.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${selectedKey.username}`} 
+                        className="w-4.5 h-4.5 rounded-full bg-white/10" 
+                        alt="" 
+                        referrerPolicy="no-referrer"
+                      />
+                      @{selectedKey.username}
+                    </Link>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-3">
@@ -1651,7 +1840,7 @@ function AppContent() {
                   }`}
                 >
                   {copiedId === selectedKey.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  {copiedId === selectedKey.id ? 'Скопировано' : 'Копировать ключ'}
+                  {copiedId === selectedKey.id ? 'Скопировано!' : selectedKey.postType === 'subscription' ? 'Скопировать подписку (ссылку)' : 'Копировать конфигурацию'}
                 </button>
 
                 <Link
@@ -1660,7 +1849,7 @@ function AppContent() {
                   onClick={() => setSelectedKey(null)}
                 >
                   <AlertTriangle className="w-3 h-3 md:w-3.5 md:h-3.5" />
-                  Сообщить о проблеме
+                  Сообщить о технической проблеме
                 </Link>
               </div>
             </motion.div>
@@ -1677,8 +1866,8 @@ function AppContent() {
         </div>
       )}
 
-      {location.pathname !== '/versionsandroid' && location.pathname !== '/android' && location.pathname !== '/androidverapp' && location.pathname !== '/app' && <Header scrolled={scrolled} />}
-      {location.pathname !== '/versionsandroid' && location.pathname !== '/android' && location.pathname !== '/androidverapp' && location.pathname !== '/app' && <BottomNav />}
+      {location.pathname !== '/versionsandroid' && location.pathname !== '/android' && location.pathname !== '/androidverapp' && location.pathname !== '/app' && <Header scrolled={scrolled} currentUser={currentUser} userProfile={userProfile} />}
+      {location.pathname !== '/versionsandroid' && location.pathname !== '/android' && location.pathname !== '/androidverapp' && location.pathname !== '/app' && <BottomNav currentUser={currentUser} userProfile={userProfile} />}
 
       <Routes>
         <Route path="/" element={
@@ -1708,11 +1897,13 @@ function AppContent() {
         } />
         <Route path="/admin" element={<AdminPanel />} />
         <Route path="/report" element={<ReportPage />} />
-        <Route path="/suggest" element={<SuggestServerPage />} />
+        <Route path="/suggest" element={<SuggestServerPage currentUser={currentUser} userProfile={userProfile} />} />
         <Route path="/remove-server" element={<RequestRemovalPage />} />
         <Route path="/versionsandroid" element={<VersionsAndroidPage />} />
         <Route path="/androidverapp" element={<AndroidVerAppPage />} />
         <Route path="/app" element={<AppAboutPage />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route path="/user/:username" element={<UserProfilePage />} />
         <Route path="/android" element={
           <AndroidPage 
             keys={keys} 

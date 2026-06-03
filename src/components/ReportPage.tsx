@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { AlertTriangle, Send, ChevronLeft, CheckCircle2, ShieldAlert, BadgeInfo, ZapOff, MoreHorizontal, RefreshCw } from 'lucide-react';
-import { db, collection, addDoc, handleFirestoreError, OperationType, serverTimestamp, getDocs, orderBy, query, where } from '../lib/firebase';
+import { db, doc, getDoc, collection, addDoc, handleFirestoreError, OperationType, serverTimestamp, getDocs, orderBy, query, where } from '../lib/firebase';
 
 const REASONS = [
   { id: 'not_working', label: 'Не работает', icon: ZapOff, color: 'text-rose-500' },
@@ -46,10 +46,15 @@ export default function ReportPage() {
         }
 
         let freshData: any[] = [];
-        for (const chunk of chunks) {
-          const q = query(collection(db, 'reports'), where('__name__', 'in', chunk));
-          const snap = await getDocs(q);
-          freshData = [...freshData, ...snap.docs.map(d => ({ id: d.id, ...d.data() }))];
+        for (const id of reportIds) {
+          try {
+            const docSnap = await getDoc(doc(db, 'reports', id));
+            if (docSnap.exists()) {
+              freshData.push({ id: docSnap.id, ...docSnap.data() });
+            }
+          } catch (e) {
+            console.warn(`Could not sync report ID ${id}`, e);
+          }
         }
 
         // Update local state and storage if statuses changed

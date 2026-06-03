@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronLeft, Send, RefreshCw, CheckCircle2, Globe, Activity, Terminal, MapPin, AlertTriangle, Shield, Copy, Check } from 'lucide-react';
-import { db, collection, addDoc, handleFirestoreError, OperationType, serverTimestamp, doc, getDoc } from '../lib/firebase';
+import { 
+  ChevronLeft, Send, RefreshCw, CheckCircle2, Globe, Activity, 
+  Terminal, MapPin, AlertTriangle, Shield, Copy, Check, Lock, 
+  Layers, FolderOpen, Calendar, Clock 
+} from 'lucide-react';
+import { db, auth, collection, addDoc, handleFirestoreError, OperationType, serverTimestamp, doc, getDoc } from '../lib/firebase';
 
-export default function SuggestServerPage() {
+interface SuggestServerPageProps {
+  currentUser: any;
+  userProfile: any;
+}
+
+export default function SuggestServerPage({ currentUser, userProfile }: SuggestServerPageProps) {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -14,13 +23,19 @@ export default function SuggestServerPage() {
   const [copied, setCopied] = useState(false);
   const [historyItems, setHistoryItems] = useState<any[]>([]);
   
+  // Selection of Post Type: 'vless' or 'subscription'
+  const [postType, setPostType] = useState<'vless' | 'subscription'>('vless');
+
   const [formData, setFormData] = useState({
     name: '',
+    subscriptionName: '',
     protocol: 'VLESS / REALITY',
     country: '',
     city: '',
     config: '',
-    expiryDate: ''
+    expiryDate: '',
+    isScheduled: false,
+    scheduledAt: ''
   });
 
   useEffect(() => {
@@ -41,7 +56,6 @@ export default function SuggestServerPage() {
         }
       }));
 
-      // Update localStorage with fresh statuses
       localStorage.setItem('my_suggestions', JSON.stringify(updatedHistory));
       setHistoryItems(updatedHistory);
     };
@@ -139,18 +153,39 @@ export default function SuggestServerPage() {
     e.preventDefault();
     if (isSubmitting) return;
 
+    if (!currentUser) {
+      alert('Необходимо авторизоваться для публикации сервера или подписки.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const displayId = generateDisplayId();
       const metadata = await getClientMetadata();
+
+      // Set custom fields based on selected platform type
+      const isSub = postType === 'subscription';
+      const name = isSub ? (formData.subscriptionName.trim() || 'Пользовательская подписка') : formData.name.trim();
+
       const docRef = await addDoc(collection(db, 'server_suggestions'), {
-        ...formData,
+        name,
+        postType,
+        protocol: isSub ? 'Subscription' : formData.protocol,
+        country: isSub ? 'Global' : (formData.country.trim().toUpperCase() || 'US'),
+        city: isSub ? 'All' : (formData.city.trim() || 'Internet'),
+        config: formData.config.trim(),
+        expiryDate: formData.expiryDate || '01.01.2027',
+        scheduledAt: formData.isScheduled && formData.scheduledAt ? formData.scheduledAt : null,
         displayId,
         status: 'pending',
         createdAt: serverTimestamp(),
         userIp: metadata.ip,
         browser: metadata.browser,
-        userCountry: metadata.country
+        userCountry: metadata.country,
+        userId: currentUser.uid,
+        username: userProfile?.username || 'anonymous',
+        displayName: userProfile?.displayName || 'Пользователь',
+        avatarUrl: userProfile?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${userProfile?.username || 'anon'}`
       });
 
       setGeneratedId(displayId);
@@ -159,7 +194,7 @@ export default function SuggestServerPage() {
       const newHistoryItem = {
         id: docRef.id,
         displayId,
-        name: formData.name,
+        name,
         createdAt: new Date().toISOString(),
         status: 'pending'
       };
@@ -176,6 +211,59 @@ export default function SuggestServerPage() {
     }
   };
 
+  // Safe checks for user registration completeness (require a username to bind)
+  if (!currentUser) {
+    return (
+      <div className="pt-32 pb-20 px-4 max-w-md mx-auto min-h-screen flex flex-col justify-center items-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass rounded-[32px] p-8 text-center border border-white/5 shadow-2xl"
+        >
+          <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Lock className="w-8 h-8 text-indigo-500" />
+          </div>
+          <h2 className="text-2xl font-serif italic mb-4">Вход в систему</h2>
+          <p className="text-white/40 text-sm mb-8 leading-relaxed">
+            Чтобы опубликовать ключ или подписку от своего имени, вам необходимо войти в аккаунт.
+          </p>
+          <button 
+            onClick={() => navigate('/login')}
+            className="w-full py-4 bg-white text-black font-bold uppercase tracking-widest text-[10px] rounded-xl hover:scale-[1.02] transition-transform"
+          >
+            Войти в Личный Кабинет
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (!userProfile?.username) {
+    return (
+      <div className="pt-32 pb-20 px-4 max-w-md mx-auto min-h-screen flex flex-col justify-center items-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass rounded-[32px] p-8 text-center border border-white/5 shadow-2xl"
+        >
+          <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Shield className="w-8 h-8 text-amber-500" />
+          </div>
+          <h2 className="text-xl font-serif italic mb-4">Не заполнено имя пользователя</h2>
+          <p className="text-white/40 text-sm mb-8 leading-relaxed animate-pulse">
+            Завершите заполнение личного профиля, чтобы делиться вашими конфигурациями с сообществом.
+          </p>
+          <button 
+            onClick={() => navigate(`/user/profile`)}
+            className="w-full py-4 bg-amber-500 text-black font-bold uppercase tracking-widest text-[10px] rounded-xl hover:scale-[1.02] transition-transform"
+          >
+            Перейти к Профилю
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
   if (isSuccess) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
@@ -187,9 +275,9 @@ export default function SuggestServerPage() {
           <div className="w-20 h-20 bg-emerald-500/20 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-emerald-500/10">
             <CheckCircle2 className="w-10 h-10 text-emerald-500" />
           </div>
-          <h2 className="text-3xl font-serif italic mb-4">Предложение отправлено!</h2>
+          <h2 className="text-3xl font-serif italic mb-4">Пост на премодерации!</h2>
           <p className="text-white/40 leading-relaxed text-sm mb-8">
-            Ваш сервер отправлен на проверку. Пожалуйста, сохраните этот ID — он понадобится для удаления или отслеживания статуса.
+            Ваш сервер/подписка отправлены администрации на проверку. Пожалуйста, запишите или сохраните ID заявки ниже.
           </p>
 
           <div className="bg-white/5 rounded-2xl p-6 border border-white/5 mb-8 group relative overflow-hidden">
@@ -253,42 +341,31 @@ export default function SuggestServerPage() {
                 <Shield className="w-8 h-8 text-amber-500" />
               </div>
 
-              <h2 className="text-3xl font-serif italic mb-6">⚠️ Пожалуйста, прочтите текст внизу</h2>
+              <h2 className="text-3xl font-serif italic mb-6">⚠️ Правила публикации</h2>
               
               <div className="space-y-4 mb-10">
                 <div className="flex gap-4">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <p className="text-sm text-white/60 leading-relaxed">
-                    Если обнаружится, что информация о сервере неверна/сервер не рабочий, то, администрация отклонит заявку на добавление сервера.
+                    Если обнаружится, что добавленный сервер или ссылка на подписку не функционируют, администрация отклонит публикацию.
                   </p>
                 </div>
                 <div className="flex gap-4">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <p className="text-sm text-white/60 leading-relaxed">
-                    Название сервера не должно содержать нецензурную лексику, чужие личные данные, и т.д., при нарушении этого правила, будет выдан запрет на заявку на 1 день, затем на 3 дня, 7 дней, 14 д (максимум).
+                    Придумайте приличное название подписке или серверу. Посты с нецензурной лексикой во избежание блокировок профиля отклоняются немедленно.
                   </p>
                 </div>
                 <div className="flex gap-4">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <p className="text-sm text-white/60 leading-relaxed">
-                    Администрация может отклонить заявку по своему усмотрению, не объясняя причины.
+                    Все посты и папки подписок привязываются к вашей публичной странице автора <span className="text-indigo-400">@{userProfile.username}</span>.
                   </p>
                 </div>
                 <div className="flex gap-4">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <p className="text-sm text-white/60 leading-relaxed">
-                    Администрация может проигнорировать/отклонить заявку, если она уже существует.
-                  </p>
-                </div>
-                <div className="flex gap-4">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
-                  <p className="text-sm text-white/60 leading-relaxed">
-                    Администрация может удалить сервер в любое время, если посчитает это необходимым.
-                  </p>
-                </div>
-                <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10">
-                  <p className="text-xs text-white/80 leading-relaxed">
-                    Если вы хотите, чтобы ваш сервер был удалён, <Link to="/remove-server" className="text-amber-500 font-bold hover:underline">отправьте запрос на удаление</Link>.
+                    Администрация оставляет за собой право модерировать, изменять или удалять предлагаемый контент по своему усмотрению.
                   </p>
                 </div>
               </div>
@@ -302,7 +379,7 @@ export default function SuggestServerPage() {
                   : 'bg-white text-black hover:scale-[1.02]'
                 }`}
               >
-                {countdown > 0 ? `Подождите ${countdown}с...` : 'Я принимаю условия'}
+                {countdown > 0 ? `Подождите ${countdown}с...` : 'Ознакомился и согласен'}
               </button>
             </motion.div>
           </motion.div>
@@ -328,121 +405,229 @@ export default function SuggestServerPage() {
           <Activity size={120} />
         </div>
 
-        <div className="flex items-center gap-4 mb-10 relative">
-          <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center">
-            <Globe className="w-6 h-6 text-amber-500" />
+        <div className="flex items-center gap-4 mb-8 relative">
+          <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center">
+            <Globe className="w-6 h-6 text-indigo-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-serif italic tracking-tighter">Предложить сервер</h1>
-            <p className="text-white/40 text-xs text-balance">Добавьте свою конфигурацию в нашу сеть</p>
+            <h1 className="text-2xl font-serif italic tracking-tighter">Опубликовать сервер / пост</h1>
+            <p className="text-white/40 text-xs">Добавьте собственный ключ VLESS или общую папку-подписку</p>
           </div>
         </div>
 
+        {/* Post Type Selector Tabs */}
+        <div className="flex p-1 rounded-2xl bg-white/[0.03] border border-white/5 mb-8">
+          <button
+            type="button"
+            onClick={() => setPostType('vless')}
+            className={`flex-1 py-3.5 rounded-xl text-[10px] uppercase tracking-[0.2em] font-bold transition-all ${
+              postType === 'vless'
+                ? 'bg-white text-black shadow-lg font-black'
+                : 'text-white/40 hover:text-white/80'
+            }`}
+          >
+            Ключ VLESS (vless://)
+          </button>
+          <button
+            type="button"
+            onClick={() => setPostType('subscription')}
+            className={`flex-1 py-3.5 rounded-xl text-[10px] uppercase tracking-[0.2em] font-bold transition-all ${
+              postType === 'subscription'
+                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 font-black'
+                : 'text-white/40 hover:text-white/80'
+            }`}
+          >
+            Подписка-Папка (Ссылка)
+          </button>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6 relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-                Название сервера
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-amber-500 transition-colors">
-                  <Terminal size={16} />
+          
+          {postType === 'vless' ? (
+            <>
+              {/* VLESS Section Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
+                    Название сервера
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-indigo-400 transition-colors">
+                      <Terminal size={16} />
+                    </div>
+                    <input
+                      required={postType === 'vless'}
+                      value={formData.name}
+                      onChange={e => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Singapore Neon"
+                      className="w-full bg-white/2 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all font-medium"
+                    />
+                  </div>
                 </div>
-                <input
-                  required
-                  value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Singapore Highspeed"
-                  className="w-full bg-white/2 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all font-medium"
-                />
-              </div>
-            </div>
 
-            <div className="space-y-4">
-              <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-                Протокол
-              </label>
-              <select
-                value={formData.protocol}
-                onChange={e => setFormData({ ...formData, protocol: e.target.value })}
-                className="w-full bg-white/2 border border-white/5 rounded-2xl p-4 text-sm focus:outline-none focus:border-white/20 transition-all appearance-none cursor-pointer font-medium"
-              >
-                <option value="VLESS / REALITY" className="bg-[#050505]">VLESS / REALITY</option>
-                <option value="Shadowsocks" className="bg-[#050505]">Shadowsocks</option>
-                <option value="Trojan" className="bg-[#050505]">Trojan</option>
-                <option value="Hysteria2" className="bg-[#050505]">Hysteria2</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-                Страна (Код)
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-amber-500 transition-colors">
-                  <Globe size={16} />
+                <div className="space-y-4">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
+                    Протокол
+                  </label>
+                  <select
+                    value={formData.protocol}
+                    onChange={e => setFormData({ ...formData, protocol: e.target.value })}
+                    className="w-full bg-white/2 border border-white/5 rounded-2xl p-4 text-sm focus:outline-none focus:border-white/20 transition-all appearance-none cursor-pointer font-medium"
+                  >
+                    <option value="VLESS / REALITY" className="bg-[#050505]">VLESS / REALITY</option>
+                    <option value="Shadowsocks" className="bg-[#050505]">Shadowsocks</option>
+                    <option value="Trojan" className="bg-[#050505]">Trojan</option>
+                    <option value="Hysteria2" className="bg-[#050505]">Hysteria2</option>
+                  </select>
                 </div>
-                <input
-                  required
-                  maxLength={2}
-                  value={formData.country}
-                  onChange={e => setFormData({ ...formData, country: e.target.value.toUpperCase() })}
-                  placeholder="SG, US, DE..."
-                  className="w-full bg-white/2 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all uppercase font-mono font-bold tracking-widest"
-                />
               </div>
-            </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
+                    Страна (Двухзначный Код)
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-indigo-400 transition-colors">
+                      <Globe size={16} />
+                    </div>
+                    <input
+                      required={postType === 'vless'}
+                      maxLength={2}
+                      value={formData.country}
+                      onChange={e => setFormData({ ...formData, country: e.target.value.toUpperCase() })}
+                      placeholder="SG, US, NL, PL..."
+                      className="w-full bg-white/2 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all uppercase font-mono font-bold tracking-widest"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
+                    Город
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-indigo-400 transition-colors">
+                      <MapPin size={16} />
+                    </div>
+                    <input
+                      required={postType === 'vless'}
+                      value={formData.city}
+                      onChange={e => setFormData({ ...formData, city: e.target.value })}
+                      placeholder="Singapore"
+                      className="w-full bg-white/2 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all font-medium"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
+                  Конфигурация (vless://...)
+                </label>
+                <div className="relative group">
+                  <div className="absolute top-4 left-4 text-white/20 group-focus-within:text-indigo-400 transition-colors">
+                    <Terminal size={16} />
+                  </div>
+                  <textarea
+                    required={postType === 'vless'}
+                    value={formData.config}
+                    onChange={e => setFormData({ ...formData, config: e.target.value })}
+                    placeholder="vless://e881cba1-df5a-4632-a5e2-e1927acc8831@192.168.1.1:443?security=reality..."
+                    className="w-full h-32 bg-white/2 border border-white/5 rounded-2xl pt-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all resize-none font-mono text-[11px]"
+                  />
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Subscription Fields Section */}
+              <div className="space-y-4 animate-fadeIn">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
+                  Название папки / подписки
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-emerald-500 transition-colors">
+                    <FolderOpen size={16} />
+                  </div>
+                  <input
+                    required={postType === 'subscription'}
+                    value={formData.subscriptionName}
+                    onChange={e => setFormData({ ...formData, subscriptionName: e.target.value })}
+                    placeholder="Супер-быстрое прокси для всех"
+                    className="w-full bg-white/2 border border-emerald-500/10 focus:border-emerald-500/30 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none transition-all font-semibold"
+                  />
+                </div>
+                <p className="text-[9px] text-white/20 ml-2">
+                  ℹ️ Подписка будет автоматически добавлена на главную как папка (без надобности ввода паролей).
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
+                  Ссылка на файл подписки (URL)
+                </label>
+                <div className="relative group">
+                  <div className="absolute top-4 left-4 text-white/20 group-focus-within:text-emerald-400 transition-colors">
+                    <Globe size={16} />
+                  </div>
+                  <textarea
+                    required={postType === 'subscription'}
+                    value={formData.config}
+                    onChange={e => setFormData({ ...formData, config: e.target.value })}
+                    placeholder="https://myvpnprofile.com/sub/all.txt"
+                    className="w-full h-24 bg-white/2 border border-emerald-500/10 focus:border-emerald-500/30 rounded-2xl pt-4 pl-12 pr-4 text-sm focus:outline-none transition-all font-mono text-[11px]"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+            {/* Active Date expiry */}
             <div className="space-y-4">
               <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-                Город
+                Активен до
               </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-amber-500 transition-colors">
-                  <MapPin size={16} />
-                </div>
-                <input
-                  required
-                  value={formData.city}
-                  onChange={e => setFormData({ ...formData, city: e.target.value })}
-                  placeholder="Singapore"
-                  className="w-full bg-white/2 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all font-medium"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-              Ссылка на конфиг / Ссылка
-            </label>
-            <div className="relative group">
-              <div className="absolute top-4 left-4 text-white/20 group-focus-within:text-amber-500 transition-colors">
-                <Terminal size={16} />
-              </div>
-              <textarea
+              <input
                 required
-                value={formData.config}
-                onChange={e => setFormData({ ...formData, config: e.target.value })}
-                placeholder="vless://... или ссылка на файл"
-                className="w-full h-32 bg-white/2 border border-white/5 rounded-2xl pt-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all resize-none font-mono text-[11px]"
+                type="date"
+                value={formData.expiryDate}
+                onChange={e => setFormData({ ...formData, expiryDate: e.target.value })}
+                className="w-full bg-white/2 border border-white/5 rounded-2xl p-4 text-sm focus:outline-none focus:border-white/20 transition-all text-white/60"
               />
             </div>
-          </div>
 
-          <div className="space-y-4">
-            <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-              Активен до
-            </label>
-            <input
-              required
-              type="date"
-              value={formData.expiryDate}
-              onChange={e => setFormData({ ...formData, expiryDate: e.target.value })}
-              className="w-full bg-white/2 border border-white/5 rounded-2xl p-4 text-sm focus:outline-none focus:border-white/20 transition-all text-white/60"
-            />
+            {/* Scheduled publication (запланированное опубликование) */}
+            <div className="space-y-4">
+              <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1 flex justify-between items-center">
+                <span>Отложенный старт</span>
+                <span className="text-[8px] text-[#ffdd67] lowercase">(опционально)</span>
+              </label>
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 cursor-pointer bg-white/[0.02] border border-white/5 p-4 rounded-2xl hover:bg-white/[0.04]">
+                  <input 
+                    type="checkbox"
+                    checked={formData.isScheduled}
+                    onChange={e => setFormData({ ...formData, isScheduled: e.target.checked })}
+                    className="accent-indigo-500 w-4 h-4"
+                  />
+                  <span className="text-xs text-white/60 font-medium">Запланировать публикацию?</span>
+                </label>
+
+                {formData.isScheduled && (
+                  <div className="relative animate-slideDown">
+                    <input 
+                      required={formData.isScheduled}
+                      type="datetime-local"
+                      value={formData.scheduledAt}
+                      onChange={e => setFormData({ ...formData, scheduledAt: e.target.value })}
+                      className="w-full bg-white/2 border border-indigo-500/20 focus:border-indigo-500/40 rounded-2xl p-4 text-xs font-mono text-white/80 focus:outline-none"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="pt-6">
@@ -452,7 +637,9 @@ export default function SuggestServerPage() {
               className={`w-full py-5 rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-[0.2em] transition-all text-xs ${
                 isSubmitting
                 ? 'bg-white/5 text-white/20 cursor-not-allowed'
-                : 'bg-amber-500 text-black shadow-[0_0_30px_rgba(245,158,11,0.2)] hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(245,158,11,0.3)]'
+                : postType === 'subscription' 
+                ? 'bg-emerald-500 text-white shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(16,185,129,0.3)]'
+                : 'bg-indigo-500 text-white shadow-[0_0_30px_rgba(99,102,241,0.2)] hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(99,102,241,0.3)]'
               }`}
             >
               {isSubmitting ? (
@@ -460,10 +647,10 @@ export default function SuggestServerPage() {
               ) : (
                 <Send className="w-4 h-4" />
               )}
-              {isSubmitting ? 'Отправка...' : 'Предложить сервер'}
+              {isSubmitting ? 'Отправка...' : postType === 'subscription' ? 'Опубликовать папку-подписку' : 'Опубликовать ключ VLESS'}
             </button>
             <p className="mt-4 text-[9px] text-white/20 text-center leading-relaxed italic px-4">
-              * Все предложенные сервера проходят премодерацию. Мы оставляем за собой право отклонить сервер без объяснения причин.
+              * Все добавленные публикации проходят премодерацию у администрации перед появлением на главной.
             </p>
           </div>
         </form>
@@ -506,4 +693,3 @@ export default function SuggestServerPage() {
     </div>
   );
 }
-

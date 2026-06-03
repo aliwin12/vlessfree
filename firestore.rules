@@ -78,17 +78,11 @@ service cloud.firestore {
     }
 
     // 4. Reports Collection
-    function isValidReport(data) {
-      return data.serverId is string &&
-             data.serverName is string &&
-             data.reason in ['not_working', 'info_error', 'slow_speed', 'other'] &&
-             data.status in ['pending', 'resolved', 'dismissed'];
-    }
-
     match /reports/{reportId} {
       allow create: if isValidId(incoming().serverId) && 
-                      incoming().createdAt == request.time;
-      allow get, list, update, delete: if isAdmin();
+                       incoming().createdAt == request.time;
+      allow get: if true; // Publicly get status if knowing the exact document ID
+      allow list, update, delete: if isAdmin();
     }
 
     // 5. Visits Collection
@@ -117,9 +111,13 @@ service cloud.firestore {
 
     match /server_suggestions/{suggestionId} {
       allow create: if isValidSuggestion(incoming()) && 
-                      incoming().status == 'pending' &&
-                      incoming().createdAt == request.time;
-      allow get, list, update, delete: if isAdmin();
+                       incoming().status == 'pending' &&
+                       incoming().createdAt == request.time;
+      allow get: if true; // Anyone knowing the suggestion ID can check its status/details
+      allow list: if isAdmin() || 
+                    (resource.data.status == 'approved') || 
+                    (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin();
     }
 
     // 8. Server Removals
@@ -145,6 +143,43 @@ service cloud.firestore {
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin() && isValidSetting(incoming());
+    }
+
+    // 11. User Profiles & Username Claims
+    function isValidUserProfile(data) {
+      return data.username is string && data.username.size() >= 3 && data.username.size() <= 15 &&
+             data.username.matches('^[a-zA-Z0-9_]+$') &&
+             data.displayName is string && data.displayName.size() <= 40 &&
+             (data.bio == null || (data.bio is string && data.bio.size() <= 200)) &&
+             (data.telegram == null || (data.telegram is string && data.telegram.size() <= 100)) &&
+             (data.avatarUrl == null || (data.avatarUrl is string && data.avatarUrl.size() <= 500));
+    }
+
+    match /users/{userId} {
+      allow get: if true;
+      allow create: if isSignedIn() && request.auth.uid == userId &&
+                      isValidUserProfile(incoming()) &&
+                      incoming().createdAt == request.time &&
+                      incoming().updatedAt == request.time &&
+                      getAfter(/databases/$(database)/documents/usernames/$(incoming().username)).data.uid == request.auth.uid;
+      allow update: if isSignedIn() && request.auth.uid == userId &&
+                      isValidUserProfile(incoming()) &&
+                      incoming().createdAt == existing().createdAt &&
+                      incoming().updatedAt == request.time &&
+                      (incoming().username == existing().username ||
+                       getAfter(/databases/$(database)/documents/usernames/$(incoming().username)).data.uid == request.auth.uid);
+      allow delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+    }
+
+    match /usernames/{username} {
+      allow get: if true;
+      allow create: if isSignedIn() &&
+                      incoming().uid == request.auth.uid &&
+                      incoming().createdAt == request.time &&
+                      username.size() >= 3 && username.size() <= 15 &&
+                      username.matches('^[a-zA-Z0-9_]+$') &&
+                      username == username.lower();
+      allow delete: if isSignedIn() && (existing().uid == request.auth.uid || isAdmin());
     }
 
     // 9. Test Path (Internal)

@@ -124,6 +124,31 @@
         "value": { "type": "string" }
       },
       "required": ["value"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Public user profile configuration",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "displayName": { "type": "string" },
+        "bio": { "type": "string" },
+        "telegram": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["username", "displayName", "createdAt", "updatedAt"]
+    },
+    "UsernameClaim": {
+      "title": "Username Claim",
+      "description": "Mapping from username to uid to ensure uniqueness",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "createdAt"]
     }
   },
   "firestore": {
@@ -162,6 +187,14 @@
     "/settings/{settingId}": {
       "schema": "Setting",
       "description": "General settings document"
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Public user profiles"
+    },
+    "/usernames/{username}": {
+      "schema": "UsernameClaim",
+      "description": "Direct mapping of lowercase usernames to prevent duplicates"
     }
   }
 }
