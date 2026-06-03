@@ -32,6 +32,18 @@ function getSlug(text: string): string {
   return slug || 'sub';
 }
 
+function checkIsBrowser(req: express.Request): boolean {
+  const userAgent = req.headers['user-agent'] || '';
+  const acceptHeader = req.headers['accept'] || '';
+  
+  const hasBrowserUa = /Mozilla|Chrome|Safari|Firefox|Edge/.test(userAgent) && 
+                       !/v2ray|hiddify|vless|shadowsocks|clash|nekobox|streisand|quantumult|surge/i.test(userAgent);
+  
+  const wantsHtml = acceptHeader.includes('text/html');
+  
+  return hasBrowserUa && wantsHtml;
+}
+
 const firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf8'));
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
@@ -126,32 +138,55 @@ async function startServer() {
         return res.status(404).send('Subscription folders matching query not found.');
       }
 
-      const targetUrl = foundSub.config;
-      if (!targetUrl || !targetUrl.startsWith('http')) {
-        return res.status(400).send('Invalid underlying source subscription URL.');
-      }
+      const targetUrl = (foundSub.config || '').trim();
+      let rawText = '';
 
-      // Download source subscription content
-      const response = await fetch(targetUrl, {
-        headers: {
-          'User-Agent': 'v2rayN/Telegram@vlessfree',
-          'Accept': '*/*'
+      if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
+        // Download source subscription content
+        const response = await fetch(targetUrl, {
+          headers: {
+            'User-Agent': 'v2rayN/Telegram@vlessfree',
+            'Accept': '*/*'
+          }
+        });
+
+        if (!response.ok) {
+          return res.status(500).send(`Unable to fetch underlying configurations: ${response.statusText}`);
         }
-      });
 
-      if (!response.ok) {
-        return res.status(500).send(`Unable to fetch underlying configurations: ${response.statusText}`);
+        rawText = await response.text();
+      } else {
+        // Fallback if they pasted configurations directly instead of a link
+        rawText = targetUrl;
       }
 
-      const rawText = await response.text();
       let unpackedText = rawText;
 
       // Base64 decoding fallback if response is encrypted/base64 encoded
-      const hasProto = rawText.includes('://');
-      const isBase64 = /^[a-zA-Z0-9+/=\s\n\r]+$/.test(rawText) && rawText.trim().length > 10 && !hasProto;
+      let isBase64 = false;
+      const cleanedText = rawText.trim().replace(/[\s\n\r]/g, '');
+      const hasProto = cleanedText.includes('://');
+
+      if (!hasProto && cleanedText.length > 10) {
+        // Base64 regex allowing standard and URL-safe characters, and padding
+        const base64Regex = /^[a-zA-Z0-9+/=\-_]+$/;
+        if (base64Regex.test(cleanedText)) {
+          isBase64 = true;
+        }
+      }
+
       if (isBase64) {
         try {
-          unpackedText = Buffer.from(rawText.replace(/[\s\n\r]/g, ''), 'base64').toString('utf-8');
+          // Normalize URL-safe Base64 to standard Base64
+          let standardBase64 = cleanedText
+            .replace(/-/g, '+')
+            .replace(/_/g, '/');
+          
+          while (standardBase64.length % 4 !== 0) {
+            standardBase64 += '=';
+          }
+          
+          unpackedText = Buffer.from(standardBase64, 'base64').toString('utf-8');
         } catch (e) {
           console.error("Failed to decode base64 configs:", e);
         }
@@ -174,11 +209,12 @@ async function startServer() {
         return `${configWithoutTag}#${encodeURIComponent(customTagName)}`;
       }).join('\n');
 
-      const userAgent = req.headers['user-agent'] || '';
-      const isBrowser = /Mozilla|Chrome|Safari|Firefox|Edge/.test(userAgent) && !/v2ray|hiddify|vless|shadowsocks|clash|nekobox|streisand|quantumult|surge/i.test(userAgent);
+      const reqHost = req.headers.host ? `${req.protocol}://${req.headers.host}` : 'https://vlessfree.vercel.app';
+      const subUrl = `${reqHost}/${username}/${subName}`;
+      
+      const isBrowser = checkIsBrowser(req);
 
       if (isBrowser) {
-        const subUrl = `https://vlessfree.vercel.app/${username}/${subName}`;
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.send(`
           <!DOCTYPE html>
@@ -247,7 +283,7 @@ async function startServer() {
                 </div>
               </div>
   
-              <p style="margin-top: 40px; margin-bottom: 0; font-size: 10px; opacity: 0.3;">https://vlessfree.vercel.app</p>
+              <p style="margin-top: 40px; margin-bottom: 0; font-size: 10px; opacity: 0.3;">${reqHost}</p>
             </div>
   
             <script>
@@ -272,7 +308,7 @@ async function startServer() {
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       res.setHeader('Profile-Title', `${foundSub.name} | от @${foundSub.username} | vlessfree`); 
       res.setHeader('Profile-Update-Interval', '6');
-      res.setHeader('Profile-Web-Page-Url', `https://vlessfree.vercel.app/user/${foundSub.username}`);
+      res.setHeader('Profile-Web-Page-Url', `${reqHost}/user/${foundSub.username}`);
       return res.send(base64Content);
     } catch (err: any) {
       console.error("Error serving user subscription endpoint", err);
@@ -328,11 +364,11 @@ async function startServer() {
 
     const base64Content = Buffer.from(configs).toString('base64');
 
-    // Simple detection for non-client access (browsers usually have "Mozilla" or specific browser names)
-    const isBrowser = /Mozilla|Chrome|Safari|Firefox|Edge/.test(userAgent) && !/v2ray|hiddify|vless|shadowsocks|clash|nekobox|streisand|quantumult|surge/i.test(userAgent);
+    const isBrowser = checkIsBrowser(req);
+    const reqHost = req.headers.host ? `${req.protocol}://${req.headers.host}` : 'https://vlessfree.vercel.app';
 
     if (isBrowser) {
-      const subUrl = `https://vlessfree.vercel.app/suball`;
+      const subUrl = `${reqHost}/suball`;
       const qrCodeImageUrl = 'https://i.ibb.co/7J85dCT8/Untitled.png';
 
       // Return a simple HTML page for humans
@@ -395,12 +431,12 @@ async function startServer() {
               </div>
             </div>
 
-            <p style="margin-top: 40px; margin-bottom: 0; font-size: 10px; opacity: 0.3;">https://vlessfree.vercel.app</p>
+            <p style="margin-top: 40px; margin-bottom: 0; font-size: 10px; opacity: 0.3;">${reqHost}</p>
           </div>
 
           <script>
             function copySubLink() {
-              const url = "https://vlessfree.vercel.app/suball";
+              const url = "${subUrl}";
               navigator.clipboard.writeText(url).then(() => {
                 const msg = document.getElementById('copyMsg');
                 msg.style.display = 'block';
@@ -416,7 +452,7 @@ async function startServer() {
     // Standard subscription headers for clients
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('Profile-Title', 'vlessfree Sub'); 
-    res.setHeader('Profile-Web-Page-Url', 'https://vlessfree.vercel.app');
+    res.setHeader('Profile-Web-Page-Url', reqHost);
     
     res.send(base64Content);
   });

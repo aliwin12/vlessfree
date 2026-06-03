@@ -69,7 +69,7 @@ export default function AndroidPage({ keys, warnings = [], handleCopy, copiedId 
 
   // Handle Copy Subscription URL
   const copySubUrl = () => {
-    const subUrl = 'https://vlessfree.vercel.app/suball';
+    const subUrl = `${window.location.origin}/suball`;
     navigator.clipboard.writeText(subUrl);
     setCopiedSub(true);
     triggerToast('Ссылка подписки скопирована в буфер обмена!');

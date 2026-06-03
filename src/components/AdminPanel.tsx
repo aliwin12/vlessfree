@@ -103,7 +103,11 @@ const parseSubText = (text: string, defaultExpiryDate?: string, startingNumber =
   
   if (!decodedText.includes('vless://') && !decodedText.includes('vmess://') && !decodedText.includes('trojan://') && !decodedText.includes('ss://')) {
     try {
-      decodedText = atob(decodedText.replace(/_/g, '/').replace(/-/g, '+').trim());
+      let standardBase64 = decodedText.replace(/[\s\n\r]/g, '').replace(/_/g, '/').replace(/-/g, '+');
+      while (standardBase64.length % 4 !== 0) {
+        standardBase64 += '=';
+      }
+      decodedText = atob(standardBase64);
     } catch (e) {
       console.warn("Base64 decoding failed or raw input isn't base64", e);
     }

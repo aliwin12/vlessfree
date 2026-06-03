@@ -449,11 +449,26 @@ export default function UserProfilePage() {
         .then(data => {
           const content = data.content || '';
           let text = content;
-          const hasProto = content.includes('://');
-          const isBase64 = /^[a-zA-Z0-9+/=\s\n\r]+$/.test(content) && content.trim().length > 10 && !hasProto;
+          const cleanedText = content.trim().replace(/[\s\n\r]/g, '');
+          const hasProto = cleanedText.includes('://');
+          let isBase64 = false;
+
+          if (!hasProto && cleanedText.length > 10) {
+            const base64Regex = /^[a-zA-Z0-9+/=\-_]+$/;
+            if (base64Regex.test(cleanedText)) {
+              isBase64 = true;
+            }
+          }
+
           if (isBase64) {
             try {
-              text = atob(content.replace(/[\s\n\r]/g, ''));
+              let standardBase64 = cleanedText
+                .replace(/-/g, '+')
+                .replace(/_/g, '/');
+              while (standardBase64.length % 4 !== 0) {
+                standardBase64 += '=';
+              }
+              text = atob(standardBase64);
             } catch (e) {
               console.error("Base64 decode error client-side in profile:", e);
             }
@@ -483,7 +498,8 @@ export default function UserProfilePage() {
     if (isSub) {
       const urlUser = profile?.username || 'anonymous';
       const cleanSubName = getSlug(name || '');
-      const customSubUrl = `https://vlessfree.vercel.app/${urlUser}/${cleanSubName}`;
+      const reqHost = window.location.origin;
+      const customSubUrl = `${reqHost}/${urlUser}/${cleanSubName}`;
       navigator.clipboard.writeText(customSubUrl);
     } else {
       navigator.clipboard.writeText(config);

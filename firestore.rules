@@ -187,12 +187,16 @@ service cloud.firestore {
                        getAfter(/databases/$(database)/documents/usernames/$(incoming().username)).data.uid == request.auth.uid)) ||
                      (isSignedIn() && 
                       incoming().diff(existing()).affectedKeys().hasOnly(['followersCount']) &&
-                      (incoming().get('followersCount', 0) == existing().get('followersCount', 0) + 1 ||
-                       incoming().get('followersCount', 0) == existing().get('followersCount', 0) - 1)) ||
+                      (
+                        (!('followersCount' in existing()) && (incoming().followersCount == 1 || incoming().followersCount == -1)) ||
+                        ('followersCount' in existing() && (incoming().followersCount == existing().followersCount + 1 || incoming().followersCount == existing().followersCount - 1))
+                      )) ||
                      (isSignedIn() && request.auth.uid == userId &&
                       incoming().diff(existing()).affectedKeys().hasOnly(['followingCount']) &&
-                      (incoming().get('followingCount', 0) == existing().get('followingCount', 0) + 1 ||
-                       incoming().get('followingCount', 0) == existing().get('followingCount', 0) - 1));
+                      (
+                        (!('followingCount' in existing()) && (incoming().followingCount == 1 || incoming().followingCount == -1)) ||
+                        ('followingCount' in existing() && (incoming().followingCount == existing().followingCount + 1 || incoming().followingCount == existing().followingCount - 1))
+                      ));
       allow delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
 
