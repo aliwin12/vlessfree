@@ -11,6 +11,27 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import fs from 'fs';
 
+function getSlug(text: string): string {
+  const ru: { [key: string]: string } = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
+    'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
+    'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts',
+    'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu',
+    'я': 'ya'
+  };
+  const transliterated = (text || '')
+    .toLowerCase()
+    .split('')
+    .map(char => ru[char] !== undefined ? ru[char] : char)
+    .join('');
+
+  const slug = transliterated
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return slug || 'sub';
+}
+
 const firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf8'));
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
@@ -95,8 +116,8 @@ async function startServer() {
       const serversSnap = await getDocs(collection(db, 'servers'));
       const foundSub = serversSnap.docs.map(d => ({ id: d.id, ...d.data() as any })).find(s => {
         const sUsername = (s.username || '').toLowerCase().trim();
-        const sName = (s.name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
-        const reqSubName = subName.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+        const sName = getSlug(s.name || '');
+        const reqSubName = getSlug(subName);
         
         return s.postType === 'subscription' && sUsername === username.toLowerCase().trim() && (sName === reqSubName || sName.includes(reqSubName) || reqSubName.includes(sName));
       });

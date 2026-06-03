@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Key, Shield, Globe, Copy, Check, RefreshCw, Zap, Cpu, Lock, Activity, Calendar, X, AlertTriangle, Monitor, Smartphone, Terminal, Info, ChevronRight, Download, ExternalLink, Menu, Share2, Folder, ChevronDown, Bell, Plus, LogIn, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
@@ -339,6 +339,48 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
   const navigate = useNavigate();
   const itemsPerPage = 12;
 
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>('default');
+
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotifPermission(Notification.permission);
+    }
+  }, []);
+
+  const requestNotificationPermission = async () => {
+    if (!('Notification' in window)) {
+      alert('Уведомления не поддерживаются в этом браузере или режиме приватности.');
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    setNotifPermission(permission);
+    if (permission === 'granted') {
+      playAwesomeChime();
+      try {
+        new Notification('🔔 Уведомления успешно включены!', {
+          body: 'Каждый раз, когда разработчик добавит новый VLESS-ключ или готовую подписку, мы пришлём вам оповещение.',
+          icon: 'https://s10.iimage.su/s/17/gW7gsFfxcyoojRD4cNLejI21W6YZc62Ieh9AfziAL.png'
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  const triggerTestNotification = () => {
+    playAwesomeChime();
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification('⚡️ Тестовое уведомление VLESSFREE', {
+          body: 'Проверка связи завершена успешно! Звуковой сигнал воспроизведен.',
+          icon: 'https://s10.iimage.su/s/17/gW7gsFfxcyoojRD4cNLejI21W6YZc62Ieh9AfziAL.png'
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
   const activeWarnings = warnings.filter((w: any) => w.active);
   const replaceWithWarning = activeWarnings.find((w: any) => w.replaceContent);
 
@@ -546,6 +588,62 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
           </motion.div>
         ))}
       </AnimatePresence>
+
+      {/* Browser Notification Subscription Widget */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="w-full mb-8 max-w-3xl mx-auto"
+      >
+        <div className="glass p-5 md:p-8 rounded-[24px] md:rounded-[32px] border border-white/5 bg-white/[0.01] flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden" id="notification-subscription-bar">
+          <div className="absolute top-0 left-0 w-24 h-24 bg-indigo-500/10 blur-[40px] pointer-events-none rounded-full" />
+          
+          <div className="flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row relative z-10">
+            <div className={`p-4 rounded-2xl flex items-center justify-center shrink-0 ${
+              notifPermission === 'granted' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+              notifPermission === 'denied' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+              'bg-white/5 text-white/60 border border-white/10'
+            }`}>
+              <Bell className={`w-6 h-6 ${notifPermission === 'granted' ? 'animate-bounce' : ''}`} />
+            </div>
+            <div>
+              <h3 className="text-base md:text-lg font-bold tracking-tight text-white mb-1 select-none">
+                {notifPermission === 'granted' ? 'Системные уведомления активны' :
+                 notifPermission === 'denied' ? 'Уведомления заблокированы' :
+                 'Включить push-уведомления'}
+              </h3>
+              <p className="text-xs text-white/50 leading-relaxed max-w-md">
+                {notifPermission === 'granted' ? 'Вы будете получать звуковые сигналы и моментальные всплывающие сообщения о публикации новых VLESS-ключей и папок-подписок.' :
+                 notifPermission === 'denied' ? 'Вы заблокировали запросы на уведомления. Пожалуйста, разрешите их в панели настроек вашего браузера (иконка замка слева от URL).' :
+                 'Получайте моментальные оповещения прямо на рабочий стол или телефон при публикации новых высокоскоростных ключей и готовых подписок.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="shrink-0 relative z-10 w-full sm:w-auto">
+            {notifPermission === 'granted' ? (
+              <button
+                onClick={triggerTestNotification}
+                className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white text-[11px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10 flex items-center justify-center gap-2"
+              >
+                Проверить связь
+              </button>
+            ) : notifPermission === 'denied' ? (
+              <div className="text-[10px] uppercase font-bold tracking-wider text-rose-400 bg-rose-500/10 px-4 py-2.5 rounded-xl border border-rose-500/20 text-center">
+                Требуется разрешение
+              </div>
+            ) : (
+              <button
+                onClick={requestNotificationPermission}
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] uppercase tracking-[0.15em] font-bold transition-all duration-300 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-[1.02] flex items-center justify-center gap-2"
+              >
+                Подписаться
+              </button>
+            )}
+          </div>
+        </div>
+      </motion.div>
 
       {(keys.length > 0 && !replaceWithWarning) ? (
         <>
@@ -1485,10 +1583,78 @@ function LoadingScreen() {
   );
 }
 
+function getSlug(text: string): string {
+  const ru: { [key: string]: string } = {
+    'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
+    'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
+    'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'h', 'ц': 'ts',
+    'ч': 'ch', 'ш': 'sh', 'щ': 'sch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu',
+    'я': 'ya'
+  };
+  const transliterated = (text || '')
+    .toLowerCase()
+    .split('')
+    .map(char => ru[char] !== undefined ? ru[char] : char)
+    .join('');
+
+  const slug = transliterated
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return slug || 'sub';
+}
+
+function playAwesomeChime() {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    
+    // First high note D5 -> A5
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+    osc1.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+    gain1.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start();
+    osc1.stop(ctx.currentTime + 0.45);
+
+    // Harmonious secondary note arriving slightly delayed A5 -> D6
+    const delayTime = 120;
+    setTimeout(() => {
+      try {
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880, ctx.currentTime); // A5
+        osc2.frequency.exponentialRampToValueAtTime(1174.66, ctx.currentTime + 0.2); // D6
+        gain2.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start();
+        osc2.stop(ctx.currentTime + 0.55);
+      } catch (e) {
+        console.warn(e);
+      }
+    }, delayTime);
+  } catch (e) {
+    console.warn('Audio chime unsupported or blocked by autoplay rules:', e);
+  }
+}
+
 function AppContent() {
   const [keys, setKeys] = useState<VlessKey[]>([]);
   const [warnings, setWarnings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Notifications refs for tracking live updates
+  const isFirstSnapshot = useRef(true);
+  const processedKeysRef = useRef<Record<string, string>>({});
 
   // User States
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -1653,6 +1819,50 @@ function AppContent() {
         return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
       });
 
+      // Detect and notify about new keys / folder-subscriptions
+      const isFirst = isFirstSnapshot.current;
+      isFirstSnapshot.current = false;
+
+      snapshot.docChanges().forEach((change) => {
+        const docId = change.doc.id;
+        const data = change.doc.data() as any;
+        const status = data.status || 'approved';
+        const oldStatus = processedKeysRef.current[docId];
+
+        const isApproved = status === 'approved' || status === 'unstable';
+        const wasApproved = oldStatus === 'approved' || oldStatus === 'unstable';
+
+        if (isApproved && !wasApproved && !isFirst) {
+          const isSub = data.postType === 'subscription';
+          const title = isSub ? '📁 Добавлена новая папка-подписка!' : '✈️ Добавлен новый VLESS-ключ!';
+          const countryNames: Record<string, string> = {
+            'NL': 'Нидерланды', 'DE': 'Германия', 'FI': 'Финляндия', 'US': 'США', 
+            'UK': 'Великобритания', 'MD': 'Молдова', 'IN': 'Индия', 'KZ': 'Казахстан', 
+            'RU': 'Россия', 'SE': 'Швеция', 'TR': 'Турция', 'JP': 'Япония', 'BR': 'Бразилия'
+          };
+          const locationStr = countryNames[data.country] || data.country || '';
+          const body = `${data.name || 'Анонимный сервер'} ${locationStr ? `(${locationStr})` : ''}`;
+
+          // Play real-time chime synthesizer
+          playAwesomeChime();
+
+          // Desktop Notification trigger
+          if ('Notification' in window && Notification.permission === 'granted') {
+            try {
+              new Notification(title, {
+                body,
+                icon: 'https://s10.iimage.su/s/17/gW7gsFfxcyoojRD4cNLejI21W6YZc62Ieh9AfziAL.png',
+                tag: docId
+              });
+            } catch (notiError) {
+              console.warn('System push notification failed:', notiError);
+            }
+          }
+        }
+
+        processedKeysRef.current[docId] = status;
+      });
+
       setKeys(sortedDocs);
       setLoading(false);
     }, (error) => {
@@ -1752,7 +1962,7 @@ function AppContent() {
     const foundKey = keys.find((k: any) => k.id === id);
     if (foundKey && foundKey.postType === 'subscription') {
       const username = foundKey.username || 'anonymous';
-      const cleanSubName = (foundKey.name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+      const cleanSubName = getSlug(foundKey.name || '');
       const customSubUrl = `https://vlessfree.vercel.app/${username}/${cleanSubName}`;
       navigator.clipboard.writeText(customSubUrl);
     } else {

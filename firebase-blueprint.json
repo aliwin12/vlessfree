@@ -135,10 +135,38 @@
         "bio": { "type": "string" },
         "telegram": { "type": "string" },
         "avatarUrl": { "type": "string" },
+        "followersCount": { "type": "number", "description": "Count of subscribers" },
+        "followingCount": { "type": "number", "description": "Count of users followed" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["username", "displayName", "createdAt", "updatedAt"]
+    },
+    "Follower": {
+      "title": "Follower info",
+      "description": "Relational subcollection item for follower",
+      "type": "object",
+      "properties": {
+        "followerUid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "username": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["followerUid", "displayName", "username", "createdAt"]
+    },
+    "Following": {
+      "title": "Following info",
+      "description": "Relational subcollection item for followed users",
+      "type": "object",
+      "properties": {
+        "followingUid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "username": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["followingUid", "displayName", "username", "createdAt"]
     },
     "UsernameClaim": {
       "title": "Username Claim",
@@ -191,6 +219,14 @@
     "/users/{userId}": {
       "schema": "UserProfile",
       "description": "Public user profiles"
+    },
+    "/users/{userId}/followers/{followerId}": {
+      "schema": "Follower",
+      "description": "Subcollection storing details of users following this user"
+    },
+    "/users/{userId}/following/{followingId}": {
+      "schema": "Following",
+      "description": "Subcollection storing details of users followed by this user"
     },
     "/usernames/{username}": {
       "schema": "UsernameClaim",
