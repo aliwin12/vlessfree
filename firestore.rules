@@ -188,7 +188,11 @@ service cloud.firestore {
                      (isSignedIn() && 
                       incoming().diff(existing()).affectedKeys().hasOnly(['followersCount']) &&
                       (incoming().get('followersCount', 0) == existing().get('followersCount', 0) + 1 ||
-                       incoming().get('followersCount', 0) == existing().get('followersCount', 0) - 1));
+                       incoming().get('followersCount', 0) == existing().get('followersCount', 0) - 1)) ||
+                     (isSignedIn() && request.auth.uid == userId &&
+                      incoming().diff(existing()).affectedKeys().hasOnly(['followingCount']) &&
+                      (incoming().get('followingCount', 0) == existing().get('followingCount', 0) + 1 ||
+                       incoming().get('followingCount', 0) == existing().get('followingCount', 0) - 1));
       allow delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
     }
 
