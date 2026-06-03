@@ -590,60 +590,54 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
       </AnimatePresence>
 
       {/* Browser Notification Subscription Widget */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="w-full mb-8 max-w-3xl mx-auto"
-      >
-        <div className="glass p-5 md:p-8 rounded-[24px] md:rounded-[32px] border border-white/5 bg-white/[0.01] flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden" id="notification-subscription-bar">
-          <div className="absolute top-0 left-0 w-24 h-24 bg-indigo-500/10 blur-[40px] pointer-events-none rounded-full" />
-          
-          <div className="flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row relative z-10">
-            <div className={`p-4 rounded-2xl flex items-center justify-center shrink-0 ${
-              notifPermission === 'granted' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-              notifPermission === 'denied' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
-              'bg-white/5 text-white/60 border border-white/10'
-            }`}>
-              <Bell className={`w-6 h-6 ${notifPermission === 'granted' ? 'animate-bounce' : ''}`} />
-            </div>
-            <div>
-              <h3 className="text-base md:text-lg font-bold tracking-tight text-white mb-1 select-none">
-                {notifPermission === 'granted' ? 'Системные уведомления активны' :
-                 notifPermission === 'denied' ? 'Уведомления заблокированы' :
-                 'Включить push-уведомления'}
-              </h3>
-              <p className="text-xs text-white/50 leading-relaxed max-w-md">
-                {notifPermission === 'granted' ? 'Вы будете получать звуковые сигналы и моментальные всплывающие сообщения о публикации новых VLESS-ключей и папок-подписок.' :
-                 notifPermission === 'denied' ? 'Вы заблокировали запросы на уведомления. Пожалуйста, разрешите их в панели настроек вашего браузера (иконка замка слева от URL).' :
-                 'Получайте моментальные оповещения прямо на рабочий стол или телефон при публикации новых высокоскоростных ключей и готовых подписок.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="shrink-0 relative z-10 w-full sm:w-auto">
-            {notifPermission === 'granted' ? (
-              <button
-                onClick={triggerTestNotification}
-                className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white text-[11px] uppercase tracking-widest font-bold transition-all duration-300 border border-white/10 flex items-center justify-center gap-2"
-              >
-                Проверить связь
-              </button>
-            ) : notifPermission === 'denied' ? (
-              <div className="text-[10px] uppercase font-bold tracking-wider text-rose-400 bg-rose-500/10 px-4 py-2.5 rounded-xl border border-rose-500/20 text-center">
-                Требуется разрешение
+      <AnimatePresence>
+        {notifPermission !== 'granted' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, height: 0, marginBottom: 0, overflow: 'hidden', scale: 0.95 }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            className="w-full mb-8 max-w-3xl mx-auto"
+          >
+            <div className="glass p-5 md:p-8 rounded-[24px] md:rounded-[32px] border border-white/5 bg-white/[0.01] flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden" id="notification-subscription-bar">
+              <div className="absolute top-0 left-0 w-24 h-24 bg-indigo-500/10 blur-[40px] pointer-events-none rounded-full" />
+              
+              <div className="flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row relative z-10">
+                <div className={`p-4 rounded-2xl flex items-center justify-center shrink-0 ${
+                  notifPermission === 'denied' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                  'bg-white/5 text-white/60 border border-white/10'
+                }`}>
+                  <Bell className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base md:text-lg font-bold tracking-tight text-white mb-1 select-none">
+                    {notifPermission === 'denied' ? 'Уведомления заблокированы' : 'Включить push-уведомления'}
+                  </h3>
+                  <p className="text-xs text-white/50 leading-relaxed max-w-md">
+                    {notifPermission === 'denied' ? 'Вы заблокировали запросы на уведомления. Пожалуйста, разрешите их в панели настроек вашего браузера (иконка замка слева от URL).' :
+                     'Получайте моментальные оповещения прямо на рабочий стол или телефон при публикации новых высокоскоростных ключей и готовых подписок.'}
+                  </p>
+                </div>
               </div>
-            ) : (
-              <button
-                onClick={requestNotificationPermission}
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] uppercase tracking-[0.15em] font-bold transition-all duration-300 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-[1.02] flex items-center justify-center gap-2"
-              >
-                Подписаться
-              </button>
-            )}
-          </div>
-        </div>
-      </motion.div>
+
+              <div className="shrink-0 relative z-10 w-full sm:w-auto">
+                {notifPermission === 'denied' ? (
+                  <div className="text-[10px] uppercase font-bold tracking-wider text-rose-400 bg-rose-500/10 px-4 py-2.5 rounded-xl border border-rose-500/20 text-center">
+                    Требуется разрешение
+                  </div>
+                ) : (
+                  <button
+                    onClick={requestNotificationPermission}
+                    className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-[11px] uppercase tracking-[0.15em] font-bold transition-all duration-300 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-[1.02] flex items-center justify-center gap-2"
+                  >
+                    Подписаться
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {(keys.length > 0 && !replaceWithWarning) ? (
         <>
@@ -1211,6 +1205,14 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
 }
 
 function HowToUsePage() {
+  const [hasPermission, setHasPermission] = useState(false);
+
+  useEffect(() => {
+    if ('Notification' in window) {
+      setHasPermission(Notification.permission === 'granted');
+    }
+  }, []);
+
   const platforms = [
     {
       name: 'Windows',
@@ -1324,6 +1326,40 @@ function HowToUsePage() {
           Вернуться к списку серверов <ChevronRight className="w-4 h-4" />
         </Link>
       </div>
+
+      {/* Test Connection / Notifications section */}
+      {hasPermission && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-8 p-6 md:p-10 glass rounded-[24px] md:rounded-[40px] text-center border border-emerald-500/25 bg-emerald-500/[0.02] shrink-0 relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 blur-[40px] pointer-events-none rounded-full" />
+          <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto mb-4 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+            <Bell className="w-5 h-5 animate-bounce" />
+          </div>
+          <h3 className="text-xl md:text-2xl font-serif italic mb-2 text-white">Push-уведомления активны</h3>
+          <p className="text-white/40 text-xs md:text-sm mb-6 max-w-sm mx-auto leading-relaxed">
+            Здесь вы можете запустить тестовое уведомление для проверки корректности работы браузерных оповещений и звукового сигнала.
+          </p>
+          <button
+            onClick={() => {
+              playAwesomeChime();
+              try {
+                new Notification('⚡️ Тестовое уведомление VLESSFREE', {
+                  body: 'Проверка связи завершена успешно! Звуковой сигнал воспроизведен.',
+                  icon: 'https://s10.iimage.su/s/17/gW7gsFfxcyoojRD4cNLejI21W6YZc62Ieh9AfziAL.png'
+                });
+              } catch (e) {
+                console.error(e);
+              }
+            }}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-white border border-emerald-500/30 rounded-xl text-[10px] uppercase tracking-widest font-bold transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(16,185,129,0.35)]"
+          >
+            Проверить связь
+          </button>
+        </motion.div>
+      )}
     </main>
   );
 }
