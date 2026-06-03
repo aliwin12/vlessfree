@@ -167,6 +167,29 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
       const isSub = postType === 'subscription';
       const name = isSub ? (formData.subscriptionName.trim() || 'Пользовательская подписка') : formData.name.trim();
 
+      // Write directly to standard servers (live immediately)
+      await addDoc(collection(db, 'servers'), {
+        name,
+        protocol: isSub ? 'Subscription' : formData.protocol,
+        country: isSub ? 'Global' : (formData.country.trim().toUpperCase() || 'US'),
+        city: isSub ? 'All' : (formData.city.trim() || 'Internet'),
+        config: formData.config.trim(),
+        latency: '30ms', // Initial default
+        load: 10, // Initial default
+        status: 'online', // Initial default
+        expiryDate: formData.expiryDate || '01.01.2027',
+        isUserPost: true,
+        userId: currentUser.uid,
+        username: userProfile?.username || 'anonymous',
+        displayName: userProfile?.displayName || 'Пользователь',
+        avatarUrl: userProfile?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${userProfile?.username || 'anon'}`,
+        postType,
+        scheduledAt: formData.isScheduled && formData.scheduledAt ? formData.scheduledAt : null,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      // Write to suggestion log for user history support with 'approved' status
       const docRef = await addDoc(collection(db, 'server_suggestions'), {
         name,
         postType,
@@ -177,7 +200,7 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
         expiryDate: formData.expiryDate || '01.01.2027',
         scheduledAt: formData.isScheduled && formData.scheduledAt ? formData.scheduledAt : null,
         displayId,
-        status: 'pending',
+        status: 'approved',
         createdAt: serverTimestamp(),
         userIp: metadata.ip,
         browser: metadata.browser,
@@ -190,13 +213,13 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
 
       setGeneratedId(displayId);
 
-      // Save to local history
+      // Save to local history as approved
       const newHistoryItem = {
         id: docRef.id,
         displayId,
         name,
         createdAt: new Date().toISOString(),
-        status: 'pending'
+        status: 'approved'
       };
       const history = JSON.parse(localStorage.getItem('my_suggestions') || '[]');
       history.push(newHistoryItem);
@@ -275,14 +298,14 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
           <div className="w-20 h-20 bg-emerald-500/20 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-emerald-500/10">
             <CheckCircle2 className="w-10 h-10 text-emerald-500" />
           </div>
-          <h2 className="text-3xl font-serif italic mb-4">Пост на премодерации!</h2>
+          <h2 className="text-3xl font-serif italic mb-4">Успешно опубликовано!</h2>
           <p className="text-white/40 leading-relaxed text-sm mb-8">
-            Ваш сервер/подписка отправлены администрации на проверку. Пожалуйста, запишите или сохраните ID заявки ниже.
+            Ваш сервер/подписка успешно добавлены и уже доступны на главной странице! Запишите или сохраните ID публикации ниже на случай, если захотите её удалить.
           </p>
 
           <div className="bg-white/5 rounded-2xl p-6 border border-white/5 mb-8 group relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <p className="text-[10px] uppercase font-bold tracking-widest text-white/20 mb-2">ID заявки</p>
+            <p className="text-[10px] uppercase font-bold tracking-widest text-white/20 mb-2">ID публикации</p>
             <div className="flex items-center justify-center gap-4">
               <span className="text-4xl font-mono font-black tracking-[0.2em] text-amber-500 selection:bg-amber-500 selection:text-black">
                 {generatedId}
@@ -347,13 +370,13 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
                 <div className="flex gap-4">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <p className="text-sm text-white/60 leading-relaxed">
-                    Если обнаружится, что добавленный сервер или ссылка на подписку не функционируют, администрация отклонит публикацию.
+                    Нерабочие серверы или недействительные ссылки на подписки удаляются администрацией при регулярных проверках или по жалобам пользователей.
                   </p>
                 </div>
                 <div className="flex gap-4">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <p className="text-sm text-white/60 leading-relaxed">
-                    Придумайте приличное название подписке или серверу. Посты с нецензурной лексикой во избежание блокировок профиля отклоняются немедленно.
+                    Придумывайте приличные названия. Посты с нецензурной лексикой или спамом удаляются мгновенно во избежание перманентной блокировки вашего профиля.
                   </p>
                 </div>
                 <div className="flex gap-4">
@@ -650,7 +673,7 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
               {isSubmitting ? 'Отправка...' : postType === 'subscription' ? 'Опубликовать папку-подписку' : 'Опубликовать ключ VLESS'}
             </button>
             <p className="mt-4 text-[9px] text-white/20 text-center leading-relaxed italic px-4">
-              * Все добавленные публикации проходят премодерацию у администрации перед появлением на главной.
+              * Все добавленные публикации автоматически появляются на главной странице мгновенно без премодерации.
             </p>
           </div>
         </form>

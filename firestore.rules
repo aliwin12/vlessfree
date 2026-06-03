@@ -46,11 +46,10 @@ service cloud.firestore {
 
     match /servers/{serverId} {
       allow get, list: if true;
-      allow create: if isAdmin() && 
+      allow create: if (isAdmin() || (isSignedIn() && incoming().userId == request.auth.uid)) && 
                       isValidServer(incoming());
-      allow update: if isAdmin() && 
-                      isValidServer(incoming());
-      allow delete: if isAdmin();
+      allow update: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid && incoming().userId == request.auth.uid);
+      allow delete: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid);
     }
 
     // 2. Warnings Collection
@@ -111,7 +110,7 @@ service cloud.firestore {
 
     match /server_suggestions/{suggestionId} {
       allow create: if isValidSuggestion(incoming()) && 
-                       incoming().status == 'pending' &&
+                       (incoming().status == 'pending' || incoming().status == 'approved') &&
                        incoming().createdAt == request.time;
       allow get: if true; // Anyone knowing the suggestion ID can check its status/details
       allow list: if isAdmin() || 

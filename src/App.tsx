@@ -388,14 +388,28 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
 
   const filteredKeys = keys.filter((key: any) => {
     // Automatic inactivation check
-    const parts = key.expiryDate?.split('.');
     let expiry: Date | null = null;
-    if (parts && parts.length === 3) {
-      const [day, month, year] = parts.map(Number);
-      if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
-        expiry = new Date(year, month - 1, day);
-        expiry.setHours(23, 59, 59, 999);
+    if (key.expiryDate) {
+      if (key.expiryDate.includes('.')) {
+        const parts = key.expiryDate.split('.');
+        if (parts.length === 3) {
+          const [day, month, year] = parts.map(Number);
+          if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+            expiry = new Date(year, month - 1, day);
+          }
+        }
+      } else if (key.expiryDate.includes('-')) {
+        const parts = key.expiryDate.split('-');
+        if (parts.length === 3) {
+          const [year, month, day] = parts.map(Number);
+          if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+            expiry = new Date(year, month - 1, day);
+          }
+        }
       }
+    }
+    if (expiry) {
+      expiry.setHours(23, 59, 59, 999);
     }
 
     const now = new Date();
@@ -1656,6 +1670,55 @@ function AppContent() {
   const [unlockedSpecial, setUnlockedSpecial] = useState(false);
   const location = useLocation();
 
+  const [unpackedConfigs, setUnpackedConfigs] = useState<string[]>([]);
+  const [loadingUnpack, setLoadingUnpack] = useState(false);
+  const [unpackError, setUnpackError] = useState<string | null>(null);
+  const [copiedUnpackedIdx, setCopiedUnpackedIdx] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (selectedKey && selectedKey.postType === 'subscription') {
+      setLoadingUnpack(true);
+      setUnpackError(null);
+      setUnpackedConfigs([]);
+
+      fetch(`/api/fetch-subscription?url=${encodeURIComponent(selectedKey.config)}`)
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+          return res.json();
+        })
+        .then(data => {
+          const content = data.content || '';
+          let text = content;
+          const hasProto = content.includes('://');
+          const isBase64 = /^[a-zA-Z0-9+/=\s\n\r]+$/.test(content) && content.trim().length > 10 && !hasProto;
+          if (isBase64) {
+            try {
+              text = atob(content.replace(/[\s\n\r]/g, ''));
+            } catch (e) {
+              console.error("Base64 decode error client-side:", e);
+            }
+          }
+          
+          const protos = ['vless://', 'vmess://', 'ss://', 'ssr://', 'trojan://', 'hysteria://', 'hysteria2://', 'tuic://'];
+          const lines = text.split(/[\r\n]+/)
+            .map((line: string) => line.trim())
+            .filter((line: string) => protos.some(proto => line.startsWith(proto)));
+
+          setUnpackedConfigs(lines);
+          setLoadingUnpack(false);
+        })
+        .catch(err => {
+          console.error("Error unpacking subscription", err);
+          setUnpackError('Не удалось загрузить или распаковать папку-подписку.');
+          setLoadingUnpack(false);
+        });
+    } else {
+      setUnpackedConfigs([]);
+      setLoadingUnpack(false);
+      setUnpackError(null);
+    }
+  }, [selectedKey]);
+
   useEffect(() => {
     // Mark app as loaded for the index.html failsafe
     (window as any).appLoaded = true;
@@ -1686,9 +1749,32 @@ function AppContent() {
   }, [location]);
 
   const handleCopy = (id: any, config: string) => {
-    navigator.clipboard.writeText(config);
+    const foundKey = keys.find((k: any) => k.id === id);
+    if (foundKey && foundKey.postType === 'subscription') {
+      const username = foundKey.username || 'anonymous';
+      const cleanSubName = (foundKey.name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+      const customSubUrl = `https://vlessfree.vercel.app/${username}/${cleanSubName}`;
+      navigator.clipboard.writeText(customSubUrl);
+    } else {
+      navigator.clipboard.writeText(config);
+    }
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const copyUnpackedConfig = (idx: number, config: string) => {
+    if (!selectedKey) return;
+    let configWithoutTag = config;
+    if (config.includes('#')) {
+      configWithoutTag = config.split('#')[0];
+    }
+    const cleanUsername = selectedKey.username || 'anonymous';
+    const tag = `${selectedKey.name} | от @${cleanUsername} | vlessfree [${idx + 1}]`;
+    const finalConfig = `${configWithoutTag}#${encodeURIComponent(tag)}`;
+
+    navigator.clipboard.writeText(finalConfig);
+    setCopiedUnpackedIdx(idx);
+    setTimeout(() => setCopiedUnpackedIdx(null), 2000);
   };
 
   return (
@@ -1759,7 +1845,7 @@ function AppContent() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative max-w-lg w-full glass rounded-[24px] md:rounded-[40px] p-5 md:p-12 overflow-hidden"
+              className="relative max-w-lg w-full glass rounded-[24px] md:rounded-[40px] p-5 md:p-12 max-h-[90vh] overflow-y-auto custom-scrollbar"
               onClick={(e) => e.stopPropagation()}
             >
               <button 
@@ -1829,6 +1915,55 @@ function AppContent() {
                   </div>
                 )}
               </div>
+
+              {selectedKey.postType === 'subscription' && (
+                <div className="mt-2 border-t border-white/5 pt-6 pb-6 text-left">
+                  <h3 className="text-[10px] uppercase tracking-widest font-bold opacity-30 mb-3 flex justify-between items-center">
+                    <span>Содержимое папки (авто-распаковка)</span>
+                    <span className="text-emerald-400 font-mono lowercase">
+                      {loadingUnpack ? 'распаковка...' : `${unpackedConfigs.length} серверов`}
+                    </span>
+                  </h3>
+
+                  {loadingUnpack ? (
+                    <div className="space-y-2 py-2">
+                      <div className="h-11 bg-white/5 rounded-xl animate-pulse" />
+                      <div className="h-11 bg-white/5 rounded-xl animate-pulse" />
+                    </div>
+                  ) : unpackError ? (
+                    <p className="text-xs text-rose-500 py-2">{unpackError}</p>
+                  ) : unpackedConfigs.length === 0 ? (
+                    <p className="text-xs text-white/30 italic py-2">В этой папке пока нет распакованных конфигураций.</p>
+                  ) : (
+                    <div className="space-y-2 max-h-[190px] overflow-y-auto pr-2 custom-scrollbar">
+                      {unpackedConfigs.map((config, idx) => {
+                        const proto = config.split('://')[0].toUpperCase();
+                        return (
+                          <div key={idx} className="flex items-center justify-between bg-white/[0.02] border border-white/5 p-3 rounded-xl hover:bg-white/[0.04] transition-all">
+                            <div className="flex flex-col gap-0.5 truncate pr-4">
+                              <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">{proto} НАСТРОЙКА #{idx + 1}</span>
+                              <span className="text-[11px] text-white/70 font-mono truncate">
+                                {config.split('#')[1] ? decodeURIComponent(config.split('#')[1]) : config.substring(0, 45) + '...'}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => copyUnpackedConfig(idx, config)}
+                              className={`p-2 rounded-lg transition-all shrink-0 ${
+                                copiedUnpackedIdx === idx 
+                                ? 'bg-emerald-500 text-white' 
+                                : 'bg-white/5 text-white/60 hover:bg-white hover:text-black hover:scale-105'
+                              }`}
+                              title="Копировать конфигурацию"
+                            >
+                              {copiedUnpackedIdx === idx ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="flex flex-col gap-3">
                 <button 
