@@ -90,15 +90,12 @@ export default function AuthPage() {
           throw new Error('Пароль должен состоять минимум из 6 символов.');
         }
 
-        // Run continuous transaction to guard username uniqueness
-        await runTransaction(db, async (transaction) => {
-          const usernameRef = doc(db, 'usernames', cleanUsername);
-          const usernameSnap = await transaction.get(usernameRef);
-          
-          if (usernameSnap.exists()) {
-            throw new Error(`Имя пользователя @${cleanUsername} уже занято.`);
-          }
-        });
+        // Guard username uniqueness via simple getDoc for unauthenticated scope
+        const usernameRefCheck = doc(db, 'usernames', cleanUsername);
+        const usernameSnapCheck = await getDoc(usernameRefCheck);
+        if (usernameSnapCheck.exists()) {
+          throw new Error(`Имя пользователя @${cleanUsername} уже занято.`);
+        }
 
         // If username is free, create user account
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -107,10 +104,16 @@ export default function AuthPage() {
         // Update auth profile
         await updateProfile(user, { displayName: displayName.trim() });
 
-        // Save username claim and profile in database atomically via transaction
+        // Save username claim and profile in database atomically via transaction,
+        // re-verifying username uniqueness within the auth transaction to prevent races.
         await runTransaction(db, async (transaction) => {
           const usernameRef = doc(db, 'usernames', cleanUsername);
           const profileRef = doc(db, 'users', user.uid);
+
+          const usernameSnap = await transaction.get(usernameRef);
+          if (usernameSnap.exists()) {
+            throw new Error(`Имя пользователя @${cleanUsername} уже занято.`);
+          }
 
           transaction.set(usernameRef, {
             uid: user.uid,
@@ -123,6 +126,8 @@ export default function AuthPage() {
             bio: '',
             telegram: '',
             avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}`,
+            followersCount: 0,
+            followingCount: 0,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
           });
@@ -203,20 +208,15 @@ export default function AuthPage() {
     }
 
     try {
-      // Check and claim username uniqueness
-      await runTransaction(db, async (transaction) => {
-        const usernameRef = doc(db, 'usernames', cleanUsername);
-        const usernameSnap = await transaction.get(usernameRef);
-        
-        if (usernameSnap.exists()) {
-          throw new Error(`Имя пользователя @${cleanUsername} уже занято.`);
-        }
-      });
-
-      // Write atomically both UsernameClaim and UserProfile
+      // Check and claim username uniqueness and write profile in a single atomic transaction
       await runTransaction(db, async (transaction) => {
         const usernameRef = doc(db, 'usernames', cleanUsername);
         const profileRef = doc(db, 'users', pendingGoogleUser.uid);
+
+        const usernameSnap = await transaction.get(usernameRef);
+        if (usernameSnap.exists()) {
+          throw new Error(`Имя пользователя @${cleanUsername} уже занято.`);
+        }
 
         transaction.set(usernameRef, {
           uid: pendingGoogleUser.uid,
@@ -229,6 +229,8 @@ export default function AuthPage() {
           bio: '',
           telegram: '',
           avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${cleanUsername}`,
+          followersCount: 0,
+          followingCount: 0,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
