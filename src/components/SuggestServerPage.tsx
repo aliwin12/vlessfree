@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   ChevronLeft, Send, RefreshCw, CheckCircle2, Globe, Activity, 
   Terminal, MapPin, AlertTriangle, Shield, Copy, Check, Lock, 
-  Layers, FolderOpen, Calendar, Clock 
+  Layers, FolderOpen, Calendar, Clock, Zap, Flame, Sparkles, Heart, Server
 } from 'lucide-react';
 import { db, auth, collection, addDoc, handleFirestoreError, OperationType, serverTimestamp, doc, getDoc } from '../lib/firebase';
 
@@ -22,6 +22,7 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
   const [countdown, setCountdown] = useState(5);
   const [copied, setCopied] = useState(false);
   const [historyItems, setHistoryItems] = useState<any[]>([]);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   
   // Selection of Post Type: 'vless' or 'subscription'
   const [postType, setPostType] = useState<'vless' | 'subscription'>('vless');
@@ -35,7 +36,14 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
     config: '',
     expiryDate: '',
     isScheduled: false,
-    scheduledAt: ''
+    scheduledAt: '',
+    notes: '',
+    category: 'Общий обход block 🌐',
+    customIcon: 'Globe',
+    isPrivate: false,
+    hideAuthor: false,
+    speedLimit: 'Без лимита',
+    allowedClients: [] as string[]
   });
 
   useEffect(() => {
@@ -167,8 +175,18 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
       const isSub = postType === 'subscription';
       const name = isSub ? (formData.subscriptionName.trim() || 'Пользовательская подписка') : formData.name.trim();
 
+      const advancedFields = {
+        notes: formData.notes.trim() || '',
+        category: formData.category || 'Общий обход block 🌐',
+        customIcon: formData.customIcon || (isSub ? 'Folder' : 'Globe'),
+        isPrivate: !!formData.isPrivate,
+        hideAuthor: !!formData.hideAuthor,
+        speedLimit: formData.speedLimit || 'Без лимита',
+        allowedClients: formData.allowedClients || []
+      };
+
       // Write directly to standard servers (live immediately)
-      await addDoc(collection(db, 'servers'), {
+      const liveServer = await addDoc(collection(db, 'servers'), {
         name,
         protocol: isSub ? 'Subscription' : formData.protocol,
         country: isSub ? 'Global' : (formData.country.trim().toUpperCase() || 'US'),
@@ -186,7 +204,8 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
         postType,
         scheduledAt: formData.isScheduled && formData.scheduledAt ? formData.scheduledAt : null,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
+        ...advancedFields
       });
 
       // Write to suggestion log for user history support with 'approved' status
@@ -208,7 +227,9 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
         userId: currentUser.uid,
         username: userProfile?.username || 'anonymous',
         displayName: userProfile?.displayName || 'Пользователь',
-        avatarUrl: userProfile?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${userProfile?.username || 'anon'}`
+        avatarUrl: userProfile?.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${userProfile?.username || 'anon'}`,
+        serverId: liveServer.id,
+        ...advancedFields
       });
 
       setGeneratedId(displayId);
@@ -604,6 +625,178 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
                 </div>
               </div>
             </>
+          )}
+
+          {/* Advanced collapsible button */}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white transition-all active:scale-95"
+            >
+              <span>⚙️ {showAdvanced ? 'Скрыть дополнительные настройки' : 'Дополнительные настройки'}</span>
+            </button>
+          </div>
+
+          {showAdvanced && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              className="space-y-6 bg-white/[0.01] border border-white/5 rounded-3xl p-6 md:p-8 mt-2 space-y-6"
+            >
+              <h4 className="text-xs uppercase tracking-widest font-black text-[#888] pb-2 border-b border-white/5">Дополнительные параметры публикации</h4>
+
+              {/* Notes block */}
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
+                  Заметка / Инструкция (notes)
+                </label>
+                <textarea
+                  value={formData.notes || ''}
+                  onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Добавьте полезные примечания, пароль (если нужен) или инструкцию для пользователей..."
+                  maxLength={500}
+                  className="w-full h-24 bg-white/2 border border-white/5 focus:border-white/15 rounded-2xl p-4 text-xs focus:outline-none transition-all resize-none font-semibold text-white/80"
+                />
+              </div>
+
+              {/* Category, speedLimit, customIcon grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Category Selection */}
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
+                    Специализация применения
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={e => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full bg-[#0d0d0d] border border-white/5 rounded-2xl p-4 text-xs text-white/70 focus:outline-none focus:border-white/20 transition-colors"
+                  >
+                    <option value="Общий обход block 🌐">Общий обход block 🌐</option>
+                    <option value="Для игр 🎮">Для игр 🎮</option>
+                    <option value="Для работы/учебы 💼">Для работы/учебы 💼</option>
+                    <option value="Для YouTube & Streaming 📺">Для YouTube & Streaming 📺</option>
+                    <option value="Высокая защита 🔐">Высокая защита 🔐</option>
+                  </select>
+                </div>
+
+                {/* Speed Limit */}
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
+                    Лимит скорости
+                  </label>
+                  <select
+                    value={formData.speedLimit}
+                    onChange={e => setFormData({ ...formData, speedLimit: e.target.value })}
+                    className="w-full bg-[#0d0d0d] border border-white/5 rounded-2xl p-4 text-xs text-white/70 focus:outline-none focus:border-white/20 transition-colors"
+                  >
+                    <option value="Без лимита">Без лимита (Uncapped)</option>
+                    <option value="10 Mbps">10 Mbps</option>
+                    <option value="50 Mbps">50 Mbps</option>
+                    <option value="100 Mbps">100 Mbps</option>
+                    <option value="500 Mbps">500 Mbps</option>
+                    <option value="1 Gbps">1 Gbps</option>
+                  </select>
+                </div>
+
+              </div>
+
+              {/* Icon selector */}
+              <div className="space-y-3">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1 block">
+                  Декоративный значок (Иконка)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { key: 'Globe', label: '🌐 Globe' },
+                    { key: 'Server', label: '🖥️ Server' },
+                    { key: 'Zap', label: '⚡ Energy' },
+                    { key: 'Flame', label: '🔥 Flame' },
+                    { key: 'Shield', label: '🛡️ Safety' },
+                    { key: 'Sparkles', label: '✨ Sparkles' },
+                    { key: 'Heart', label: '❤️ Favorite' }
+                  ].map((ic) => (
+                    <button
+                      key={ic.key}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, customIcon: ic.key })}
+                      className={`px-3 py-1.5 rounded-xl text-[10px] font-mono border transition-all ${
+                        formData.customIcon === ic.key
+                          ? 'bg-white text-black font-extrabold border-transparent'
+                          : 'bg-white/5 hover:bg-white/10 text-white/60 border-white/5'
+                      }`}
+                    >
+                      {ic.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Allowed clients multiselect */}
+              <div className="space-y-3">
+                <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1 block">
+                  Рекомендуемые клиенты
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {['v2rayN', 'Sing-box', 'Nekobox', 'Shadowrocket', 'Hiddify'].map((cl) => {
+                    const isChecked = formData.allowedClients.includes(cl);
+                    return (
+                      <button
+                        key={cl}
+                        type="button"
+                        onClick={() => {
+                          const updated = isChecked
+                            ? formData.allowedClients.filter(c => c !== cl)
+                            : [...formData.allowedClients, cl];
+                          setFormData({ ...formData, allowedClients: updated });
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-[10px] font-semibold border transition-all ${
+                          isChecked
+                            ? 'bg-indigo-600 border-transparent text-white'
+                            : 'bg-white/5 hover:bg-white/10 text-white/50 border-white/5'
+                        }`}
+                      >
+                        {cl}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Privacy and Anonymity options */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* Privacy check */}
+                <label className="flex items-center gap-3 cursor-pointer bg-white/[0.02] border border-white/5 p-4 rounded-2xl hover:bg-white/[0.04] transition-all">
+                  <input
+                    type="checkbox"
+                    checked={formData.isPrivate}
+                    onChange={e => setFormData({ ...formData, isPrivate: e.target.checked })}
+                    className="accent-indigo-500 w-4 h-4"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs text-white/70 font-semibold">Приватная публикация</span>
+                    <span className="text-[9px] text-white/30">Скрывает сервер из общего списка</span>
+                  </div>
+                </label>
+
+                {/* Anonymity check */}
+                <label className="flex items-center gap-3 cursor-pointer bg-white/[0.02] border border-[#ff3f5e]/10 p-4 rounded-2xl hover:bg-white/[0.04] transition-all">
+                  <input
+                    type="checkbox"
+                    checked={formData.hideAuthor}
+                    onChange={e => setFormData({ ...formData, hideAuthor: e.target.checked })}
+                    className="accent-[#ff3f5e] w-4 h-4"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs text-white/70 font-semibold">Анонимное предложение</span>
+                    <span className="text-[9px] text-white/30">Скрывает автора и ссылку на профиль</span>
+                  </div>
+                </label>
+
+              </div>
+            </motion.div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">

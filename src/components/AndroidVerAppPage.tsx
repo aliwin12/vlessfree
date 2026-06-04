@@ -155,7 +155,7 @@ export default function AndroidVerAppPage() {
   };
 
   const copySubscriptionUrl = () => {
-    const subUrl = 'https://vlessfree.vercel.app/suball';
+    const subUrl = `${window.location.origin}/suball`;
     navigator.clipboard.writeText(subUrl);
     showToast('Ссылка подписки скопирована!');
   };

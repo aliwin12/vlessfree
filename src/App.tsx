@@ -20,6 +20,19 @@ import AndroidPage from './components/AndroidPage';
 import AppAboutPage from './components/AppAboutPage';
 import AuthPage from './components/AuthPage';
 import UserProfilePage from './components/UserProfilePage';
+import { Flame, Sparkles, Heart, Server } from 'lucide-react';
+
+const getCustomIcon = (iconName: string, isSub: boolean) => {
+  switch (iconName) {
+    case 'Shield': return <Shield className="w-4 h-4 md:w-6 md:h-6" />;
+    case 'Zap': return <Zap className="w-4 h-4 md:w-6 md:h-6 text-amber-400" />;
+    case 'Flame': return <Flame className="w-4 h-4 md:w-6 md:h-6 text-rose-500" />;
+    case 'Sparkles': return <Sparkles className="w-4 h-4 md:w-6 md:h-6 text-indigo-400" />;
+    case 'Heart': return <Heart className="w-4 h-4 md:w-6 md:h-6 text-red-500" />;
+    case 'Server': return <Server className="w-4 h-4 md:w-6 md:h-6 text-indigo-300" />;
+    default: return isSub ? <Folder className="w-4 h-4 md:w-6 md:h-6" /> : <Globe className="w-4 h-4 md:w-6 md:h-6" />;
+  }
+};
 
 const UPDATES = [
   {
@@ -457,6 +470,11 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
     const now = new Date();
     const isExpired = !expiry || expiry < now;
 
+    // Filter out private publications
+    if (key.isPrivate) {
+      return false;
+    }
+
     // Filter out future scheduled publications
     if (key.scheduledAt) {
       const schedTime = new Date(key.scheduledAt);
@@ -851,16 +869,21 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
                       key.isComingSoon ? 'bg-emerald-500/10 text-emerald-500' : 
                       isSub ? 'bg-emerald-500/10 text-emerald-400' : ''
                     }`}>
-                      {isSub ? <Folder className="w-4 h-4 md:w-6 md:h-6" /> : <Globe className="w-4 h-4 md:w-6 md:h-6" />}
+                      {getCustomIcon(key.customIcon, isSub)}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap justify-end">
                       {isSub && (
-                        <span className="px-2 py-1 rounded-lg bg-emerald-500 text-white text-[8px] md:text-[9px] uppercase tracking-widest font-black shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                        <span className="px-2 py-1 rounded-lg bg-emerald-500 text-white text-[8px] md:text-[9px] uppercase tracking-widest font-black shadow-[0_0_15px_rgba(16,185,129,0.3)] whitespace-nowrap">
                           ПАПКА-ПОДПИСКА
                         </span>
                       )}
+                      {key.category && (
+                        <span className="px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 text-[8px] md:text-[9px] uppercase tracking-widest font-bold border border-indigo-500/20 whitespace-nowrap">
+                          {key.category}
+                        </span>
+                      )}
                       {key.isComingSoon && (
-                        <span className="px-2 py-1 rounded-lg bg-emerald-500 text-white text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+                        <span className="px-2 py-1 rounded-lg bg-emerald-500 text-white text-[8px] md:text-[9px] uppercase tracking-widest font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)] whitespace-nowrap">
                           COMING SOON
                         </span>
                       )}
@@ -902,9 +925,30 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
                   </div>
                   
                   <div className={key.isSpecial && !unlockedSpecial ? 'blur-sm select-none pointer-events-none' : ''}>
-                    <p className="text-xs md:text-sm text-white/40 mb-4 md:mb-6 selectable">
-                      {isSub ? 'Нигде • Общая папка-подписка без пароля' : key.location}
+                    <p className="text-xs md:text-sm text-white/40 mb-4 md:mb-6 select-none flex flex-wrap items-center gap-2">
+                      <span>{isSub ? 'Нигде • Общая папка-подписка без пароля' : key.location}</span>
+                      {key.speedLimit && key.speedLimit !== 'Без лимита' && (
+                        <span className="px-1.5 py-0.5 rounded-md bg-white/5 border border-white/5 text-[9px] font-mono text-white/60">
+                          ⚡ {key.speedLimit}
+                        </span>
+                      )}
                     </p>
+
+                    {key.notes && (
+                      <div className="bg-white/[0.015] border border-white/5 rounded-xl p-3 mb-4 leading-relaxed font-sans text-left text-xs text-white/60 select-text">
+                        📝 <span className="italic">{key.notes}</span>
+                      </div>
+                    )}
+
+                    {key.allowedClients && key.allowedClients.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-4 select-none">
+                        {key.allowedClients.map((cl: string) => (
+                          <span key={cl} className="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/10 text-[7px] md:text-[8px] uppercase tracking-wider font-mono">
+                            {cl}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                     {key.reason && (
                       <div className="bg-rose-500/5 border border-rose-500/10 rounded-lg md:rounded-xl p-3 md:p-4 mb-4 md:mb-6">
@@ -1000,22 +1044,32 @@ function HomePage({ keys, warnings = [], handleCopy, copiedId, selectedKey, setS
                     </button>
 
                     {key.isUserPost && key.userId && (
-                      <Link 
-                        to={`/user/${key.username}`}
-                        className="flex items-center gap-2 mt-4 pt-4 border-t border-white/5 hover:text-indigo-400 text-white/50 transition-colors pointer-events-auto relative z-40"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <img 
-                          src={key.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${key.username}`} 
-                          className="w-5 h-5 rounded-full bg-white/10 border border-white/10" 
-                          alt="" 
-                          referrerPolicy="no-referrer"
-                        />
-                        <div className="flex flex-col items-start leading-none text-left">
-                          <span className="text-[7px] text-white/30 uppercase tracking-widest font-semibold mb-0.5">Добавил:</span>
-                          <span className="text-[10px] font-bold text-white/80 font-mono">@{key.username}</span>
+                      key.hideAuthor ? (
+                        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/5 text-white/30 text-[10px] select-none text-left">
+                          <div className="w-5 h-5 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-[10px]">🕵️</div>
+                          <div className="flex flex-col items-start leading-none">
+                            <span className="text-[7px] text-white/30 uppercase tracking-widest font-semibold mb-0.5">Добавил:</span>
+                            <span className="text-[10px] font-bold text-white/40">Анонимный Проводник</span>
+                          </div>
                         </div>
-                      </Link>
+                      ) : (
+                        <Link 
+                          to={`/user/${key.username}`}
+                          className="flex items-center gap-2 mt-4 pt-4 border-t border-white/5 hover:text-indigo-400 text-white/50 transition-colors pointer-events-auto relative z-40"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <img 
+                            src={key.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${key.username}`} 
+                            className="w-5 h-5 rounded-full bg-white/10 border border-white/10" 
+                            alt="" 
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="flex flex-col items-start leading-none text-left">
+                            <span className="text-[7px] text-white/30 uppercase tracking-widest font-semibold mb-0.5">Добавил:</span>
+                            <span className="text-[10px] font-bold text-white/80 font-mono">@{key.username}</span>
+                          </div>
+                        </Link>
+                      )
                     )}
                   </div>
                 </motion.div>
@@ -1999,7 +2053,8 @@ function AppContent() {
     if (foundKey && foundKey.postType === 'subscription') {
       const username = foundKey.username || 'anonymous';
       const cleanSubName = getSlug(foundKey.name || '');
-      const customSubUrl = `https://vlessfree.vercel.app/${username}/${cleanSubName}`;
+      const reqHost = window.location.origin;
+      const customSubUrl = `${reqHost}/${username}/${cleanSubName}`;
       navigator.clipboard.writeText(customSubUrl);
     } else {
       navigator.clipboard.writeText(config);

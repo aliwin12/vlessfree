@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   User, AtSign, Settings, Save, X, Globe, Clipboard, Check, 
   Send, Calendar, Cpu, Shield, RefreshCw, AlertCircle, Sparkles,
-  Folder, Lock, Copy, ChevronRight, Users
+  Folder, Lock, Copy, ChevronRight, Users, Zap, Flame, Heart, Server
 } from 'lucide-react';
 import { 
   auth, db, handleFirestoreError, OperationType, 
@@ -12,6 +12,27 @@ import {
 } from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, updateDoc, serverTimestamp, runTransaction, deleteDoc, setDoc, writeBatch, increment, onSnapshot } from 'firebase/firestore';
+
+const getCustomIcon = (iconName: string, isSub: boolean) => {
+  switch (iconName) {
+    case 'Shield': return <Shield className="w-4 h-4 md:w-6 md:h-6" />;
+    case 'Zap': return <Zap className="w-4 h-4 md:w-6 md:h-6 text-amber-400" />;
+    case 'Flame': return <Flame className="w-4 h-4 md:w-6 md:h-6 text-rose-500" />;
+    case 'Sparkles': return <Sparkles className="w-4 h-4 md:w-6 md:h-6 text-indigo-400" />;
+    case 'Heart': return <Heart className="w-4 h-4 md:w-6 md:h-6 text-red-500" />;
+    case 'Server': return <Server className="w-4 h-4 md:w-6 md:h-6 text-indigo-300" />;
+    default: return isSub ? <Folder className="w-4 h-4 md:w-6 md:h-6" /> : <Globe className="w-4 h-4 md:w-6 md:h-6" />;
+  }
+};
+
+const profileColors: Record<string, { accent: string; bg: string; text: string; shadow: string; border: string }> = {
+  indigo: { accent: 'bg-indigo-600 hover:bg-indigo-500', bg: 'indigo-500', text: 'text-indigo-400', shadow: 'rgba(99,102,241,0.25)', border: 'border-indigo-500/20' },
+  emerald: { accent: 'bg-emerald-600 hover:bg-emerald-500', bg: 'emerald-500', text: 'text-emerald-400', shadow: 'rgba(16,185,129,0.25)', border: 'border-emerald-500/20' },
+  amber: { accent: 'bg-amber-600 hover:bg-amber-500', bg: 'amber-500', text: 'text-amber-400', shadow: 'rgba(245,158,11,0.25)', border: 'border-amber-500/20' },
+  rose: { accent: 'bg-rose-600 hover:bg-rose-500', bg: 'rose-500', text: 'text-rose-400', shadow: 'rgba(244,63,94,0.25)', border: 'border-rose-500/20' },
+  violet: { accent: 'bg-violet-600 hover:bg-violet-500', bg: 'violet-500', text: 'text-violet-400', shadow: 'rgba(139,92,246,0.25)', border: 'border-violet-500/20' },
+  sky: { accent: 'bg-sky-600 hover:bg-sky-500', bg: 'sky-500', text: 'text-sky-400', shadow: 'rgba(14,165,233,0.25)', border: 'border-sky-500/20' }
+};
 
 interface UserProfile {
   username: string;
@@ -23,6 +44,11 @@ interface UserProfile {
   followingCount?: number;
   createdAt?: any;
   updatedAt?: any;
+  statusText?: string;
+  profileColor?: string;
+  donationUrl?: string;
+  contactOther?: string;
+  showHistoryOnPublic?: boolean;
 }
 
 export default function UserProfilePage() {
@@ -30,10 +56,71 @@ export default function UserProfilePage() {
   const navigate = useNavigate();
   const cleanUsername = (username || '').trim().toLowerCase();
 
+  const getProfileColors = (col?: string) => {
+    switch (col) {
+      case 'emerald':
+        return {
+          glow: 'bg-emerald-500/20 shadow-[0_0_50px_rgba(16,185,129,0.1)]',
+          border: 'border-emerald-500/30 hover:border-emerald-500/40',
+          text: 'text-emerald-400',
+          badge: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/10 hover:bg-emerald-500/30',
+          followBg: 'bg-emerald-600 hover:bg-emerald-500 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]',
+          avatarGlow: 'bg-emerald-500/20'
+        };
+      case 'amber':
+        return {
+          glow: 'bg-amber-500/20 shadow-[0_0_50px_rgba(245,158,11,0.1)]',
+          border: 'border-amber-500/30 hover:border-amber-500/40',
+          text: 'text-amber-400',
+          badge: 'bg-amber-500/20 text-amber-400 border-amber-500/10 hover:bg-amber-500/30',
+          followBg: 'bg-amber-600 hover:bg-amber-500 hover:shadow-[0_0_20px_rgba(245,158,11,0.3)]',
+          avatarGlow: 'bg-amber-500/20'
+        };
+      case 'rose':
+        return {
+          glow: 'bg-rose-500/20 shadow-[0_0_50px_rgba(244,63,94,0.1)]',
+          border: 'border-rose-500/30 hover:border-rose-500/40',
+          text: 'text-rose-400',
+          badge: 'bg-rose-500/20 text-rose-400 border-rose-500/10 hover:bg-rose-500/30',
+          followBg: 'bg-rose-600 hover:bg-rose-500 hover:shadow-[0_0_20px_rgba(244,63,94,0.3)]',
+          avatarGlow: 'bg-rose-500/20'
+        };
+      case 'violet':
+        return {
+          glow: 'bg-violet-500/20 shadow-[0_0_50px_rgba(139,92,246,0.1)]',
+          border: 'border-violet-500/30 hover:border-violet-500/40',
+          text: 'text-violet-400',
+          badge: 'bg-violet-500/20 text-violet-400 border-violet-500/10 hover:bg-violet-500/30',
+          followBg: 'bg-violet-600 hover:bg-violet-500 hover:shadow-[0_0_20px_rgba(139,92,246,0.3)]',
+          avatarGlow: 'bg-violet-500/20'
+        };
+      case 'sky':
+        return {
+          glow: 'bg-sky-500/20 shadow-[0_0_50px_rgba(14,165,233,0.1)]',
+          border: 'border-sky-500/30 hover:border-sky-500/40',
+          text: 'text-sky-400',
+          badge: 'bg-sky-500/20 text-sky-400 border-sky-500/10 hover:bg-sky-500/30',
+          followBg: 'bg-sky-600 hover:bg-sky-500 hover:shadow-[0_0_20px_rgba(14,165,233,0.3)]',
+          avatarGlow: 'bg-sky-500/20'
+        };
+      default:
+        return {
+          glow: 'bg-indigo-500/20 shadow-[0_0_50px_rgba(99,102,241,0.1)]',
+          border: 'border-indigo-500/30 hover:border-indigo-500/40',
+          text: 'text-indigo-400',
+          badge: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/10 hover:bg-indigo-500/30',
+          followBg: 'bg-indigo-600 hover:bg-indigo-500 hover:shadow-[0_0_20px_rgba(99,102,241,0.3)]',
+          avatarGlow: 'bg-indigo-500/20'
+        };
+    }
+  };
+
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
   const [profileUid, setProfileUid] = useState<string | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  const activeColors = getProfileColors(profile?.profileColor);
   
   // Follower/Following lists & statistics
   const [followersList, setFollowersList] = useState<any[]>([]);
@@ -75,6 +162,27 @@ export default function UserProfilePage() {
   const [editBio, setEditBio] = useState('');
   const [editTelegram, setEditTelegram] = useState('');
   const [editAvatarUrl, setEditAvatarUrl] = useState('');
+
+  const [editStatusText, setEditStatusText] = useState('');
+  const [editProfileColor, setEditProfileColor] = useState('indigo');
+  const [editDonationUrl, setEditDonationUrl] = useState('');
+  const [editContactOther, setEditContactOther] = useState('');
+  const [editShowHistoryOnPublic, setEditShowHistoryOnPublic] = useState(true);
+
+  // States for editing suggestions
+  const [editingPost, setEditingPost] = useState<any>(null);
+  const [savingPost, setSavingPost] = useState(false);
+  const [editPostName, setEditPostName] = useState('');
+  const [editPostExpiryDate, setEditPostExpiryDate] = useState('');
+  const [editPostStatus, setEditPostStatus] = useState<'online' | 'unstable' | 'offline'>('online');
+  const [editPostNotes, setEditPostNotes] = useState('');
+  const [editPostCategory, setEditPostCategory] = useState('');
+  const [editPostIcon, setEditPostIcon] = useState('');
+  const [editPostIsPrivate, setEditPostIsPrivate] = useState(false);
+  const [editPostHideAuthor, setEditPostHideAuthor] = useState(false);
+  const [editPostAllowedClients, setEditPostAllowedClients] = useState<string[]>([]);
+  const [editPostSpeedLimit, setEditPostSpeedLimit] = useState('');
+  const [editPostIsPinned, setEditPostIsPinned] = useState(false);
 
   // Listener to track auth status
   useEffect(() => {
@@ -179,6 +287,11 @@ export default function UserProfilePage() {
           setEditBio(profileData.bio || '');
           setEditTelegram(profileData.telegram || '');
           setEditAvatarUrl(profileData.avatarUrl || '');
+          setEditStatusText(profileData.statusText || '');
+          setEditProfileColor(profileData.profileColor || 'indigo');
+          setEditDonationUrl(profileData.donationUrl || '');
+          setEditContactOther(profileData.contactOther || '');
+          setEditShowHistoryOnPublic(profileData.showHistoryOnPublic !== false);
 
           // Step 3: Fetch their successfully verified suggestions
           if (uid) {
@@ -361,6 +474,11 @@ export default function UserProfilePage() {
             bio: editBio.trim(),
             telegram: editTelegram.trim().replace(/^@/, ''),
             avatarUrl: editAvatarUrl.trim(),
+            statusText: editStatusText.trim(),
+            profileColor: editProfileColor,
+            donationUrl: editDonationUrl.trim(),
+            contactOther: editContactOther.trim(),
+            showHistoryOnPublic: !!editShowHistoryOnPublic,
             updatedAt: serverTimestamp()
           });
         });
@@ -371,7 +489,12 @@ export default function UserProfilePage() {
           displayName: editDisplayName.trim(),
           bio: editBio.trim(),
           telegram: editTelegram.trim().replace(/^@/, ''),
-          avatarUrl: editAvatarUrl.trim()
+          avatarUrl: editAvatarUrl.trim(),
+          statusText: editStatusText.trim(),
+          profileColor: editProfileColor,
+          donationUrl: editDonationUrl.trim(),
+          contactOther: editContactOther.trim(),
+          showHistoryOnPublic: !!editShowHistoryOnPublic
         };
         setProfile((prev) => prev ? { ...prev, ...payload } : null);
         setUpdateSuccess('Имя пользователя и профиль успешно изменены! Перенаправление...');
@@ -390,6 +513,11 @@ export default function UserProfilePage() {
           bio: editBio.trim(),
           telegram: editTelegram.trim().replace(/^@/, ''), // Save raw username
           avatarUrl: editAvatarUrl.trim(),
+          statusText: editStatusText.trim(),
+          profileColor: editProfileColor,
+          donationUrl: editDonationUrl.trim(),
+          contactOther: editContactOther.trim(),
+          showHistoryOnPublic: !!editShowHistoryOnPublic,
           updatedAt: serverTimestamp()
         };
 
@@ -410,6 +538,129 @@ export default function UserProfilePage() {
       setUpdateError(err.message || 'Произошла ошибка при обновлении профиля.');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleDeletePost = async (item: any) => {
+    if (!window.confirm(`Вы уверены, что хотите навсегда удалить публикацию "${item.name}"?`)) return;
+    
+    try {
+      // 1. Delete from server_suggestions
+      await deleteDoc(doc(db, 'server_suggestions', item.id));
+      
+      // 2. Delete from servers
+      if (item.serverId) {
+        await deleteDoc(doc(db, 'servers', item.serverId));
+      } else {
+        // Fallback: search and delete matching name & config
+        const serversRef = collection(db, 'servers');
+        const q = query(serversRef, where('userId', '==', profileUid), where('name', '==', item.name));
+        const snap = await getDocs(q);
+        snap.forEach(async (docRef) => {
+          if (docRef.data().config === item.config) {
+            await deleteDoc(doc(db, 'servers', docRef.id));
+          }
+        });
+      }
+      
+      // Refresh local list
+      setUserSuggestions(prev => prev.filter(s => s.id !== item.id));
+      alert('Публикация успешно удалена!');
+    } catch (error: any) {
+      console.error("Error deleting post:", error);
+      alert('Не удалось удалить публикацию: ' + (error.message || error));
+    }
+  };
+
+  const handleEditSettings = (item: any) => {
+    setEditingPost(item);
+    setEditPostName(item.name || '');
+    setEditPostExpiryDate(item.expiryDate || '');
+    setEditPostStatus(item.status || 'online');
+    setEditPostNotes(item.notes || '');
+    setEditPostCategory(item.category || '');
+    setEditPostIcon(item.customIcon || '');
+    setEditPostIsPrivate(!!item.isPrivate);
+    setEditPostHideAuthor(!!item.hideAuthor);
+    setEditPostAllowedClients(item.allowedClients || []);
+    setEditPostSpeedLimit(item.speedLimit || '');
+    setEditPostIsPinned(!!item.isPinned);
+  };
+
+  const handleEditPostSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPost) return;
+    setSavingPost(true);
+    
+    try {
+      const payload = {
+        name: editPostName.trim(),
+        expiryDate: editPostExpiryDate,
+        status: editPostStatus,
+        notes: editPostNotes.trim(),
+        category: editPostCategory,
+        customIcon: editPostIcon,
+        isPrivate: !!editPostIsPrivate,
+        hideAuthor: !!editPostHideAuthor,
+        allowedClients: editPostAllowedClients,
+        speedLimit: editPostSpeedLimit,
+        isPinned: !!editPostIsPinned,
+        updatedAt: serverTimestamp()
+      };
+      
+      // 1. Update in server_suggestions
+      await updateDoc(doc(db, 'server_suggestions', editingPost.id), payload);
+      
+      // 2. Update in servers
+      if (editingPost.serverId) {
+         await updateDoc(doc(db, 'servers', editingPost.serverId), {
+           name: editPostName.trim(),
+           expiryDate: editPostExpiryDate,
+           status: editPostStatus,
+           notes: editPostNotes.trim(),
+           category: editPostCategory,
+           customIcon: editPostIcon,
+           isPrivate: !!editPostIsPrivate,
+           hideAuthor: !!editPostHideAuthor,
+           allowedClients: editPostAllowedClients,
+           speedLimit: editPostSpeedLimit,
+           isPinned: !!editPostIsPinned,
+           updatedAt: serverTimestamp()
+         });
+      } else {
+         // Fallback: query and update
+         const serversRef = collection(db, 'servers');
+         const q = query(serversRef, where('userId', '==', profileUid), where('name', '==', editingPost.name));
+         const snap = await getDocs(q);
+         snap.forEach(async (docRef) => {
+           if (docRef.data().config === editingPost.config) {
+             await updateDoc(doc(db, 'servers', docRef.id), {
+               name: editPostName.trim(),
+               expiryDate: editPostExpiryDate,
+               status: editPostStatus,
+               notes: editPostNotes.trim(),
+               category: editPostCategory,
+               customIcon: editPostIcon,
+               isPrivate: !!editPostIsPrivate,
+               hideAuthor: !!editPostHideAuthor,
+               allowedClients: editPostAllowedClients,
+               speedLimit: editPostSpeedLimit,
+               isPinned: !!editPostIsPinned,
+               updatedAt: serverTimestamp()
+             });
+           }
+         });
+      }
+      
+      // Update local lists
+      setUserSuggestions(prev => prev.map(s => s.id === editingPost.id ? { ...s, ...payload } : s));
+      setEditingPost(null);
+      alert('Параметры публикации успешно обновлены!');
+    } catch (error: any) {
+      console.error("Error updating post settings:", error);
+      alert('Не удалось обновить параметры публикации: ' + (error.message || error));
+    } finally {
+      setSavingPost(false);
     }
   };
 
@@ -587,7 +838,7 @@ export default function UserProfilePage() {
       <div className="max-w-4xl mx-auto relative z-10" id="profile-container">
         
         {/* Profile Card Header */}
-        <div className="glass rounded-[32px] border border-white/10 p-6 md:p-10 mb-8 relative overflow-hidden">
+        <div className={`glass rounded-[32px] border ${activeColors.border} p-6 md:p-10 mb-8 relative overflow-hidden transition-colors duration-500`}>
           
           {/* Top-Right Settings Button for Owners */}
           {isOwner && (
@@ -603,7 +854,7 @@ export default function UserProfilePage() {
           {/* Social Avatar & Profile info */}
           <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-6 md:gap-8">
             <div className="relative group">
-              <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-full scale-95 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+              <div className={`absolute inset-0 ${activeColors.glow} blur-xl rounded-full scale-95 opacity-0 group-hover:opacity-100 transition-all duration-300`} />
               <img 
                 src={profile.avatarUrl || generateDefaultAvatar()} 
                 alt={profile.displayName}
@@ -613,7 +864,7 @@ export default function UserProfilePage() {
                 className="w-24 h-24 sm:w-28 sm:h-28 rounded-[28px] border-2 border-white/20 bg-black/60 object-cover relative z-10 p-2 shrink-0 transition-transform duration-300 group-hover:scale-[1.03]"
                 referrerPolicy="no-referrer"
               />
-              <div className="absolute bottom-1 right-1 z-20 bg-indigo-500 text-white rounded-full p-1.5 border-2 border-black">
+              <div className={`absolute bottom-1 right-1 z-20 ${profile.profileColor === 'emerald' ? 'bg-emerald-500' : profile.profileColor === 'amber' ? 'bg-amber-500' : profile.profileColor === 'rose' ? 'bg-rose-500' : profile.profileColor === 'violet' ? 'bg-violet-500' : profile.profileColor === 'sky' ? 'bg-sky-500' : 'bg-indigo-500'} text-white rounded-full p-1.5 border-2 border-black`}>
                 <Sparkles size={11} className="animate-pulse" />
               </div>
             </div>
@@ -623,9 +874,16 @@ export default function UserProfilePage() {
                 <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-none">
                   {profile.displayName}
                 </h1>
-                <p className="text-sm font-mono text-indigo-400 font-semibold tracking-wider flex items-center justify-center md:justify-start gap-1">
+                <p className={`text-sm font-mono ${activeColors.text} font-semibold tracking-wider flex items-center justify-center md:justify-start gap-1`}>
                   <AtSign size={14} />{profile.username}
                 </p>
+                {profile.statusText && (
+                  <div className="pt-1.5 flex justify-center md:justify-start">
+                    <p className="text-[11px] italic text-white/60 bg-white/[0.02] border border-white/5 rounded-xl px-3 py-1.5 inline-flex items-center gap-1.5 select-none font-mono">
+                      <span>✨</span> {profile.statusText}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {profile.bio ? (
@@ -636,7 +894,7 @@ export default function UserProfilePage() {
                 <p className="text-xs text-white/30 italic font-mono">Био отсутствует</p>
               )}
 
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-2 text-xs font-mono text-white/40">
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-2 text-[10px] sm:text-xs font-mono text-white/40">
                 <span className="flex items-center gap-1.5">
                   <Calendar size={13} />
                   Регистрация: {formatDate(profile.createdAt)}
@@ -652,6 +910,23 @@ export default function UserProfilePage() {
                     <Send size={11} />
                     @{profile.telegram}
                   </a>
+                )}
+
+                {profile.donationUrl && (
+                  <a 
+                    href={profile.donationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded-full transition-all"
+                  >
+                    💖 Донат автору
+                  </a>
+                )}
+
+                {profile.contactOther && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-500/10 text-indigo-300 border border-indigo-500/10 rounded-full font-sans select-all">
+                    🌐 {profile.contactOther}
+                  </span>
                 )}
               </div>
 
@@ -838,6 +1113,102 @@ export default function UserProfilePage() {
                   </div>
                 </div>
 
+                {/* Advanced Profile customization settings fields */}
+                <div className="border-t border-white/5 pt-6 mt-6 space-y-6">
+                  <h4 className="text-xs uppercase font-serif italic text-indigo-400 tracking-wider">Дополнительные Настройки Профиля</h4>
+                  
+                  {/* Status text */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">Статус (Текст под аватаром)</label>
+                    <input 
+                      type="text"
+                      value={editStatusText}
+                      onChange={e => setEditStatusText(e.target.value)}
+                      placeholder="Например: Поставщик стабильных Vless конфигураций 🚀"
+                      maxLength={80}
+                      className="w-full bg-white/[0.04] border border-white/5 focus:border-indigo-500/30 rounded-2xl px-4 py-3.5 outline-none text-sm font-sans"
+                    />
+                  </div>
+
+                  {/* Profile Color Accent */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">Цветовая гамма/Акцент профиля</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
+                      {Object.keys(profileColors).map((color) => {
+                        const isSelected = editProfileColor === color;
+                        return (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => setEditProfileColor(color)}
+                            className={`py-2 px-1 rounded-xl text-[9px] uppercase tracking-wider font-extrabold border transition-all duration-300 flex items-center justify-center ${
+                              isSelected 
+                                ? 'border-white bg-white/10 text-white shadow-md' 
+                                : 'border-white/5 bg-white/[0.02] text-white/40 hover:text-white/60'
+                            }`}
+                          >
+                            <span className={`inline-block w-2.5 h-2.5 rounded-full mr-1.5 ${
+                              color === 'indigo' ? 'bg-indigo-505' :
+                              color === 'emerald' ? 'bg-emerald-500' :
+                              color === 'amber' ? 'bg-amber-500' :
+                              color === 'rose' ? 'bg-rose-500' :
+                              color === 'violet' ? 'bg-violet-500' : 'bg-sky-500'
+                            }`} />
+                            {color === 'indigo' ? 'Индиго' :
+                             color === 'emerald' ? 'Изумруд' :
+                             color === 'amber' ? 'Янтарь' :
+                             color === 'rose' ? 'Роза' :
+                             color === 'violet' ? 'Фиолет' : 'Синий'}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Donation Link */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">Ссылка на донат (Donation Link)</label>
+                    <input 
+                      type="url"
+                      value={editDonationUrl}
+                      onChange={e => setEditDonationUrl(e.target.value)}
+                      placeholder="https://yoomoney.ru/... или https://donationalerts.com/..."
+                      className="w-full bg-white/[0.04] border border-white/5 focus:border-indigo-500/30 rounded-2xl px-4 py-3.5 outline-none text-sm font-sans"
+                    />
+                  </div>
+
+                  {/* Alternative contact */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">Альтернативный контакт/Сайт</label>
+                    <input 
+                      type="text"
+                      value={editContactOther}
+                      onChange={e => setEditContactOther(e.target.value)}
+                      placeholder="Например: VK Group, email, или персональный сайт"
+                      className="w-full bg-white/[0.04] border border-white/5 focus:border-indigo-500/30 rounded-2xl px-4 py-3.5 outline-none text-sm font-sans"
+                    />
+                  </div>
+
+                  {/* Show history toggle */}
+                  <div className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+                    <div className="text-left">
+                      <h4 className="text-xs font-bold text-white mb-0.5">Публичная история</h4>
+                      <p className="text-[10px] text-white/40">Показывать ваши одобренные публикации в истории профиля для гостей.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditShowHistoryOnPublic(!editShowHistoryOnPublic)}
+                      className={`w-11 h-6 rounded-full transition-all duration-300 relative p-0.5 flex-shrink-0 ${
+                        editShowHistoryOnPublic ? 'bg-indigo-600' : 'bg-white/10'
+                      }`}
+                    >
+                      <span className={`block w-5 h-5 rounded-full bg-white transition-all duration-300 transform ${
+                        editShowHistoryOnPublic ? 'translate-x-5' : 'translate-x-0'
+                      }`} />
+                    </button>
+                  </div>
+                </div>
+
                 {/* Form Buttons */}
                 <div className="flex gap-4 pt-4">
                   <button
@@ -899,7 +1270,7 @@ export default function UserProfilePage() {
                       onClick={() => setActiveSuggestionTab('subs')}
                       className={`px-5 py-2.5 rounded-xl text-[9px] uppercase tracking-[0.2em] font-bold transition-all duration-300 ${
                         activeSuggestionTab === 'subs' 
-                        ? 'bg-emerald-500 text-white shadow-xl scale-[1.02]' 
+                        ? 'bg-white text-black shadow-xl scale-[1.02]' 
                         : 'text-white/40 hover:text-white/65'
                       }`}
                     >
@@ -913,15 +1284,13 @@ export default function UserProfilePage() {
                     <RefreshCw className="w-5 h-5 animate-spin text-white/40" />
                     <span className="text-xs font-mono text-white/40 uppercase">Получение предложений...</span>
                   </div>
-                ) : userSuggestions.length === 0 ? (
-                  <div className="glass rounded-[24px] border border-dashed border-white/10 p-12 text-center">
-                    <Globe className="w-12 h-12 text-white/10 mx-auto mb-4" />
-                    <p className="text-sm text-white/40 select-none">Пользователь пока не добавил ни одного сервера.</p>
-                  </div>
                 ) : (
                   <>
                     {(() => {
                       const filteredSuggestions = userSuggestions.filter((item) => {
+                        // If has isPrivate, only show to the profile owner
+                        if (item.isPrivate && !isOwner) return false;
+
                         const isSub = item.postType === 'subscription';
                         if (activeSuggestionTab === 'keys') return !isSub;
                         if (activeSuggestionTab === 'subs') return isSub;
@@ -958,9 +1327,19 @@ export default function UserProfilePage() {
                                     item.status === 'offline' ? 'bg-rose-500/10 text-rose-500' : 
                                     isSub ? 'bg-emerald-500/10 text-emerald-400' : ''
                                   }`}>
-                                    {isSub ? <Folder className="w-4 h-4 md:w-6 md:h-6" /> : <Globe className="w-4 h-4 md:w-6 md:h-6" />}
+                                    {getCustomIcon(item.customIcon, isSub)}
                                   </div>
-                                  <div className="flex gap-2 items-center">
+                                  <div className="flex gap-2 items-center flex-wrap justify-end">
+                                    {item.isPrivate && (
+                                      <div className="px-2 py-0.5 rounded-lg bg-red-500/20 text-red-400 border border-red-500/10 text-[8px] md:text-[9px] uppercase tracking-widest font-black font-mono">
+                                        Приватный 🔒
+                                      </div>
+                                    )}
+                                    {item.category && (
+                                      <div className="px-2 py-0.5 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 text-[8px] md:text-[9px] uppercase tracking-widest font-bold">
+                                        {item.category}
+                                      </div>
+                                    )}
                                     <div className={`px-2 py-0.5 rounded-lg border text-[8px] md:text-[9px] uppercase tracking-widest font-mono font-bold select-none ${
                                       item.status === 'approved' 
                                         ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
@@ -988,10 +1367,31 @@ export default function UserProfilePage() {
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-xs text-white/40">
-                                    {isSub ? 'Нигде • Общая папка-подписка' : (item.location || 'Локация не указана')}
+                                  <p className="text-xs text-white/40 flex flex-wrap items-center gap-2">
+                                    <span>{isSub ? 'Нигде • Общая папка-подписка' : (item.location || 'Локация не указана')}</span>
+                                    {item.speedLimit && item.speedLimit !== 'Без лимита' && (
+                                      <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/5 text-[8px] font-mono text-white/60">
+                                        ⚡ {item.speedLimit}
+                                      </span>
+                                    )}
                                   </p>
                                 </div>
+
+                                {item.notes && (
+                                  <div className="text-[11px] text-white/50 bg-white/[0.012] border border-white/5 rounded-xl p-3 leading-relaxed text-left select-text line-clamp-3">
+                                    📝 <span className="italic">{item.notes}</span>
+                                  </div>
+                                )}
+
+                                {item.allowedClients && item.allowedClients.length > 0 && (
+                                  <div className="flex flex-wrap gap-1">
+                                    {item.allowedClients.map((cl: string) => (
+                                      <span key={cl} className="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/10 text-[7px] uppercase tracking-wider font-mono">
+                                        {cl}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
 
                                 {item.reason && item.status === 'rejected' && (
                                   <div className="bg-rose-500/5 border border-rose-500/10 rounded-xl p-3">
@@ -1029,6 +1429,23 @@ export default function UserProfilePage() {
                                       </>
                                     )}
                                   </button>
+
+                                  {isOwner && (
+                                    <div className="grid grid-cols-2 gap-2 mt-1">
+                                      <button
+                                        onClick={() => handleEditSettings(item)}
+                                        className="py-2.5 rounded-xl border border-white/5 hover:border-white/20 bg-white/5 hover:bg-white/10 text-[9px] uppercase tracking-widest font-black flex items-center justify-center gap-1.5 text-white/70 hover:text-white transition-all duration-300"
+                                      >
+                                        ⚙️ Настройки
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeletePost(item)}
+                                        className="py-2.5 rounded-xl border border-red-500/10 hover:border-red-500/25 bg-red-500/5 hover:bg-red-500/15 text-[9px] uppercase tracking-widest font-black flex items-center justify-center gap-1.5 text-red-400 hover:text-red-300 transition-all duration-300"
+                                      >
+                                        🗑️ Удалить
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
 
                               </motion.div>
@@ -1187,6 +1604,207 @@ export default function UserProfilePage() {
                     )}
                   </button>
                 </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Suggestion Post Edit Settings Modal */}
+        <AnimatePresence>
+          {editingPost && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/85 backdrop-blur-2xl overflow-y-auto"
+              onClick={() => setEditingPost(null)}
+            >
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="relative max-w-lg w-full glass rounded-[24px] md:rounded-[40px] p-6 md:p-10 my-8 flex flex-col gap-6 text-left"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button 
+                  onClick={() => setEditingPost(null)}
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+
+                <div>
+                  <h2 className="text-xl md:text-2xl font-serif italic tracking-tight text-white mb-2">
+                    ⚙️ Настройки Публикации
+                  </h2>
+                  <p className="text-white/40 text-xs font-mono">
+                    ID: {editingPost.id} ({editingPost.postType === 'subscription' ? 'Подписка' : 'Сервер'})
+                  </p>
+                </div>
+
+                <form onSubmit={handleEditPostSubmit} className="space-y-4 md:space-y-5">
+                  {/* Name field */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">Название публикации</label>
+                    <input 
+                      required
+                      type="text"
+                      value={editPostName}
+                      onChange={e => setEditPostName(e.target.value)}
+                      placeholder="Укажите понятное имя"
+                      className="w-full bg-white/[0.04] border border-white/5 focus:border-indigo-500/30 rounded-xl px-4 py-3 outline-none text-sm font-sans"
+                    />
+                  </div>
+
+                  {/* Expiry Date */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">Дата истечения (expiryDate)</label>
+                    <input 
+                      type="text"
+                      value={editPostExpiryDate}
+                      onChange={e => setEditPostExpiryDate(e.target.value)}
+                      placeholder="Например: 2026-12-31"
+                      className="w-full bg-white/[0.04] border border-white/5 focus:border-indigo-500/30 rounded-xl px-4 py-3 outline-none text-sm font-mono text-white"
+                    />
+                  </div>
+
+                  {/* Status selection */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">Статус подключения</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {['online', 'unstable', 'offline'].map((status) => (
+                        <button
+                          key={status}
+                          type="button"
+                          onClick={() => setEditPostStatus(status as any)}
+                          className={`py-2 rounded-xl text-[9px] uppercase tracking-wider font-bold border transition-all duration-300 ${
+                            editPostStatus === status 
+                              ? 'border-indigo-500 bg-indigo-500/10 text-indigo-400' 
+                              : 'border-white/5 bg-white/[0.02] text-white/40 hover:text-white/60'
+                          }`}
+                        >
+                          {status === 'online' ? '🟢 Online' : status === 'unstable' ? '🟡 Нестабильный' : '🔴 Offline'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Speed Limit */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">Лимит скорости</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {['Без лимита', '50 Мбит/с', '100 Мбит/с', '1 Гбит/с'].map((limit) => (
+                        <button
+                          key={limit}
+                          type="button"
+                          onClick={() => setEditPostSpeedLimit(limit)}
+                          className={`py-2 rounded-xl text-[9px] uppercase tracking-wider font-bold border transition-all duration-305 ${
+                            editPostSpeedLimit === limit 
+                              ? 'border-indigo-500 bg-indigo-500/10 text-indigo-400' 
+                              : 'border-white/5 bg-white/[0.02] text-white/40 hover:text-white/60'
+                          }`}
+                        >
+                          {limit}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Icon Selector */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">Декоративная иконка (customIcon)</label>
+                    <div className="grid grid-cols-6 gap-2">
+                      {['Globe', 'Shield', 'Zap', 'Flame', 'Sparkles', 'Heart'].map((iconName) => (
+                        <button
+                          key={iconName}
+                          type="button"
+                          onClick={() => setEditPostIcon(iconName)}
+                          className={`py-2.5 rounded-xl border flex items-center justify-center transition-all duration-305 ${
+                            editPostIcon === iconName 
+                              ? 'border-indigo-500 bg-indigo-500/10 text-indigo-400 scale-105' 
+                              : 'border-white/5 bg-white/[0.02] text-white/40 hover:text-white/60 hover:scale-102'
+                          }`}
+                          title={iconName}
+                        >
+                          {getCustomIcon(iconName, false)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Description/Notes text block */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">Инструкции / Примечание</label>
+                    <textarea 
+                      value={editPostNotes}
+                      onChange={e => setEditPostNotes(e.target.value)}
+                      placeholder="Ограничения, порты, рекомендуемые настройки подключения..."
+                      maxLength={150}
+                      rows={2}
+                      className="w-full bg-white/[0.04] border border-white/5 focus:border-indigo-500/30 rounded-xl px-4 py-3 outline-none text-xs font-sans resize-none text-white"
+                    />
+                  </div>
+
+                  {/* Toggles Group */}
+                  <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-4 text-xs">
+                    {/* Private toggle */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-bold text-white">Приватный ключ 🔒</h4>
+                        <p className="text-[9px] text-white/40">Скрыть из общей ленты, доступен только вам в профиле.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEditPostIsPrivate(!editPostIsPrivate)}
+                        className={`w-11 h-6 rounded-full transition-all duration-305 relative p-0.5 flex-shrink-0 ${
+                          editPostIsPrivate ? 'bg-indigo-600' : 'bg-white/10'
+                        }`}
+                      >
+                        <span className={`block w-5 h-5 rounded-full bg-white transition-all duration-305 transform ${
+                          editPostIsPrivate ? 'translate-x-5' : 'translate-x-0'
+                        }`} />
+                      </button>
+                    </div>
+
+                    {/* Hide author toggle */}
+                    <div className="flex items-center justify-between border-t border-white/5 pt-4">
+                      <div>
+                        <h4 className="font-bold text-white">Анонимная публикация 🕵️</h4>
+                        <p className="text-[9px] text-white/40">Скрыть ваше имя на карточке этого ключа в общей ленте.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEditPostHideAuthor(!editPostHideAuthor)}
+                        className={`w-11 h-6 rounded-full transition-all duration-305 relative p-0.5 flex-shrink-0 ${
+                          editPostHideAuthor ? 'bg-indigo-600' : 'bg-white/10'
+                        }`}
+                      >
+                        <span className={`block w-5 h-5 rounded-full bg-white transition-all duration-305 transform ${
+                          editPostHideAuthor ? 'translate-x-5' : 'translate-x-0'
+                        }`} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Modal Action Buttons */}
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditingPost(null)}
+                      className="flex-1 py-3 border border-white/10 hover:bg-white/5 rounded-xl text-xs uppercase font-extrabold tracking-widest transition-colors text-white/60"
+                    >
+                      Отмена
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingPost}
+                      className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs uppercase font-extrabold tracking-widest transition-colors shadow-lg hover:shadow-indigo-500/20 flex items-center justify-center gap-2"
+                    >
+                      {savingPost ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save size={12} />}
+                      Сохранить
+                    </button>
+                  </div>
+                </form>
               </motion.div>
             </motion.div>
           )}

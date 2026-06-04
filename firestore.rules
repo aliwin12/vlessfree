@@ -105,7 +105,15 @@ service cloud.firestore {
              data.country is string &&
              data.city is string &&
              data.config is string && data.config.size() <= 2000 &&
-             data.status in ['pending', 'approved', 'rejected'];
+             data.status in ['pending', 'approved', 'rejected'] &&
+             (data.get('category', null) == null || data.get('category', null) is string) &&
+             (data.get('notes', null) == null || data.get('notes', null) is string) &&
+             (data.get('customIcon', null) == null || data.get('customIcon', null) is string) &&
+             (data.get('isPrivate', null) == null || data.get('isPrivate', null) is bool) &&
+             (data.get('hideAuthor', null) == null || data.get('hideAuthor', null) is bool) &&
+             (data.get('allowedClients', null) == null || data.get('allowedClients', null) is list) &&
+             (data.get('speedLimit', null) == null || data.get('speedLimit', null) is string) &&
+             (data.get('isPinned', null) == null || data.get('isPinned', null) is bool);
     }
 
     match /server_suggestions/{suggestionId} {
@@ -116,7 +124,7 @@ service cloud.firestore {
       allow list: if isAdmin() || 
                     (resource.data.status == 'approved') || 
                     (isSignedIn() && resource.data.userId == request.auth.uid);
-      allow update, delete: if isAdmin();
+      allow update, delete: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid);
     }
 
     // 8. Server Removals
@@ -153,7 +161,12 @@ service cloud.firestore {
              (data.get('telegram', null) == null || (data.get('telegram', null) is string && data.get('telegram', null).size() <= 100)) &&
              (data.get('avatarUrl', null) == null || (data.get('avatarUrl', null) is string && data.get('avatarUrl', null).size() <= 500)) &&
              (data.get('followersCount', null) == null || data.get('followersCount', null) is int) &&
-             (data.get('followingCount', null) == null || data.get('followingCount', null) is int);
+             (data.get('followingCount', null) == null || data.get('followingCount', null) is int) &&
+             (data.get('statusText', null) == null || (data.get('statusText', null) is string && data.get('statusText', null).size() <= 100)) &&
+             (data.get('profileColor', null) == null || (data.get('profileColor', null) is string && data.get('profileColor', null).size() <= 50)) &&
+             (data.get('donationUrl', null) == null || (data.get('donationUrl', null) is string && data.get('donationUrl', null).size() <= 500)) &&
+             (data.get('contactOther', null) == null || (data.get('contactOther', null) is string && data.get('contactOther', null).size() <= 200)) &&
+             (data.get('showHistoryOnPublic', null) == null || data.get('showHistoryOnPublic', null) is bool);
     }
 
     function isValidFollower(data) {

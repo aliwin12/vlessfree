@@ -37,7 +37,7 @@ function checkIsBrowser(req: express.Request): boolean {
   const acceptHeader = req.headers['accept'] || '';
   
   const hasBrowserUa = /Mozilla|Chrome|Safari|Firefox|Edge/.test(userAgent) && 
-                       !/v2ray|hiddify|vless|shadowsocks|clash|nekobox|streisand|quantumult|surge/i.test(userAgent);
+                       !/v2ray|hiddify|vless|shadowsocks|clash|nekobox|streisand|quantumult|surge|shadowrocket|loon|stash|kitsunebi|matsuri|sing-box|singbox|surfboard|bifrost|anxray|trojan|hysteria|ss/i.test(userAgent);
   
   const wantsHtml = acceptHeader.includes('text/html');
   
@@ -305,10 +305,12 @@ async function startServer() {
 
       // Encode custom format Base64 configs for vless client
       const base64Content = Buffer.from(formattedConfigs).toString('base64');
+      const safeTitleName = getSlug(foundSub.name || 'sub').replace(/-/g, ' ');
+      const safeTitle = `${safeTitleName} | by @${foundSub.username} | vlessfree`;
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      res.setHeader('Profile-Title', `${foundSub.name} | от @${foundSub.username} | vlessfree`); 
+      res.setHeader('Profile-Title', safeTitle); 
       res.setHeader('Profile-Update-Interval', '6');
-      res.setHeader('Profile-Web-Page-Url', `${reqHost}/user/${foundSub.username}`);
+      res.setHeader('Profile-Web-Page-Url', encodeURI(`${reqHost}/user/${foundSub.username}`));
       return res.send(base64Content);
     } catch (err: any) {
       console.error("Error serving user subscription endpoint", err);
