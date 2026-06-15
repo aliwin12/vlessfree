@@ -201,117 +201,112 @@ async function startServer() {
       // Format server names inside subscription client profile matching user specification
       const formattedConfigs = lines.map((configStr, idx) => {
         let configWithoutTag = configStr;
+        let originalTag = '';
         if (configStr.includes('#')) {
-          configWithoutTag = configStr.split('#')[0];
+          const parts = configStr.split('#');
+          configWithoutTag = parts[0];
+          originalTag = parts.slice(1).join('#');
         }
-        // Name format request: *название подписки* | от *имя пользователя* | vlessfree
-        const customTagName = `${foundSub.name} | от @${foundSub.username} | vlessfree [${idx + 1}]`;
+
+        let decodedTag = '';
+        if (originalTag) {
+          try {
+            decodedTag = decodeURIComponent(originalTag).trim();
+          } catch (e) {
+            decodedTag = originalTag.trim();
+          }
+        }
+
+        // Determine protocol label
+        let protoLabel = 'VLESS';
+        const lowerConfig = configStr.toLowerCase();
+        if (lowerConfig.startsWith('vmess://')) protoLabel = 'VMess';
+        else if (lowerConfig.startsWith('ss://')) protoLabel = 'Shadowsocks';
+        else if (lowerConfig.startsWith('ssr://')) protoLabel = 'SSR';
+        else if (lowerConfig.startsWith('trojan://')) protoLabel = 'Trojan';
+        else if (lowerConfig.startsWith('hysteria2://') || lowerConfig.startsWith('hysteria://')) protoLabel = 'Hysteria2';
+        else if (lowerConfig.startsWith('tuic://')) protoLabel = 'TUIC';
+
+        // Extract host and SNI to check for location clues
+        let host = '';
+        let sni = '';
+        try {
+          const mainPart = configWithoutTag.substring(configWithoutTag.indexOf('://') + 3);
+          const atIdx = mainPart.indexOf('@');
+          let socketStr = atIdx !== -1 ? mainPart.substring(atIdx + 1) : mainPart;
+          
+          const qIdx = socketStr.indexOf('?');
+          if (qIdx !== -1) {
+            const paramsStr = socketStr.substring(qIdx + 1);
+            socketStr = socketStr.substring(0, qIdx);
+            
+            const params = paramsStr.split('&');
+            for (const p of params) {
+              if (p.toLowerCase().startsWith('sni=')) {
+                sni = p.substring(4);
+              }
+            }
+          }
+          
+          const colonIdx = socketStr.lastIndexOf(':');
+          host = colonIdx !== -1 ? socketStr.substring(0, colonIdx) : socketStr;
+        } catch (e) {
+          // ignore
+        }
+
+        // Match country using keyword scanning
+        const searchPool = `${decodedTag} ${host} ${sni}`.toLowerCase();
+        
+        const countriesReference = [
+          { keywords: ['singapore', 'сингапур', 'sg', '🇸🇬'], flag: '🇸🇬', nameRu: 'Сингапур' },
+          { keywords: ['usa', 'сша', 'america', 'united states', 'new york', 'ny', 'us', '🇺🇸'], flag: '🇺🇸', nameRu: 'США' },
+          { keywords: ['germany', 'германия', 'de', 'frankfurt', '🇩🇪'], flag: '🇩🇪', nameRu: 'Германия' },
+          { keywords: ['netherlands', 'нидерланды', 'amsterdam', 'nl', '🇳🇱', 'neth'], flag: '🇳🇱', nameRu: 'Нидерланды' },
+          { keywords: ['finland', 'финляндия', 'fi', 'helsinki', '🇫🇮'], flag: '🇫🇮', nameRu: 'Финляндия' },
+          { keywords: ['poland', 'польша', 'pl', 'warsaw', 'warszawa', '🇵🇱'], flag: '🇵🇱', nameRu: 'Польша' },
+          { keywords: ['france', 'франция', 'fr', 'paris', '🇫🇷'], flag: '🇫🇷', nameRu: 'Франция' },
+          { keywords: ['turkey', 'турция', 'tr', 'istanbul', '🇹🇷'], flag: '🇹🇷', nameRu: 'Турция' },
+          { keywords: ['japan', 'япония', 'jp', 'tokyo', '🇯🇵'], flag: '🇯🇵', nameRu: 'Япония' },
+          { keywords: ['russia', 'россия', 'ru', 'moscow', 'мск', '🇷🇺'], flag: '🇷🇺', nameRu: 'Россия' },
+          { keywords: ['ukraine', 'украина', 'ua', 'kyiv', 'киев', '🇺🇦'], flag: '🇺🇦', nameRu: 'Украина' },
+          { keywords: ['kazakhstan', 'казахстан', 'kz', 'almaty', 'алматы', '🇰🇿'], flag: '🇰🇿', nameRu: 'Казахстан' },
+          { keywords: ['united kingdom', 'london', 'gb', 'uk', 'англия', 'великобритания', '🇬🇧', 'britain'], flag: '🇬🇧', nameRu: 'Великобритания' },
+          { keywords: ['sweden', 'швеция', 'se', 'stockholm', '🇸🇪'], flag: '🇸🇪', nameRu: 'Швеция' },
+          { keywords: ['switzerland', 'швейцария', 'ch', 'zurich', '🇨🇭'], flag: '🇨🇭', nameRu: 'Швейцария' },
+          { keywords: ['austria', 'австрия', 'at', 'vienna', '🇦🇹'], flag: '🇦🇹', nameRu: 'Австрия' },
+          { keywords: ['spain', 'испания', 'es', 'madrid', '🇪🇸'], flag: '🇪🇸', nameRu: 'Испания' },
+          { keywords: ['italy', 'италия', 'it', 'milan', 'roma', '🇮🇹'], flag: '🇮🇹', nameRu: 'Италия' },
+          { keywords: ['canada', 'канада', 'ca', 'toronto', '🇨🇦'], flag: '🇨🇦', nameRu: 'Канада' },
+          { keywords: ['hong kong', 'гонконг', 'hk', '🇭🇰'], flag: '🇭🇰', nameRu: 'Гонконг' }
+        ];
+
+        let matched = countriesReference.find(c => {
+          return c.keywords.some(kw => searchPool.includes(kw));
+        });
+
+        let geoPrefix = '🌐 Global';
+        if (matched) {
+          geoPrefix = `${matched.flag} ${matched.nameRu}`;
+        } else if (decodedTag) {
+          // Keep original tag partially if it has non-empty text, truncating extreme length
+          geoPrefix = decodedTag.replace(/[|#@]/g, '').trim().substring(0, 24);
+        }
+
+        const customTagName = `${geoPrefix} | ${protoLabel} | от @${username} [${idx + 1}]`;
         return `${configWithoutTag}#${encodeURIComponent(customTagName)}`;
       }).join('\n');
 
       const reqHost = req.headers.host ? `${req.protocol}://${req.headers.host}` : 'https://vlessfree.vercel.app';
-      const subUrl = `${reqHost}/${username}/${subName}`;
       
-      const isBrowser = checkIsBrowser(req);
-
-      if (isBrowser) {
-        res.setHeader('Content-Type', 'text/html; charset=utf-8');
-        return res.send(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>${foundSub.name} ✅ vlessfree</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <style>
-              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; text-align: center; }
-              .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 32px; padding: 40px; max-width: 800px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-              h1 { font-style: italic; font-weight: normal; margin-bottom: 8px; font-size: 28px; letter-spacing: -0.02em; }
-              .author { color: #6366f1; font-weight: bold; font-family: monospace; font-size: 14px; margin-bottom: 24px; }
-              p { color: rgba(255,255,255,0.5); font-size: 14px; margin-bottom: 32px; line-height: 1.6; }
-              .container { display: flex; flex-direction: column; gap: 40px; }
-              @media (min-width: 768px) {
-                .container { flex-direction: row; align-items: flex-start; text-align: left; }
-                .left-side { flex: 1; }
-                .right-side { width: 240px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1px solid rgba(255,255,255,0.1); padding-left: 40px; }
-              }
-              .btn { display: block; width: 100%; padding: 16px; margin-bottom: 12px; border-radius: 16px; border: none; font-weight: bold; cursor: pointer; text-decoration: none; transition: all 0.3s; box-sizing: border-box; font-size: 14px; text-align: center; }
-              .btn-primary { background: #fff; color: #000; }
-              .btn-primary:hover { background: rgba(255,255,255,0.9); transform: translateY(-2px); }
-              .btn-outline { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.1); }
-              .btn-outline:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
-              .copy-msg { font-size: 12px; color: #4ade80; margin-top: 8px; display: none; }
-              .qr-label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 16px; text-align: center; }
-              .qr-image { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
-              .servers-preview { background: rgba(255,255,255,0.02); border-radius: 16px; padding: 16px; text-align: left; font-size: 11px; color: rgba(255,255,255,0.4); max-height: 150px; overflow-y: auto; font-family: monospace; margin-top: 24px; border: 1px solid rgba(255,255,255,0.05); }
-              .servers-title { font-size: 10px; uppercase font-bold tracking-wider opacity-40 mb-2 block; }
-            </style>
-          </head>
-          <body>
-            <div class="card">
-              <div style="display: flex; justify-content: center; margin-bottom: 32px; width: 100%;">
-                <img src="https://i.ibb.co/WWRyGZcS/2026-04-24-203638-removebg-preview.png" alt="Logo" style="max-width: 150px; height: auto;">
-              </div>
-              
-              <div class="container">
-                <div class="left-side">
-                  <h1>${foundSub.name}</h1>
-                  <div class="author">Автор: @${foundSub.username}</div>
-                  <p>Эта общая папка-подписка содержит <strong>${lines.length}</strong> настроенных VLESS/Reality серверов, распакованных и оптимизированных.</p>
-                  
-                  <button class="btn btn-primary" onclick="copySubLink()">Скопировать ссылку подписки</button>
-                  <div id="copyMsg" class="copy-msg">Ссылка скопирована!</div>
-                  
-                  <div style="margin-top: 24px;">
-                    <a href="v2raytun://import/${subUrl}" class="btn btn-outline">Импорт в v2rayTun</a>
-                    <a href="hiddify://import/${subUrl}" class="btn btn-outline">Импорт в Hiddify</a>
-                    <a href="happ://import/config?url=${subUrl}" class="btn btn-outline">Импорт в Happ</a>
-                  </div>
-                  
-                  <div class="servers-preview">
-                    <span class="servers-title">Внутри этой папки (${lines.length} серверов):</span>
-                    ${lines.map((l, i) => `<div>[${i + 1}] ${l.split('://')[0]} - распакован и готов</div>`).slice(0, 10).join('')}
-                    ${lines.length > 10 ? '<div>... и еще ' + (lines.length - 10) + ' серверов</div>' : ''}
-                  </div>
-                </div>
-  
-                <div class="right-side">
-                  <div class="qr-image" id="qrcode-container">
-                    <img id="qr-img" src="" alt="QR Code" style="width: 180px; height: 180px; display: block;">
-                  </div>
-                  <div class="qr-label">Сканируйте для импорта</div>
-                  <div style="font-size: 9px; color: rgba(255,255,255,0.2); margin-top: 8px;">vlessfree Sub</div>
-                </div>
-              </div>
-  
-              <p style="margin-top: 40px; margin-bottom: 0; font-size: 10px; opacity: 0.3;">${reqHost}</p>
-            </div>
-  
-            <script>
-              const link = "${subUrl}";
-              document.getElementById('qr-img').src = "https://chart.api.getqr.me/?size=180x180&data=" + encodeURIComponent(link);
-              
-              function copySubLink() {
-                navigator.clipboard.writeText(link).then(() => {
-                  const msg = document.getElementById('copyMsg');
-                  msg.style.display = 'block';
-                  setTimeout(() => { msg.style.display = 'none'; }, 2000);
-                });
-              }
-            </script>
-          </body>
-          </html>
-        `);
-      }
-
-      // Encode custom format Base64 configs for vless client
-      const base64Content = Buffer.from(formattedConfigs).toString('base64');
       const safeTitleName = getSlug(foundSub.name || 'sub').replace(/-/g, ' ');
       const safeTitle = `${safeTitleName} | by @${foundSub.username} | vlessfree`;
+      
+      // Always return plain text list of renamed configs directly without any HTML interface
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       res.setHeader('Profile-Title', safeTitle); 
       res.setHeader('Profile-Update-Interval', '6');
       res.setHeader('Profile-Web-Page-Url', encodeURI(`${reqHost}/user/${foundSub.username}`));
-      return res.send(base64Content);
+      return res.send(formattedConfigs);
     } catch (err: any) {
       console.error("Error serving user subscription endpoint", err);
       return res.status(500).send(`Subscription processing failed: ${err.message}`);
