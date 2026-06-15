@@ -752,7 +752,12 @@ export default function UserProfilePage() {
             while (standardBase64.length % 4 !== 0) {
               standardBase64 += '=';
             }
-            text = atob(standardBase64);
+            const binaryString = atob(standardBase64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            text = new TextDecoder('utf-8').decode(bytes);
           } catch (e) {
             console.error("Base64 decode error client-side in profile:", e);
           }

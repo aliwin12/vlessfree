@@ -301,20 +301,13 @@ async function startServer() {
       const safeTitleName = getSlug(foundSub.name || 'sub').replace(/-/g, ' ');
       const safeTitle = `${safeTitleName} | by @${foundSub.username} | vlessfree`;
       
-      const isBrowser = checkIsBrowser(req);
-      if (isBrowser) {
-        // Return plain text of the configurations for human reading and copying in browser (no HTML interface)
-        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-        return res.send(formattedConfigs);
-      } else {
-        // Return Base64 encoded string for VPN client apps to parse successfully without errors
-        const base64Content = Buffer.from(formattedConfigs).toString('base64');
-        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-        res.setHeader('Profile-Title', safeTitle); 
-        res.setHeader('Profile-Update-Interval', '6');
-        res.setHeader('Profile-Web-Page-Url', encodeURI(`${reqHost}/user/${foundSub.username}`));
-        return res.send(base64Content);
-      }
+      // Return Base64 encoded string for everybody (both browser and VPN client apps) to parse successfully 100% of the time without errors or HTML interface
+      const base64Content = Buffer.from(formattedConfigs).toString('base64');
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Profile-Title', safeTitle); 
+      res.setHeader('Profile-Update-Interval', '6');
+      res.setHeader('Profile-Web-Page-Url', encodeURI(`${reqHost}/user/${foundSub.username}`));
+      return res.send(base64Content);
     } catch (err: any) {
       console.error("Error serving user subscription endpoint", err);
       return res.status(500).send(`Subscription processing failed: ${err.message}`);
