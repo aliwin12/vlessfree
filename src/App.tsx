@@ -155,7 +155,7 @@ function Header({
 
           <Link to="/" className="flex items-center gap-2 md:gap-3">
             <img 
-              src="https://s10.iimage.su/s/17/gW7gsFfxcyoojRD4cNLejI21W6YZc62Ieh9AfziAL.png" 
+              src="https://i.ibb.co/216VXjgX/logotext.png" 
               alt="vlessfree" 
               className="h-6 md:h-10 w-auto object-contain glow-text"
               referrerPolicy="no-referrer"
@@ -1752,30 +1752,37 @@ function AppContent() {
   const [loadingProfile, setLoadingProfile] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    let unsubscribeProfile: (() => void) | null = null;
+    const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
       setCurrentUser(user);
+      if (unsubscribeProfile) {
+        unsubscribeProfile();
+        unsubscribeProfile = null;
+      }
       if (user) {
         setLoadingProfile(true);
-        try {
-          const profileDocSnap = await getDoc(doc(db, 'users', user.uid));
-          if (profileDocSnap.exists()) {
-            setUserProfile(profileDocSnap.data());
+        unsubscribeProfile = onSnapshot(doc(db, 'users', user.uid), (snap) => {
+          if (snap.exists()) {
+            setUserProfile(snap.data());
           } else {
             setUserProfile(null);
           }
-        } catch (e) {
-          console.error("Error loading header user profile:", e);
-          setUserProfile(null);
-        } finally {
           setLoadingProfile(false);
-        }
+        }, (error) => {
+          console.error("Error loading header user profile listener:", error);
+          setUserProfile(null);
+          setLoadingProfile(false);
+        });
       } else {
         setUserProfile(null);
         setLoadingProfile(false);
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) unsubscribeProfile();
+    };
   }, []);
 
   useEffect(() => {
@@ -1924,14 +1931,14 @@ function AppContent() {
 
         if (isApproved && !wasApproved && !isFirst) {
           const isSub = data.postType === 'subscription';
-          const title = isSub ? '📁 Добавлена новая папка-подписка!' : '✈️ Добавлен новый VLESS-ключ!';
+          const authorName = data.hideAuthor ? 'Аноним' : (data.displayName || (data.username ? `@${data.username}` : 'Пользователь'));
+          const title = isSub ? `Новая подписка от ${authorName}` : `Новый сервер от ${authorName}`;
+          const body = data.name || (isSub ? 'Пользовательская подписка' : 'VLESS-ключ');
           const countryNames: Record<string, string> = {
             'NL': 'Нидерланды', 'DE': 'Германия', 'FI': 'Финляндия', 'US': 'США', 
             'UK': 'Великобритания', 'MD': 'Молдова', 'IN': 'Индия', 'KZ': 'Казахстан', 
             'RU': 'Россия', 'SE': 'Швеция', 'TR': 'Турция', 'JP': 'Япония', 'BR': 'Бразилия'
           };
-          const locationStr = countryNames[data.country] || data.country || '';
-          const body = `${data.name || 'Анонимный сервер'} ${locationStr ? `(${locationStr})` : ''}`;
 
           // Play real-time chime synthesizer
           playAwesomeChime();
@@ -1981,37 +1988,62 @@ function AppContent() {
       setUnpackError(null);
       setUnpackedConfigs([]);
 
-      fetch(`/api/fetch-subscription?url=${encodeURIComponent(selectedKey.config)}`)
-        .then(res => {
-          if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-          return res.json();
-        })
-        .then(data => {
-          const content = data.content || '';
-          let text = content;
-          const hasProto = content.includes('://');
-          const isBase64 = /^[a-zA-Z0-9+/=\s\n\r]+$/.test(content) && content.trim().length > 10 && !hasProto;
-          if (isBase64) {
-            try {
-              text = atob(content.replace(/[\s\n\r]/g, ''));
-            } catch (e) {
-              console.error("Base64 decode error client-side:", e);
-            }
-          }
-          
-          const protos = ['vless://', 'vmess://', 'ss://', 'ssr://', 'trojan://', 'hysteria://', 'hysteria2://', 'tuic://'];
-          const lines = text.split(/[\r\n]+/)
-            .map((line: string) => line.trim())
-            .filter((line: string) => protos.some(proto => line.startsWith(proto)));
+      const configStr = (selectedKey.config || '').trim();
+      const isUrl = configStr.startsWith('http://') || configStr.startsWith('https://');
 
-          setUnpackedConfigs(lines);
-          setLoadingUnpack(false);
-        })
-        .catch(err => {
-          console.error("Error unpacking subscription", err);
-          setUnpackError('Не удалось загрузить или распаковать папку-подписку.');
-          setLoadingUnpack(false);
-        });
+      const processContent = (content: string) => {
+        let text = content;
+        const cleanedText = content.trim().replace(/[\s\n\r]/g, '');
+        const hasProto = cleanedText.includes('://');
+        let isBase64 = false;
+
+        if (!hasProto && cleanedText.length > 10) {
+          const base64Regex = /^[a-zA-Z0-9+/=\-_]+$/;
+          if (base64Regex.test(cleanedText)) {
+            isBase64 = true;
+          }
+        }
+
+        if (isBase64) {
+          try {
+            let standardBase64 = cleanedText
+              .replace(/-/g, '+')
+              .replace(/_/g, '/');
+            while (standardBase64.length % 4 !== 0) {
+              standardBase64 += '=';
+            }
+            text = atob(standardBase64);
+          } catch (e) {
+            console.error("Base64 decode error client-side in profile:", e);
+          }
+        }
+        
+        const protos = ['vless://', 'vmess://', 'ss://', 'ssr://', 'trojan://', 'hysteria://', 'hysteria2://', 'tuic://'];
+        const lines = text.split(/[\r\n]+/)
+          .map((line: string) => line.trim())
+          .filter((line: string) => protos.some(proto => line.startsWith(proto)));
+
+        setUnpackedConfigs(lines);
+        setLoadingUnpack(false);
+      };
+
+      if (isUrl) {
+        fetch(`/api/fetch-subscription?url=${encodeURIComponent(configStr)}`)
+          .then(res => {
+            if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+            return res.json();
+          })
+          .then(data => {
+            processContent(data.content || '');
+          })
+          .catch(err => {
+            console.error("Error unpacking subscription", err);
+            setUnpackError('Не удалось загрузить или распаковать папку-подписку.');
+            setLoadingUnpack(false);
+          });
+      } else {
+        processContent(configStr);
+      }
     } else {
       setUnpackedConfigs([]);
       setLoadingUnpack(false);
@@ -2077,6 +2109,37 @@ function AppContent() {
     setCopiedUnpackedIdx(idx);
     setTimeout(() => setCopiedUnpackedIdx(null), 2000);
   };
+
+  if (userProfile?.isBanned) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-6 text-center select-none relative overflow-hidden font-sans">
+        {/* Ambient background blur */}
+        <div className="absolute top-[30%] left-[20%] w-[30%] h-[30%] bg-rose-500/10 blur-[100px] rounded-full" />
+        <div className="absolute bottom-[30%] right-[20%] w-[30%] h-[30%] bg-purple-500/5 blur-[100px] rounded-full" />
+        
+        <div className="relative max-w-md w-full glass border border-rose-500/20 rounded-[32px] p-8 md:p-12 relative overflow-hidden shadow-2xl shadow-rose-950/10 z-10 animate-fade-in">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500/0 via-rose-500 to-rose-500/0" />
+          
+          <div id="ban-header" className="text-6xl mb-6 select-none animate-bounce">🚫</div>
+          
+          <h1 id="ban-title" className="text-2xl md:text-3xl font-extrabold text-white mb-4 tracking-tight">
+            Пользователь заблокирован
+          </h1>
+          
+          <p id="ban-description" className="text-sm md:text-base text-white/50 leading-relaxed font-semibold">
+            Этот пользователь был заблокирован по решению администрации сайта.
+          </p>
+
+          <button
+            onClick={() => auth.signOut()}
+            className="mt-8 px-6 py-3 bg-white/5 hover:bg-white/10 active:scale-95 text-white/70 border border-white/10 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+          >
+            Выйти из аккаунта
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#050505] selection:bg-white selection:text-black pt-safe pb-safe">

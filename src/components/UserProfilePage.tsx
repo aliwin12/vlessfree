@@ -34,12 +34,22 @@ const profileColors: Record<string, { accent: string; bg: string; text: string; 
   sky: { accent: 'bg-sky-600 hover:bg-sky-500', bg: 'sky-500', text: 'text-sky-400', shadow: 'rgba(14,165,233,0.25)', border: 'border-sky-500/20' }
 };
 
+const bannerPresets = [
+  { id: 'preset1', name: 'Абстракция', url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80' },
+  { id: 'preset2', name: 'Рассвет', url: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=1200&q=80' },
+  { id: 'preset3', name: 'Аврора', url: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&w=1200&q=80' },
+  { id: 'preset4', name: 'Неон', url: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=1200&q=80' },
+  { id: 'preset5', name: 'Космос', url: 'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1200&q=80' },
+  { id: 'preset6', name: 'Матрица', url: 'https://images.unsplash.com/photo-1614064641938-3bbee52942c7?auto=format&fit=crop&w=1200&q=80' }
+];
+
 interface UserProfile {
   username: string;
   displayName: string;
   bio?: string;
   telegram?: string;
   avatarUrl?: string;
+  bannerUrl?: string;
   followersCount?: number;
   followingCount?: number;
   createdAt?: any;
@@ -162,6 +172,7 @@ export default function UserProfilePage() {
   const [editBio, setEditBio] = useState('');
   const [editTelegram, setEditTelegram] = useState('');
   const [editAvatarUrl, setEditAvatarUrl] = useState('');
+  const [editBannerUrl, setEditBannerUrl] = useState('');
 
   const [editStatusText, setEditStatusText] = useState('');
   const [editProfileColor, setEditProfileColor] = useState('indigo');
@@ -287,6 +298,7 @@ export default function UserProfilePage() {
           setEditBio(profileData.bio || '');
           setEditTelegram(profileData.telegram || '');
           setEditAvatarUrl(profileData.avatarUrl || '');
+          setEditBannerUrl(profileData.bannerUrl || '');
           setEditStatusText(profileData.statusText || '');
           setEditProfileColor(profileData.profileColor || 'indigo');
           setEditDonationUrl(profileData.donationUrl || '');
@@ -474,6 +486,7 @@ export default function UserProfilePage() {
             bio: editBio.trim(),
             telegram: editTelegram.trim().replace(/^@/, ''),
             avatarUrl: editAvatarUrl.trim(),
+            bannerUrl: editBannerUrl.trim(),
             statusText: editStatusText.trim(),
             profileColor: editProfileColor,
             donationUrl: editDonationUrl.trim(),
@@ -490,6 +503,7 @@ export default function UserProfilePage() {
           bio: editBio.trim(),
           telegram: editTelegram.trim().replace(/^@/, ''),
           avatarUrl: editAvatarUrl.trim(),
+          bannerUrl: editBannerUrl.trim(),
           statusText: editStatusText.trim(),
           profileColor: editProfileColor,
           donationUrl: editDonationUrl.trim(),
@@ -513,6 +527,7 @@ export default function UserProfilePage() {
           bio: editBio.trim(),
           telegram: editTelegram.trim().replace(/^@/, ''), // Save raw username
           avatarUrl: editAvatarUrl.trim(),
+          bannerUrl: editBannerUrl.trim(),
           statusText: editStatusText.trim(),
           profileColor: editProfileColor,
           donationUrl: editDonationUrl.trim(),
@@ -524,7 +539,19 @@ export default function UserProfilePage() {
         await updateDoc(userDocRef, payload);
 
         // Reflect in local state
-        setProfile((prev) => prev ? { ...prev, ...payload } : null);
+        const localPayload = {
+          displayName: editDisplayName.trim(),
+          bio: editBio.trim(),
+          telegram: editTelegram.trim().replace(/^@/, ''), // Save raw username
+          avatarUrl: editAvatarUrl.trim(),
+          bannerUrl: editBannerUrl.trim(),
+          statusText: editStatusText.trim(),
+          profileColor: editProfileColor,
+          donationUrl: editDonationUrl.trim(),
+          contactOther: editContactOther.trim(),
+          showHistoryOnPublic: !!editShowHistoryOnPublic
+        };
+        setProfile((prev) => prev ? { ...prev, ...localPayload } : null);
         setUpdateSuccess('Настройки профиля сохранены успешно!');
         
         setTimeout(() => {
@@ -692,52 +719,62 @@ export default function UserProfilePage() {
       setUnpackError(null);
       setUnpackedConfigs([]);
 
-      fetch(`/api/fetch-subscription?url=${encodeURIComponent(selectedKey.config)}`)
-        .then(res => {
-          if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
-          return res.json();
-        })
-        .then(data => {
-          const content = data.content || '';
-          let text = content;
-          const cleanedText = content.trim().replace(/[\s\n\r]/g, '');
-          const hasProto = cleanedText.includes('://');
-          let isBase64 = false;
+      const configStr = (selectedKey.config || '').trim();
+      const isUrl = configStr.startsWith('http://') || configStr.startsWith('https://');
 
-          if (!hasProto && cleanedText.length > 10) {
-            const base64Regex = /^[a-zA-Z0-9+/=\-_]+$/;
-            if (base64Regex.test(cleanedText)) {
-              isBase64 = true;
-            }
+      const processContent = (content: string) => {
+        let text = content;
+        const cleanedText = content.trim().replace(/[\s\n\r]/g, '');
+        const hasProto = cleanedText.includes('://');
+        let isBase64 = false;
+
+        if (!hasProto && cleanedText.length > 10) {
+          const base64Regex = /^[a-zA-Z0-9+/=\-_]+$/;
+          if (base64Regex.test(cleanedText)) {
+            isBase64 = true;
           }
+        }
 
-          if (isBase64) {
-            try {
-              let standardBase64 = cleanedText
-                .replace(/-/g, '+')
-                .replace(/_/g, '/');
-              while (standardBase64.length % 4 !== 0) {
-                standardBase64 += '=';
-              }
-              text = atob(standardBase64);
-            } catch (e) {
-              console.error("Base64 decode error client-side in profile:", e);
+        if (isBase64) {
+          try {
+            let standardBase64 = cleanedText
+              .replace(/-/g, '+')
+              .replace(/_/g, '/');
+            while (standardBase64.length % 4 !== 0) {
+              standardBase64 += '=';
             }
+            text = atob(standardBase64);
+          } catch (e) {
+            console.error("Base64 decode error client-side in profile:", e);
           }
-          
-          const protos = ['vless://', 'vmess://', 'ss://', 'ssr://', 'trojan://', 'hysteria://', 'hysteria2://', 'tuic://'];
-          const lines = text.split(/[\r\n]+/)
-            .map((line: string) => line.trim())
-            .filter((line: string) => protos.some(proto => line.startsWith(proto)));
+        }
+        
+        const protos = ['vless://', 'vmess://', 'ss://', 'ssr://', 'trojan://', 'hysteria://', 'hysteria2://', 'tuic://'];
+        const lines = text.split(/[\r\n]+/)
+          .map((line: string) => line.trim())
+          .filter((line: string) => protos.some(proto => line.startsWith(proto)));
 
-          setUnpackedConfigs(lines);
-          setLoadingUnpack(false);
-        })
-        .catch(err => {
-          console.error("Error unpacking subscription in profile", err);
-          setUnpackError('Не удалось загрузить или распаковать папку-подписку.');
-          setLoadingUnpack(false);
-        });
+        setUnpackedConfigs(lines);
+        setLoadingUnpack(false);
+      };
+
+      if (isUrl) {
+        fetch(`/api/fetch-subscription?url=${encodeURIComponent(configStr)}`)
+          .then(res => {
+            if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+            return res.json();
+          })
+          .then(data => {
+            processContent(data.content || '');
+          })
+          .catch(err => {
+            console.error("Error unpacking subscription in profile", err);
+            setUnpackError('Не удалось загрузить или распаковать папку-подписку.');
+            setLoadingUnpack(false);
+          });
+      } else {
+        processContent(configStr);
+      }
     } else {
       setUnpackedConfigs([]);
       setLoadingUnpack(false);
@@ -837,39 +874,68 @@ export default function UserProfilePage() {
 
       <div className="max-w-4xl mx-auto relative z-10" id="profile-container">
         
-        {/* Profile Card Header */}
-        <div className={`glass rounded-[32px] border ${activeColors.border} p-6 md:p-10 mb-8 relative overflow-hidden transition-colors duration-500`}>
+        {/* Profile Card Header with YouTube-style Banner */}
+        <div className={`glass rounded-[32px] border ${activeColors.border} p-0 mb-8 relative overflow-hidden transition-all duration-500`}>
           
+          {/* YouTube Style Header Banner */}
+          <div className="relative h-40 sm:h-52 md:h-60 w-full overflow-hidden">
+            {profile.bannerUrl ? (
+              <img 
+                src={profile.bannerUrl} 
+                alt="Channel Banner" 
+                className="w-full h-full object-cover select-none pointer-events-none"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '';
+                }}
+              />
+            ) : (
+              <div className={`w-full h-full absolute inset-0 bg-gradient-to-r transition-all duration-700 ${
+                profile.profileColor === 'emerald' ? 'from-emerald-950 via-teal-900 to-zinc-950' :
+                profile.profileColor === 'amber' ? 'from-amber-950 via-amber-900 to-stone-950' :
+                profile.profileColor === 'rose' ? 'from-rose-950 via-purple-900 to-stone-950' :
+                profile.profileColor === 'violet' ? 'from-violet-950 via-fuchsia-950 to-neutral-950' :
+                profile.profileColor === 'sky' ? 'from-sky-950 via-blue-900 to-slate-950' :
+                'from-indigo-950 via-indigo-900 to-slate-950'
+              }`} />
+            )}
+            {/* Visual bottom subtle shade override for text contrast */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+          </div>
+
           {/* Top-Right Settings Button for Owners */}
           {isOwner && (
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="absolute top-6 right-6 p-3 rounded-2xl bg-white/5 hover:bg-white/15 border border-white/5 text-white/70 hover:text-white transition-all text-sm uppercase tracking-wider font-semibold flex items-center gap-2 z-25"
+              className="absolute top-4 right-4 p-2.5 rounded-2xl bg-black/60 hover:bg-black/80 border border-white/10 text-white/70 hover:text-white transition-all text-xs uppercase tracking-wider font-semibold flex items-center gap-2 z-20 backdrop-blur-md"
             >
-              {isEditing ? <X size={15} /> : <Settings size={15} />}
+              {isEditing ? <X size={13} /> : <Settings size={13} />}
               <span className="hidden sm:inline">{isEditing ? 'Закрыть' : 'Настройки'}</span>
             </button>
           )}
 
-          {/* Social Avatar & Profile info */}
-          <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-6 md:gap-8">
-            <div className="relative group">
-              <div className={`absolute inset-0 ${activeColors.glow} blur-xl rounded-full scale-95 opacity-0 group-hover:opacity-100 transition-all duration-300`} />
-              <img 
-                src={profile.avatarUrl || generateDefaultAvatar()} 
-                alt={profile.displayName}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = generateDefaultAvatar();
-                }}
-                className="w-24 h-24 sm:w-28 sm:h-28 rounded-[28px] border-2 border-white/20 bg-black/60 object-cover relative z-10 p-2 shrink-0 transition-transform duration-300 group-hover:scale-[1.03]"
-                referrerPolicy="no-referrer"
-              />
-              <div className={`absolute bottom-1 right-1 z-20 ${profile.profileColor === 'emerald' ? 'bg-emerald-500' : profile.profileColor === 'amber' ? 'bg-amber-500' : profile.profileColor === 'rose' ? 'bg-rose-500' : profile.profileColor === 'violet' ? 'bg-violet-500' : profile.profileColor === 'sky' ? 'bg-sky-500' : 'bg-indigo-500'} text-white rounded-full p-1.5 border-2 border-black`}>
-                <Sparkles size={11} className="animate-pulse" />
+          {/* Header Details Area (padded container under the banner) */}
+          <div className="p-6 md:p-10 pt-4 md:pt-6 relative z-10">
+            
+            {/* Social Avatar & Profile info with Overlap offset */}
+            <div className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-6 md:gap-8 -mt-20 sm:-mt-24 md:-mt-28 relative z-20">
+              <div className="relative group shrink-0">
+                <div className={`absolute inset-0 ${activeColors.glow} blur-xl rounded-full scale-95 opacity-0 group-hover:opacity-100 transition-all duration-300`} />
+                <img 
+                  src={profile.avatarUrl || generateDefaultAvatar()} 
+                  alt={profile.displayName}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = generateDefaultAvatar();
+                  }}
+                  className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-[32px] border-4 border-[#0a0a0b] bg-black/80 object-cover relative z-10 p-1.5 shrink-0 transition-transform duration-300 group-hover:scale-[1.03] shadow-2xl"
+                  referrerPolicy="no-referrer"
+                />
+                <div className={`absolute bottom-1 right-1 z-20 ${profile.profileColor === 'emerald' ? 'bg-emerald-500' : profile.profileColor === 'amber' ? 'bg-amber-500' : profile.profileColor === 'rose' ? 'bg-rose-500' : profile.profileColor === 'violet' ? 'bg-violet-500' : profile.profileColor === 'sky' ? 'bg-sky-500' : 'bg-indigo-500'} text-white rounded-full p-1.5 border-2 border-[#0a0a0b] shadow-lg`}>
+                  <Sparkles size={11} className="animate-pulse" />
+                </div>
               </div>
-            </div>
 
-            <div className="flex-1 space-y-3 pt-2">
+              <div className="flex-1 space-y-3 pt-4 md:pt-12">
               <div className="space-y-1">
                 <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-none">
                   {profile.displayName}
@@ -984,6 +1050,7 @@ export default function UserProfilePage() {
             </div>
           </div>
         </div>
+      </div>
 
         {/* Dynamic View Settings vs Suggestions list */}
         <AnimatePresence mode="wait">
@@ -1049,6 +1116,94 @@ export default function UserProfilePage() {
                       placeholder="Или вставьте ссылку на картинку (https://...)"
                       className="w-full bg-white/[0.04] border border-white/5 focus:border-indigo-500/30 rounded-xl px-4 py-3 outline-none text-xs sm:text-sm font-mono"
                     />
+                  </div>
+                </div>
+
+                {/* Visual Banner Presets & custom image editor */}
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between ml-1">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888]">Баннер профиля</label>
+                    {editBannerUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setEditBannerUrl('')}
+                        className="text-[9px] uppercase tracking-wider font-extrabold text-rose-500 hover:text-rose-400 transition-colors flex items-center gap-1"
+                      >
+                        <X size={10} /> Сбросить баннер
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Banner Preview */}
+                  <div className="relative aspect-[21/9] sm:aspect-[24/7] w-full rounded-2xl border border-white/10 overflow-hidden bg-black/40 flex items-center justify-center group/bnp">
+                    {editBannerUrl ? (
+                      <img 
+                        src={editBannerUrl} 
+                        alt="Banner Preview" 
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '';
+                        }}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className={`w-full h-full absolute inset-0 bg-gradient-to-r transition-all duration-500 ${
+                        editProfileColor === 'emerald' ? 'from-emerald-950 via-teal-900 to-zinc-950' :
+                        editProfileColor === 'amber' ? 'from-amber-950 via-amber-900 to-stone-950' :
+                        editProfileColor === 'rose' ? 'from-rose-950 via-purple-900 to-stone-950' :
+                        editProfileColor === 'violet' ? 'from-violet-950 via-fuchsia-950 to-neutral-950' :
+                        editProfileColor === 'sky' ? 'from-sky-950 via-blue-900 to-slate-950' :
+                        'from-indigo-950 via-indigo-900 to-slate-950'
+                      }`} />
+                    )}
+                    <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px] flex items-center justify-center">
+                      <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-white/50 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5">
+                        {editBannerUrl ? 'Кастомный баннер' : 'Дефолтный градиент темы'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Banner Presets */}
+                  <div className="space-y-2 bg-white/[0.02] border border-white/5 p-4 rounded-2xl">
+                    <p className="text-[10px] text-white/40 font-mono ml-1">Баннеры (готовые):</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {bannerPresets.map(preset => {
+                        const isSelected = editBannerUrl === preset.url;
+                        return (
+                          <button
+                            key={preset.id}
+                            type="button"
+                            onClick={() => setEditBannerUrl(preset.url)}
+                            className={`p-1 bg-black/40 border rounded-xl overflow-hidden text-left transition-all duration-300 relative group truncate flex flex-col gap-1.5 cursor-pointer ${
+                              isSelected 
+                                ? 'border-indigo-500 shadow-lg shadow-indigo-500/10 scale-102' 
+                                : 'border-white/5 hover:border-white/20'
+                            }`}
+                          >
+                            <div className="h-10 w-full rounded-lg overflow-hidden bg-zinc-900 relative">
+                              <img src={preset.url} alt={preset.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                              {isSelected && (
+                                <div className="absolute inset-0 bg-indigo-600/20 backdrop-blur-[1px] flex items-center justify-center">
+                                  <Check size={14} className="text-white" />
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-[9px] uppercase tracking-wider font-extrabold text-white/70 px-1 truncate w-full">
+                              {preset.name}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    
+                    <div className="pt-2">
+                      <input 
+                        type="url"
+                        value={editBannerUrl}
+                        onChange={e => setEditBannerUrl(e.target.value)}
+                        placeholder="Или вставьте прямую ссылку на свой фон/баннер (https://...)"
+                        className="w-full bg-white/[0.04] border border-white/5 focus:border-indigo-500/30 rounded-xl px-4 py-3 outline-none text-xs sm:text-sm font-mono text-white placeholder-white/30"
+                      />
+                    </div>
                   </div>
                 </div>
 

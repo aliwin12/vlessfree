@@ -308,6 +308,29 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
     );
   }
 
+  if (userProfile?.isPublishBanned) {
+    return (
+      <div className="pt-32 pb-20 px-4 max-w-md mx-auto min-h-screen flex flex-col justify-center items-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass rounded-[32px] p-8 text-center border border-rose-500/20 shadow-2xl"
+        >
+          <div className="w-16 h-16 bg-rose-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <Lock className="w-8 h-8 text-rose-500" />
+          </div>
+          <h2 className="text-xl font-bold mb-4 text-white">Публикация ограничена</h2>
+          <p className="text-white/50 text-sm mb-6 leading-relaxed">
+            Вы лишены права публикации серверов и папок-подписок по решению администрации сайта.
+          </p>
+          <div className="text-xs text-rose-500/80 font-semibold uppercase tracking-wider py-2 px-3 bg-rose-500/5 rounded-xl inline-block">
+            🚫 ОГРАНИЧЕНИЕ АКТИВНО
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   if (isSuccess) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">

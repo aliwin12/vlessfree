@@ -345,7 +345,7 @@ async function startServer() {
 
     const userAgent = req.headers['user-agent'] || '';
 
-    const configs = servers.filter(s => s && s.status === 'online' && s.config).map(s => {
+    const configs = servers.filter(s => s && s.status === 'online' && s.config && !s.isUserPost).map(s => {
       let config = s.config;
       let displayName = s.name || 'Server';
       

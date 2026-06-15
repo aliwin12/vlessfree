@@ -135,8 +135,11 @@
         "bio": { "type": "string" },
         "telegram": { "type": "string" },
         "avatarUrl": { "type": "string" },
+        "bannerUrl": { "type": "string", "description": "Custom YouTube-like profile banner image URL" },
         "followersCount": { "type": "number", "description": "Count of subscribers" },
         "followingCount": { "type": "number", "description": "Count of users followed" },
+        "isBanned": { "type": "boolean", "description": "True if user is banned" },
+        "isPublishBanned": { "type": "boolean", "description": "True if user is banned from publishing servers or subscriptions" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },

@@ -165,8 +165,11 @@ service cloud.firestore {
              (data.get('statusText', null) == null || (data.get('statusText', null) is string && data.get('statusText', null).size() <= 100)) &&
              (data.get('profileColor', null) == null || (data.get('profileColor', null) is string && data.get('profileColor', null).size() <= 50)) &&
              (data.get('donationUrl', null) == null || (data.get('donationUrl', null) is string && data.get('donationUrl', null).size() <= 500)) &&
+             (data.get('bannerUrl', null) == null || (data.get('bannerUrl', null) is string && data.get('bannerUrl', null).size() <= 800)) &&
              (data.get('contactOther', null) == null || (data.get('contactOther', null) is string && data.get('contactOther', null).size() <= 200)) &&
-             (data.get('showHistoryOnPublic', null) == null || data.get('showHistoryOnPublic', null) is bool);
+             (data.get('showHistoryOnPublic', null) == null || data.get('showHistoryOnPublic', null) is bool) &&
+             (data.get('isBanned', null) == null || data.get('isBanned', null) is bool) &&
+             (data.get('isPublishBanned', null) == null || data.get('isPublishBanned', null) is bool);
     }
 
     function isValidFollower(data) {
@@ -187,15 +190,20 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if true;
-      allow create: if isSignedIn() && request.auth.uid == userId &&
+      allow list: if isAdmin();
+      allow create: if (isSignedIn() && request.auth.uid == userId &&
                       isValidUserProfile(incoming()) &&
                       incoming().createdAt == request.time &&
                       incoming().updatedAt == request.time &&
-                      getAfter(/databases/$(database)/documents/usernames/$(incoming().username)).data.uid == request.auth.uid;
-      allow update: if (isSignedIn() && request.auth.uid == userId &&
+                      getAfter(/databases/$(database)/documents/usernames/$(incoming().username)).data.uid == request.auth.uid &&
+                      incoming().get('isBanned', false) == false &&
+                      incoming().get('isPublishBanned', false) == false) || isAdmin();
+      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == userId &&
                       isValidUserProfile(incoming()) &&
                       incoming().createdAt == existing().createdAt &&
                       incoming().updatedAt == request.time &&
+                      incoming().get('isBanned', false) == existing().get('isBanned', false) &&
+                      incoming().get('isPublishBanned', false) == existing().get('isPublishBanned', false) &&
                       (incoming().username == existing().username ||
                        getAfter(/databases/$(database)/documents/usernames/$(incoming().username)).data.uid == request.auth.uid)) ||
                      (isSignedIn() && 

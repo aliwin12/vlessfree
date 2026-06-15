@@ -228,12 +228,13 @@ export default function AdminPanel() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [removals, setRemovals] = useState<any[]>([]);
   const [blockedIps, setBlockedIps] = useState<any[]>([]);
+  const [usersList, setUsersList] = useState<any[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [isAddingWarning, setIsAddingWarning] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingWarningId, setEditingWarningId] = useState<string | null>(null);
   const [selectedServers, setSelectedServers] = useState<string[]>([]);
-  const [adminActiveTab, setAdminActiveTab] = useState<'active' | 'inactive' | 'comingSoon' | 'reports' | 'visits' | 'blocked' | 'suggestions' | 'removals' | 'versionsandroid'>('active');
+  const [adminActiveTab, setAdminActiveTab] = useState<'active' | 'inactive' | 'comingSoon' | 'reports' | 'visits' | 'blocked' | 'suggestions' | 'removals' | 'versionsandroid' | 'users' | 'userServers'>('active');
   const [versionsAndroidText, setVersionsAndroidText] = useState('v0.1 ok');
   const [isSavingVersionsAndroid, setIsSavingVersionsAndroid] = useState(false);
   const [formData, setFormData] = useState({
@@ -373,6 +374,14 @@ export default function AdminPanel() {
       handleFirestoreError(error, OperationType.LIST, 'server_removals');
     });
 
+    const usersQuery = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+    const unsubscribeUsers = onSnapshot(usersQuery, (snapshot) => {
+      const docs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      setUsersList(docs);
+    }, (error) => {
+      console.error("Error loading users listener:", error);
+    });
+
     const fetchVersionsAndroid = async () => {
       try {
         const docRef = doc(db, 'settings', 'versionsandroid');
@@ -398,6 +407,7 @@ export default function AdminPanel() {
       unsubscribeBlocked();
       unsubscribeSuggestions();
       unsubscribeRemovals();
+      unsubscribeUsers();
     };
   }, []);
 
@@ -416,6 +426,30 @@ export default function AdminPanel() {
       alert('Ошибка при сохранении: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setIsSavingVersionsAndroid(false);
+    }
+  };
+
+  const handleToggleUserBan = async (userId: string, currentBanStatus: boolean) => {
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        isBanned: !currentBanStatus,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error("Error toggling ban:", error);
+      alert("Не удалось изменить статус блокировки: " + (error instanceof Error ? error.message : String(error)));
+    }
+  };
+
+  const handleToggleUserPublishBan = async (userId: string, currentPublishBanStatus: boolean) => {
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        isPublishBanned: !currentPublishBanStatus,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error("Error toggling publish ban:", error);
+      alert("Не удалось изменить статус запрета на публикацию: " + (error instanceof Error ? error.message : String(error)));
     }
   };
 
@@ -1550,14 +1584,15 @@ export default function AdminPanel() {
         </div>
       )}
 
-      <div className="flex items-center gap-4 mb-12">
+      <div className="flex items-center gap-4 mb-12 flex-wrap">
         <button 
           onClick={() => setAdminActiveTab('active')}
-          className={`flex-1 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all ${
+          className={`flex-1 min-w-[120px] py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all ${
             adminActiveTab === 'active' ? 'bg-white text-black shadow-xl shadow-white/10' : 'bg-white/5 text-white/40 hover:bg-white/10'
           }`}
         >
           Активные ({servers.filter(s => {
+            if (s.isUserPost) return false;
             const parts = s.expiryDate?.split('.');
             if (!parts || parts.length !== 3) return false;
             const [day, month, year] = parts.map(Number);
@@ -1571,19 +1606,20 @@ export default function AdminPanel() {
         </button>
         <button 
           onClick={() => setAdminActiveTab('comingSoon')}
-          className={`flex-1 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all ${
+          className={`flex-1 min-w-[120px] py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all ${
             adminActiveTab === 'comingSoon' ? 'bg-emerald-500 text-white shadow-xl shadow-emerald-500/10' : 'bg-white/5 text-white/40 hover:bg-white/10'
           }`}
         >
-          Скоро будет ({servers.filter(s => s.isComingSoon).length})
+          Скоро будет ({servers.filter(s => !s.isUserPost && s.isComingSoon).length})
         </button>
         <button 
           onClick={() => setAdminActiveTab('inactive')}
-          className={`flex-1 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all ${
+          className={`flex-1 min-w-[120px] py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all ${
             adminActiveTab === 'inactive' ? 'bg-rose-500 text-white shadow-xl shadow-rose-500/20' : 'bg-white/5 text-white/40 hover:bg-white/10'
           }`}
         >
           Неактивные ({servers.filter(s => {
+            if (s.isUserPost) return false;
             const parts = s.expiryDate?.split('.');
             if (!parts || parts.length !== 3) return true; // Invalid date counts as inactive if not coming soon
             const [day, month, year] = parts.map(Number);
@@ -1596,8 +1632,16 @@ export default function AdminPanel() {
           }).length})
         </button>
         <button 
+          onClick={() => setAdminActiveTab('userServers')}
+          className={`flex-1 min-w-[120px] py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all ${
+            adminActiveTab === 'userServers' ? 'bg-indigo-500 text-white shadow-xl shadow-indigo-500/20' : 'bg-white/5 text-white/40 hover:bg-white/10'
+          }`}
+        >
+          Польз. сервера ({servers.filter(s => !!s.isUserPost).length})
+        </button>
+        <button 
           onClick={() => setAdminActiveTab('reports')}
-          className={`flex-1 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all ${
+          className={`flex-1 min-w-[120px] py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all ${
             adminActiveTab === 'reports' ? 'bg-amber-500 text-black shadow-xl shadow-amber-500/20' : 'bg-white/5 text-white/40 hover:bg-white/10'
           }`}
         >
@@ -1626,6 +1670,14 @@ export default function AdminPanel() {
           }`}
         >
           Удаление ({removals.filter(r => r.status === 'pending').length})
+        </button>
+        <button 
+          onClick={() => setAdminActiveTab('users')}
+          className={`flex-1 py-4 rounded-2xl font-bold text-[10px] uppercase tracking-widest transition-all ${
+            adminActiveTab === 'users' ? 'bg-indigo-500 text-white shadow-xl shadow-indigo-500/20' : 'bg-white/5 text-white/40 hover:bg-white/10'
+          }`}
+        >
+          Пользователи ({usersList.length})
         </button>
         <button 
           onClick={() => setAdminActiveTab('blocked')}
@@ -1956,6 +2008,116 @@ export default function AdminPanel() {
               </tbody>
             </table>
           </div>
+        ) : adminActiveTab === 'users' ? (
+          <div className="overflow-x-auto no-scrollbar animate-fade-in font-sans">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5">
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Пользователь</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Telegram</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Подписчики</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Статус</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Запрет постов</th>
+                  <th className="p-6 text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {usersList.map((u) => {
+                  const avatar = u.avatarUrl || `https://api.dicebear.com/7.x/bottts/svg?seed=${u.username || 'user'}`;
+                  const isBlocked = !!u.isBanned;
+                  const isPublishRestricted = !!u.isPublishBanned;
+                  return (
+                    <tr key={u.id || u.uid} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                      <td className="p-6">
+                        <div className="flex items-center gap-3">
+                          <img 
+                            src={avatar} 
+                            alt={u.username} 
+                            className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 object-cover" 
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold text-white leading-tight">{u.displayName || 'Пользователь'}</span>
+                            <span className="text-xs text-white/40">@{u.username || 'anonymous'}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-6 text-sm">
+                        {u.telegram ? (
+                          <a 
+                            href={u.telegram.startsWith('http') ? u.telegram : `https://t.me/${u.telegram.replace('@', '')}`}
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-indigo-400 hover:underline"
+                          >
+                            {u.telegram}
+                          </a>
+                        ) : (
+                          <span className="text-white/20">-</span>
+                        )}
+                      </td>
+                      <td className="p-6 text-xs font-mono text-white/70">
+                        {u.followersCount || 0}
+                      </td>
+                      <td className="p-6">
+                        {isBlocked ? (
+                          <span className="px-2.5 py-1 text-[9px] uppercase tracking-wider font-extrabold bg-rose-500/10 text-rose-500 rounded-lg">
+                            Забанен
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 text-[9px] uppercase tracking-wider font-extrabold bg-emerald-500/10 text-emerald-500 rounded-lg">
+                            Активен
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-6">
+                        {isPublishRestricted ? (
+                          <span className="px-2.5 py-1 text-[9px] uppercase tracking-wider font-extrabold bg-amber-500/10 text-amber-500 rounded-lg">
+                            Запрещено
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 text-[9px] uppercase tracking-wider font-extrabold bg-white/5 text-white/40 rounded-lg">
+                            Разрешено
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-6">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleToggleUserBan(u.id || u.uid, isBlocked)}
+                            className={`px-3 py-1.5 rounded-xl font-bold text-[9px] uppercase tracking-wider transition-all duration-300 ${
+                              isBlocked 
+                                ? 'bg-emerald-500 text-black hover:scale-105' 
+                                : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white'
+                            }`}
+                          >
+                            {isBlocked ? 'Разбанить' : 'Бан'}
+                          </button>
+                          <button
+                            onClick={() => handleToggleUserPublishBan(u.id || u.uid, isPublishRestricted)}
+                            className={`px-3 py-1.5 rounded-xl font-bold text-[9px] uppercase tracking-wider transition-all duration-300 ${
+                              isPublishRestricted 
+                                ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-black' 
+                                : 'bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-black'
+                            }`}
+                          >
+                            {isPublishRestricted ? 'Разрешить посты' : 'Запретить посты'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {usersList.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-12 text-center text-white/30 italic">
+                      Пользователи не найдены.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         ) : adminActiveTab === 'blocked' ? (
           <div className="overflow-x-auto no-scrollbar">
             <table className="w-full text-left border-collapse">
@@ -2034,6 +2196,12 @@ export default function AdminPanel() {
                     type="checkbox" 
                     onChange={e => {
                       const filteredServers = servers.filter(s => {
+                        const isUserSelect = !!s.isUserPost;
+                        if (adminActiveTab === 'userServers') {
+                          return isUserSelect;
+                        }
+                        if (isUserSelect) return false;
+
                         const parts = s.expiryDate?.split('.');
                         let expiry: Date | null = null;
                         if (parts && parts.length === 3) {
@@ -2058,6 +2226,12 @@ export default function AdminPanel() {
                       else setSelectedServers([]);
                     }}
                     checked={selectedServers.length > 0 && selectedServers.length === servers.filter(s => {
+                      const isUserSelect = !!s.isUserPost;
+                      if (adminActiveTab === 'userServers') {
+                        return isUserSelect;
+                      }
+                      if (isUserSelect) return false;
+
                       const parts = s.expiryDate?.split('.');
                       let expiry: Date | null = null;
                       if (parts && parts.length === 3) {
@@ -2090,6 +2264,12 @@ export default function AdminPanel() {
             </thead>
             <tbody>
               {servers.filter(s => {
+                const isUserSelect = !!s.isUserPost;
+                if (adminActiveTab === 'userServers') {
+                  return isUserSelect;
+                }
+                if (isUserSelect) return false;
+
                 const parts = s.expiryDate?.split('.');
                 let expiry: Date | null = null;
                 if (parts && parts.length === 3) {
