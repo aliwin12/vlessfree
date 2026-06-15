@@ -195,7 +195,8 @@ async function startServer() {
       // Extract valid config lines
       const protocols = ['vless://', 'vmess://', 'ss://', 'ssr://', 'trojan://', 'hysteria://', 'hysteria2://', 'tuic://'];
       const lines = unpackedText.split(/[\r\n]+/).map(line => line.trim()).filter(line => {
-        return protocols.some(proto => line.startsWith(proto));
+        const lowerLine = line.toLowerCase();
+        return protocols.some(proto => lowerLine.startsWith(proto));
       });
 
       // Format server names inside subscription client profile matching user specification
@@ -293,6 +294,23 @@ async function startServer() {
         }
 
         const customTagName = `${geoPrefix} | ${protoLabel} | от @${username} [${idx + 1}]`;
+
+        // VMess uses JSON inside its base64 config, and appending #tag at the end breaks many client decoders.
+        // We modify the "ps" tag inside VMess configurations instead.
+        if (lowerConfig.startsWith('vmess://')) {
+          try {
+            const vmessB64 = configWithoutTag.substring(8).trim();
+            const jsonStr = Buffer.from(vmessB64, 'base64').toString('utf-8');
+            const jsonObj = JSON.parse(jsonStr);
+            jsonObj.ps = customTagName;
+            const newVmessB64 = Buffer.from(JSON.stringify(jsonObj)).toString('base64');
+            return `vmess://${newVmessB64}`;
+          } catch (e) {
+            // Fallback to standard tag extension if JSON parsing fails
+            return `${configWithoutTag}#${encodeURIComponent(customTagName)}`;
+          }
+        }
+
         return `${configWithoutTag}#${encodeURIComponent(customTagName)}`;
       }).join('\n');
 
@@ -301,7 +319,9 @@ async function startServer() {
       const safeTitleName = getSlug(foundSub.name || 'sub').replace(/-/g, ' ');
       const safeTitle = `${safeTitleName} | by @${foundSub.username} | vlessfree`;
       
-      const base64Content = Buffer.from(formattedConfigs).toString('base64');
+      // Fallback: If no recognized protocol lines could be parsed, send the original unpacked configurations as is
+      const finalConfigsToSend = (lines.length > 0) ? formattedConfigs : unpackedText;
+      const base64Content = Buffer.from(finalConfigsToSend).toString('base64');
 
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
       res.setHeader('Profile-Title', safeTitle); 
