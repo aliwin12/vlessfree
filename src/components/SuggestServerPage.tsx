@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   ChevronLeft, Send, RefreshCw, CheckCircle2, Globe, Activity, 
   Terminal, MapPin, AlertTriangle, Shield, Copy, Check, Lock, 
-  Layers, FolderOpen, Calendar, Clock, Zap, Flame, Sparkles, Heart, Server
+  Layers, FolderOpen, Calendar, Clock, Zap, Flame, Sparkles, Heart, Server, CheckSquare, Settings2, Info, EyeOff, Sliders
 } from 'lucide-react';
 import { db, auth, collection, addDoc, handleFirestoreError, OperationType, serverTimestamp, doc, getDoc } from '../lib/firebase';
 
@@ -13,8 +13,19 @@ interface SuggestServerPageProps {
   userProfile: any;
 }
 
+interface ParsedConfig {
+  name: string;
+  protocol: string;
+  country: string;
+  city: string;
+  port: string;
+  host: string;
+  isValid: boolean;
+}
+
 export default function SuggestServerPage({ currentUser, userProfile }: SuggestServerPageProps) {
   const navigate = useNavigate();
+  const [activeStep, setActiveStep] = useState<number>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [generatedId, setGeneratedId] = useState('');
@@ -22,7 +33,6 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
   const [countdown, setCountdown] = useState(5);
   const [copied, setCopied] = useState(false);
   const [historyItems, setHistoryItems] = useState<any[]>([]);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   
   // Selection of Post Type: 'vless' or 'subscription'
   const [postType, setPostType] = useState<'vless' | 'subscription'>('vless');
@@ -34,7 +44,7 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
     country: '',
     city: '',
     config: '',
-    expiryDate: '',
+    expiryDate: '', // HTML input date (YYYY-MM-DD)
     isScheduled: false,
     scheduledAt: '',
     notes: '',
@@ -46,6 +56,24 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
     allowedClients: [] as string[]
   });
 
+  // Dynamic config extraction details
+  const [parsedInfo, setParsedInfo] = useState<ParsedConfig | null>(null);
+
+  // Live subscription verification status
+  const [subVerifying, setSubVerifying] = useState(false);
+  const [subVerifyResult, setSubVerifyResult] = useState<{ success: boolean; count: number; error?: string } | null>(null);
+
+  // Set initial default date (30 days from now)
+  useEffect(() => {
+    const defaultDate = new Date();
+    defaultDate.setDate(defaultDate.getDate() + 30);
+    const yyyy = defaultDate.getFullYear();
+    const mm = String(defaultDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(defaultDate.getDate()).padStart(2, '0');
+    setFormData(prev => ({ ...prev, expiryDate: `${yyyy}-${mm}-${dd}` }));
+  }, []);
+
+  // Sync list of suggested servers
   useEffect(() => {
     const fetchHistory = async () => {
       const localHistory = JSON.parse(localStorage.getItem('my_suggestions') || '[]');
@@ -71,6 +99,7 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
     fetchHistory();
   }, []);
 
+  // Display rules modal on first load if not accepted yet
   useEffect(() => {
     const hasAccepted = localStorage.getItem('disclaimer_accepted');
     if (!hasAccepted) {
@@ -157,6 +186,211 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Real-time automatic config parser
+  const handleConfigChange = (text: string) => {
+    setFormData(prev => ({ ...prev, config: text }));
+    const trimmed = text.trim();
+    if (!trimmed) {
+      setParsedInfo(null);
+      return;
+    }
+
+    try {
+      const uriPrefixes = ['vless://', 'vmess://', 'ss://', 'trojan://', 'hysteria2://', 'hysteria://'];
+      const matchedPrefix = uriPrefixes.find(p => trimmed.toLowerCase().startsWith(p));
+      
+      if (matchedPrefix) {
+        let protocol = 'VLESS / REALITY';
+        if (trimmed.startsWith('ss://')) protocol = 'Shadowsocks';
+        if (trimmed.startsWith('trojan://')) protocol = 'Trojan';
+        if (trimmed.startsWith('hysteria://') || trimmed.startsWith('hysteria2://')) protocol = 'Hysteria2';
+
+        let name = '';
+        let country = '';
+        let city = '';
+        let host = 'Auto';
+        let port = 'Auto';
+
+        // Try parsing hash remarks
+        const hashIdx = trimmed.indexOf('#');
+        if (hashIdx !== -1) {
+          try {
+            name = decodeURIComponent(trimmed.slice(hashIdx + 1));
+          } catch (e) {
+            name = trimmed.slice(hashIdx + 1);
+          }
+        }
+
+        // Try parsing host / port
+        // Standard shape: prefix://token[at]host:port?params
+        const corePart = hashIdx !== -1 ? trimmed.slice(0, hashIdx) : trimmed;
+        const mainPart = corePart.substring(matchedPrefix.length);
+        const atIdx = mainPart.indexOf('@');
+        let socketStr = atIdx !== -1 ? mainPart.substring(atIdx + 1) : mainPart;
+        
+        // Remove trailing query params
+        const queryIdx = socketStr.indexOf('?');
+        if (queryIdx !== -1) {
+          socketStr = socketStr.substring(0, queryIdx);
+        }
+
+        const colonIdx = socketStr.lastIndexOf(':');
+        if (colonIdx !== -1) {
+          host = socketStr.substring(0, colonIdx);
+          port = socketStr.substring(colonIdx + 1);
+        }
+
+        if (name) {
+          // Preset Map for Automatic Location Flags & Codes guessing
+          const locationMap: { [key: string]: { code: string; city: string } } = {
+            'singapore': { code: 'SG', city: 'Singapore' },
+            'сингапур': { code: 'SG', city: 'Singapore' },
+            'sg': { code: 'SG', city: 'Singapore' },
+            '🇸🇬': { code: 'SG', city: 'Singapore' },
+            'usa': { code: 'US', city: 'New York' },
+            'сша': { code: 'US', city: 'New York' },
+            '🇺🇸': { code: 'US', city: 'New York' },
+            'nl': { code: 'NL', city: 'Amsterdam' },
+            'нидерланды': { code: 'NL', city: 'Amsterdam' },
+            '🇳🇱': { code: 'NL', city: 'Amsterdam' },
+            'pl': { code: 'PL', city: 'Warsaw' },
+            'польша': { code: 'PL', city: 'Warsaw' },
+            '🇵🇱': { code: 'PL', city: 'Warsaw' },
+            'de': { code: 'DE', city: 'Frankfurt' },
+            'германия': { code: 'DE', city: 'Frankfurt' },
+            '🇩🇪': { code: 'DE', city: 'Frankfurt' },
+            'fi': { code: 'FI', city: 'Helsinki' },
+            'финляндия': { code: 'FI', city: 'Helsinki' },
+            '🇫🇮': { code: 'FI', city: 'Helsinki' },
+            'gb': { code: 'GB', city: 'London' },
+            'london': { code: 'GB', city: 'London' },
+            '🇬🇧': { code: 'GB', city: 'London' },
+            'fr': { code: 'FR', city: 'Paris' },
+            'франция': { code: 'FR', city: 'Paris' },
+            '🇫🇷': { code: 'FR', city: 'Paris' },
+            'tr': { code: 'TR', city: 'Istanbul' },
+            'турция': { code: 'TR', city: 'Istanbul' },
+            '🇹🇷': { code: 'TR', city: 'Istanbul' },
+            'jp': { code: 'JP', city: 'Tokyo' },
+            'tokyo': { code: 'JP', city: 'Tokyo' },
+            '🇯🇵': { code: 'JP', city: 'Tokyo' },
+            'ru': { code: 'RU', city: 'Moscow' },
+            'россия': { code: 'RU', city: 'Moscow' },
+            '🇷🇺': { code: 'RU', city: 'Moscow' }
+          };
+
+          const lowerName = name.toLowerCase();
+          for (const [kw, loc] of Object.entries(locationMap)) {
+            if (lowerName.includes(kw)) {
+              country = loc.code;
+              city = loc.city;
+              break;
+            }
+          }
+        }
+
+        const info = { name, protocol, country, city, host, port, isValid: true };
+        setParsedInfo(info);
+
+        // Pre-populate fields automatically so user has to type less
+        setFormData(prev => ({
+          ...prev,
+          name: prev.name || name,
+          protocol,
+          country: prev.country || country,
+          city: prev.city || city
+        }));
+      } else {
+        setParsedInfo({
+          name: '',
+          protocol: 'VLESS / REALITY',
+          country: '',
+          city: '',
+          host: 'Unknown',
+          port: 'Unknown',
+          isValid: false
+        });
+      }
+    } catch (err) {
+      setParsedInfo({
+        name: '',
+        protocol: 'VLESS / REALITY',
+        country: '',
+        city: '',
+        host: 'Unknown',
+        port: 'Unknown',
+        isValid: false
+      });
+    }
+  };
+
+  // Perform a live verification of subscription content before allowing publish
+  const handleVerifySubscription = async () => {
+    if (!formData.config || !formData.config.startsWith('http')) {
+      alert('Пожалуйста, введите корректный URL-адрес подписки.');
+      return;
+    }
+
+    setSubVerifying(true);
+    setSubVerifyResult(null);
+
+    try {
+      const res = await fetch(`/api/fetch-subscription?url=${encodeURIComponent(formData.config.trim())}`);
+      if (!res.ok) throw new Error(`HTTP Error Code: ${res.status}`);
+      const data = await res.json();
+      
+      const content = data.content || '';
+      let text = content;
+      const cleaned = content.trim().replace(/[\s\n\r]/g, '');
+      const hasProto = cleaned.includes('://');
+      
+      let isBase64 = false;
+      if (!hasProto && cleaned.length > 10) {
+        if (/^[a-zA-Z0-9+/=\-_]+$/.test(cleaned)) {
+          isBase64 = true;
+        }
+      }
+
+      if (isBase64) {
+        try {
+          let stdB64 = cleaned.replace(/-/g, '+').replace(/_/g, '/');
+          while (stdB64.length % 4 !== 0) stdB64 += '=';
+          text = atob(stdB64);
+        } catch (e) {
+          console.warn('Decode base64 fail');
+        }
+      }
+
+      const protos = ['vless://', 'vmess://', 'ss://', 'ssr://', 'trojan://', 'hysteria://', 'hysteria2://', 'tuic://'];
+      const configsFound = text.split(/[\r\n]+/)
+        .map((line: string) => line.trim())
+        .filter((line: string) => protos.some(proto => line.startsWith(proto)));
+
+      setSubVerifyResult({
+        success: true,
+        count: configsFound.length
+      });
+    } catch (err) {
+      setSubVerifyResult({
+        success: false,
+        count: 0,
+        error: 'Не удалось проверить подписку. Убедитесь в активности URL-адреса.'
+      });
+    } finally {
+      setSubVerifying(false);
+    }
+  };
+
+  // Preset Date calculations
+  const applyPresetDate = (days: number) => {
+    const updated = new Date();
+    updated.setDate(updated.getDate() + days);
+    const yyyy = updated.getFullYear();
+    const mm = String(updated.getMonth() + 1).padStart(2, '0');
+    const dd = String(updated.getDate()).padStart(2, '0');
+    setFormData(prev => ({ ...prev, expiryDate: `${yyyy}-${mm}-${dd}` }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -166,12 +400,22 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
       return;
     }
 
+    // Convert date string from standard HTML format (YYYY-MM-DD) to app format (DD.MM.YYYY)
+    let formattedExpiry = '01.01.2027';
+    if (formData.expiryDate) {
+      const parts = formData.expiryDate.split('-');
+      if (parts.length === 3) {
+        formattedExpiry = `${parts[2]}.${parts[1]}.${parts[0]}`; // DD.MM.YYYY
+      } else {
+        formattedExpiry = formData.expiryDate;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       const displayId = generateDisplayId();
       const metadata = await getClientMetadata();
 
-      // Set custom fields based on selected platform type
       const isSub = postType === 'subscription';
       const name = isSub ? (formData.subscriptionName.trim() || 'Пользовательская подписка') : formData.name.trim();
 
@@ -192,10 +436,10 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
         country: isSub ? 'Global' : (formData.country.trim().toUpperCase() || 'US'),
         city: isSub ? 'All' : (formData.city.trim() || 'Internet'),
         config: formData.config.trim(),
-        latency: '30ms', // Initial default
-        load: 10, // Initial default
-        status: 'online', // Initial default
-        expiryDate: formData.expiryDate || '01.01.2027',
+        latency: '30ms',
+        load: 10,
+        status: 'online',
+        expiryDate: formattedExpiry,
         isUserPost: true,
         userId: currentUser.uid,
         username: userProfile?.username || 'anonymous',
@@ -216,7 +460,7 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
         country: isSub ? 'Global' : (formData.country.trim().toUpperCase() || 'US'),
         city: isSub ? 'All' : (formData.city.trim() || 'Internet'),
         config: formData.config.trim(),
-        expiryDate: formData.expiryDate || '01.01.2027',
+        expiryDate: formattedExpiry,
         scheduledAt: formData.isScheduled && formData.scheduledAt ? formData.scheduledAt : null,
         displayId,
         status: 'approved',
@@ -255,7 +499,7 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
     }
   };
 
-  // Safe checks for user registration completeness (require a username to bind)
+  // Guards check
   if (!currentUser) {
     return (
       <div className="pt-32 pb-20 px-4 max-w-md mx-auto min-h-screen flex flex-col justify-center items-center">
@@ -290,11 +534,11 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
           animate={{ opacity: 1, y: 0 }}
           className="glass rounded-[32px] p-8 text-center border border-white/5 shadow-2xl"
         >
-          <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+          <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <Shield className="w-8 h-8 text-amber-500" />
           </div>
           <h2 className="text-xl font-serif italic mb-4">Не заполнено имя пользователя</h2>
-          <p className="text-white/40 text-sm mb-8 leading-relaxed animate-pulse">
+          <p className="text-white/40 text-sm mb-8 leading-relaxed">
             Завершите заполнение личного профиля, чтобы делиться вашими конфигурациями с сообществом.
           </p>
           <button 
@@ -367,8 +611,8 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
 
           <div className="space-y-3">
             <button
-              onClick={() => navigate('/')}
-              className="w-full py-4 rounded-xl bg-white text-black font-bold uppercase tracking-widest text-[10px] hover:scale-[1.02] transition-transform"
+               onClick={() => navigate('/')}
+               className="w-full py-4 rounded-xl bg-white text-black font-bold uppercase tracking-widest text-[10px] hover:scale-[1.02] transition-transform"
             >
               Вернуться на главную
             </button>
@@ -384,8 +628,42 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
     );
   }
 
+  // Multi-step logic validations
+  const handleNextStep = () => {
+    if (activeStep === 1) {
+      if (!formData.config.trim()) {
+        alert('Пожалуйста, введите конфигурацию ключа или ссылку подписки!');
+        return;
+      }
+      if (postType === 'subscription' && !formData.config.trim().startsWith('http')) {
+        alert('Адрес подписки должен начинаться с http:// или https://');
+        return;
+      }
+    }
+    if (activeStep === 2) {
+      const isSub = postType === 'subscription';
+      if (isSub && !formData.subscriptionName.trim()) {
+        alert('Введите название папки-подписки.');
+        return;
+      }
+      if (!isSub && !formData.name.trim()) {
+        alert('Введите название сервера.');
+        return;
+      }
+      if (!isSub && !formData.country.trim()) {
+        alert('Укажите двухзначный код страны.');
+        return;
+      }
+    }
+    setActiveStep(prev => Math.min(prev + 1, 4));
+  };
+
+  const handlePrevStep = () => {
+    setActiveStep(prev => Math.max(prev - 1, 1));
+  };
+
   return (
-    <div className="pt-32 pb-20 px-4 max-w-2xl mx-auto min-h-screen">
+    <div className="pt-32 pb-20 px-4 max-w-3xl mx-auto min-h-screen">
       <AnimatePresence>
         {showDisclaimer && (
           <motion.div 
@@ -414,25 +692,25 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
                 <div className="flex gap-4">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <p className="text-sm text-white/60 leading-relaxed">
-                    Нерабочие серверы или недействительные ссылки на подписки удаляются администрацией при регулярных проверках или по жалобам пользователей.
+                    Нерабочие серверы или недейстрительные ссылки на подписки удаляются администрацией при регулярных проверках или по жалобам пользователей.
                   </p>
                 </div>
                 <div className="flex gap-4">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <p className="text-sm text-white/60 leading-relaxed">
-                    Придумывайте приличные названия. Посты с нецензурной лексикой или спамом удаляются мгновенно во избежание перманентной блокировки вашего профиля.
+                    Придумывайте приличные названия. Посты с нецензурной лексикой или рекламой удаляются сразу, а ваш аккаунт блокируется навсегда.
                   </p>
                 </div>
                 <div className="flex gap-4">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <p className="text-sm text-white/60 leading-relaxed">
-                    Все посты и папки подписок привязываются к вашей публичной странице автора <span className="text-indigo-400">@{userProfile.username}</span>.
+                    Все публикуемые конфигурации привязываются к вашему публичному профилю <span className="text-indigo-400">@{userProfile.username}</span>.
                   </p>
                 </div>
                 <div className="flex gap-4">
                   <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
                   <p className="text-sm text-white/60 leading-relaxed">
-                    Администрация оставляет за собой право модерировать, изменять или удалять предлагаемый контент по своему усмотрению.
+                    Администрация оставляет за собой право модерировать, менять или удалять контент по своему усмотрению.
                   </p>
                 </div>
               </div>
@@ -463,434 +741,616 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
         <span className="text-xs font-bold uppercase tracking-widest">Назад</span>
       </motion.button>
 
+      {/* Main Publishing Wizard Container */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass rounded-[32px] p-8 md:p-12 relative overflow-hidden"
+        className="glass rounded-[32px] p-8 md:p-12 relative overflow-hidden border border-white/5"
       >
         <div className="absolute top-0 right-0 p-8 opacity-5">
           <Activity size={120} />
         </div>
 
-        <div className="flex items-center gap-4 mb-8 relative">
-          <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center">
-            <Globe className="w-6 h-6 text-indigo-400" />
+        {/* Wizard Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-8 border-b border-white/5 relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center">
+              <Globe className="w-6 h-6 text-indigo-400" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-serif italic tracking-tighter">Мастер публикации VLESS</h1>
+              <p className="text-white/40 text-xs">Разместите свой собственный рабочий сервер или ссылку-подписку</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-serif italic tracking-tighter">Опубликовать сервер / пост</h1>
-            <p className="text-white/40 text-xs">Добавьте собственный ключ VLESS или общую папку-подписку</p>
-          </div>
-        </div>
-
-        {/* Post Type Selector Tabs */}
-        <div className="flex p-1 rounded-2xl bg-white/[0.03] border border-white/5 mb-8">
-          <button
-            type="button"
-            onClick={() => setPostType('vless')}
-            className={`flex-1 py-3.5 rounded-xl text-[10px] uppercase tracking-[0.2em] font-bold transition-all ${
-              postType === 'vless'
-                ? 'bg-white text-black shadow-lg font-black'
-                : 'text-white/40 hover:text-white/80'
-            }`}
-          >
-            Ключ VLESS (vless://)
-          </button>
-          <button
-            type="button"
-            onClick={() => setPostType('subscription')}
-            className={`flex-1 py-3.5 rounded-xl text-[10px] uppercase tracking-[0.2em] font-bold transition-all ${
-              postType === 'subscription'
-                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 font-black'
-                : 'text-white/40 hover:text-white/80'
-            }`}
-          >
-            Подписка-Папка (Ссылка)
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6 relative">
           
-          {postType === 'vless' ? (
-            <>
-              {/* VLESS Section Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-                    Название сервера
-                  </label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-indigo-400 transition-colors">
-                      <Terminal size={16} />
-                    </div>
-                    <input
-                      required={postType === 'vless'}
-                      value={formData.name}
-                      onChange={e => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Singapore Neon"
-                      className="w-full bg-white/2 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all font-medium"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-                    Протокол
-                  </label>
-                  <select
-                    value={formData.protocol}
-                    onChange={e => setFormData({ ...formData, protocol: e.target.value })}
-                    className="w-full bg-white/2 border border-white/5 rounded-2xl p-4 text-sm focus:outline-none focus:border-white/20 transition-all appearance-none cursor-pointer font-medium"
-                  >
-                    <option value="VLESS / REALITY" className="bg-[#050505]">VLESS / REALITY</option>
-                    <option value="Shadowsocks" className="bg-[#050505]">Shadowsocks</option>
-                    <option value="Trojan" className="bg-[#050505]">Trojan</option>
-                    <option value="Hysteria2" className="bg-[#050505]">Hysteria2</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-                    Страна (Двухзначный Код)
-                  </label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-indigo-400 transition-colors">
-                      <Globe size={16} />
-                    </div>
-                    <input
-                      required={postType === 'vless'}
-                      maxLength={2}
-                      value={formData.country}
-                      onChange={e => setFormData({ ...formData, country: e.target.value.toUpperCase() })}
-                      placeholder="SG, US, NL, PL..."
-                      className="w-full bg-white/2 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all uppercase font-mono font-bold tracking-widest"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-                    Город
-                  </label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-indigo-400 transition-colors">
-                      <MapPin size={16} />
-                    </div>
-                    <input
-                      required={postType === 'vless'}
-                      value={formData.city}
-                      onChange={e => setFormData({ ...formData, city: e.target.value })}
-                      placeholder="Singapore"
-                      className="w-full bg-white/2 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all font-medium"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-                  Конфигурация (vless://...)
-                </label>
-                <div className="relative group">
-                  <div className="absolute top-4 left-4 text-white/20 group-focus-within:text-indigo-400 transition-colors">
-                    <Terminal size={16} />
-                  </div>
-                  <textarea
-                    required={postType === 'vless'}
-                    value={formData.config}
-                    onChange={e => setFormData({ ...formData, config: e.target.value })}
-                    placeholder="vless://e881cba1-df5a-4632-a5e2-e1927acc8831@192.168.1.1:443?security=reality..."
-                    className="w-full h-32 bg-white/2 border border-white/5 rounded-2xl pt-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all resize-none font-mono text-[11px]"
-                  />
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Subscription Fields Section */}
-              <div className="space-y-4 animate-fadeIn">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-                  Название папки / подписки
-                </label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-emerald-500 transition-colors">
-                    <FolderOpen size={16} />
-                  </div>
-                  <input
-                    required={postType === 'subscription'}
-                    value={formData.subscriptionName}
-                    onChange={e => setFormData({ ...formData, subscriptionName: e.target.value })}
-                    placeholder="Супер-быстрое прокси для всех"
-                    className="w-full bg-white/2 border border-emerald-500/10 focus:border-emerald-500/30 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none transition-all font-semibold"
-                  />
-                </div>
-                <p className="text-[9px] text-white/20 ml-2">
-                  ℹ️ Подписка будет автоматически добавлена на главную как папка (без надобности ввода паролей).
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-                  Ссылка на файл подписки (URL)
-                </label>
-                <div className="relative group">
-                  <div className="absolute top-4 left-4 text-white/20 group-focus-within:text-emerald-400 transition-colors">
-                    <Globe size={16} />
-                  </div>
-                  <textarea
-                    required={postType === 'subscription'}
-                    value={formData.config}
-                    onChange={e => setFormData({ ...formData, config: e.target.value })}
-                    placeholder="https://myvpnprofile.com/sub/all.txt"
-                    className="w-full h-24 bg-white/2 border border-emerald-500/10 focus:border-emerald-500/30 rounded-2xl pt-4 pl-12 pr-4 text-sm focus:outline-none transition-all font-mono text-[11px]"
-                  />
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Advanced collapsible button */}
-          <div className="pt-2">
+          {/* Post Type Selector Tabs */}
+          <div className="flex p-1 rounded-2xl bg-white/[0.03] border border-white/5 md:w-80">
             <button
               type="button"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold uppercase tracking-wider text-white/60 hover:text-white transition-all active:scale-95"
+              onClick={() => {
+                setPostType('vless');
+                setFormData(p => ({ ...p, config: '' }));
+                setParsedInfo(null);
+              }}
+              className={`flex-1 py-2.5 rounded-xl text-[9px] uppercase tracking-[0.2em] font-bold transition-all ${
+                postType === 'vless'
+                  ? 'bg-white text-black shadow-lg font-black'
+                  : 'text-white/40 hover:text-white/80'
+              }`}
             >
-              <span>⚙️ {showAdvanced ? 'Скрыть дополнительные настройки' : 'Дополнительные настройки'}</span>
+              Ключ
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPostType('subscription');
+                setFormData(p => ({ ...p, config: '' }));
+                setSubVerifyResult(null);
+              }}
+              className={`flex-1 py-2.5 rounded-xl text-[9px] uppercase tracking-[0.2em] font-bold transition-all ${
+                postType === 'subscription'
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 font-black'
+                  : 'text-white/40 hover:text-white/80'
+              }`}
+            >
+              Подписка
             </button>
           </div>
+        </div>
 
-          {showAdvanced && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              className="space-y-6 bg-white/[0.01] border border-white/5 rounded-3xl p-6 md:p-8 mt-2 space-y-6"
-            >
-              <h4 className="text-xs uppercase tracking-widest font-black text-[#888] pb-2 border-b border-white/5">Дополнительные параметры публикации</h4>
+        {/* Step Progress Bar */}
+        <div className="grid grid-cols-4 gap-2 mb-10 relative z-10">
+          {[
+            { nr: 1, text: 'Конфиг' },
+            { nr: 2, text: 'Локация' },
+            { nr: 3, text: 'Лимиты' },
+            { nr: 4, text: 'Видимость' }
+          ].map((s) => (
+            <div key={s.nr} className="flex flex-col gap-2">
+              <div className={`h-1.5 rounded-full transition-all duration-300 ${
+                activeStep >= s.nr 
+                  ? postType === 'subscription' ? 'bg-emerald-500' : 'bg-indigo-500' 
+                  : 'bg-white/5'
+              }`} />
+              <span className={`text-[9px] uppercase font-bold tracking-widest text-center ${
+                activeStep === s.nr ? 'text-white' : 'text-white/20'
+              }`}>
+                {s.nr}. {s.text}
+              </span>
+            </div>
+          ))}
+        </div>
 
-              {/* Notes block */}
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-                  Заметка / Инструкция (notes)
-                </label>
-                <textarea
-                  value={formData.notes || ''}
-                  onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Добавьте полезные примечания, пароль (если нужен) или инструкцию для пользователей..."
-                  maxLength={500}
-                  className="w-full h-24 bg-white/2 border border-white/5 focus:border-white/15 rounded-2xl p-4 text-xs focus:outline-none transition-all resize-none font-semibold text-white/80"
-                />
-              </div>
+        {/* Dynamic Form Content wrapper */}
+        <form onSubmit={handleSubmit} className="relative z-10 space-y-6">
+          <AnimatePresence mode="wait">
+            {/* STEP 1: CONFIGURATION / SUBLINK INPUT */}
+            {activeStep === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">
+                      {postType === 'vless' ? 'Вставьте ключ (vless://, trojan://, Shadowsocks)' : 'Вставьте ссылку на подписку (URL)'}
+                    </label>
+                    <span className="text-[9px] text-white/30 bg-white/5 px-2 py-0.5 rounded font-mono">
+                      {postType === 'vless' ? 'auto-parse enabled' : 'remote verify enabled'}
+                    </span>
+                  </div>
 
-              {/* Category, speedLimit, customIcon grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                {/* Category Selection */}
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-                    Специализация применения
-                  </label>
-                  <select
-                    value={formData.category}
-                    onChange={e => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full bg-[#0d0d0d] border border-white/5 rounded-2xl p-4 text-xs text-white/70 focus:outline-none focus:border-white/20 transition-colors"
-                  >
-                    <option value="Общий обход block 🌐">Общий обход block 🌐</option>
-                    <option value="Для игр 🎮">Для игр 🎮</option>
-                    <option value="Для работы/учебы 💼">Для работы/учебы 💼</option>
-                    <option value="Для YouTube & Streaming 📺">Для YouTube & Streaming 📺</option>
-                    <option value="Высокая защита 🔐">Высокая защита 🔐</option>
-                  </select>
+                  <div className="relative group">
+                    <div className="absolute top-4 left-4 text-white/20 group-focus-within:text-indigo-400 transition-colors">
+                      {postType === 'vless' ? <Terminal size={18} /> : <FolderOpen size={18} />}
+                    </div>
+                    
+                    {postType === 'vless' ? (
+                      <textarea
+                        required
+                        value={formData.config}
+                        onChange={e => handleConfigChange(e.target.value)}
+                        placeholder="vless://e881cba1-df5a-4632-a5e2-e1927acc8831@192.168.1.1:443?security=reality&sni=google.com#Singapore-Server"
+                        className="w-full h-36 bg-white/[0.02] border border-white/5 rounded-2xl pt-4 pl-12 pr-4 text-xs focus:outline-none focus:border-white/20 transition-all resize-none font-mono text-white/80"
+                      />
+                    ) : (
+                      <textarea
+                        required
+                        value={formData.config}
+                        onChange={e => setFormData({ ...formData, config: e.target.value })}
+                        placeholder="https://raw.githubusercontent.com/user/sub/main/vless.txt"
+                        className="w-full h-24 bg-white/[0.02] border border-emerald-500/10 rounded-2xl pt-4 pl-12 pr-4 text-xs focus:outline-none focus:border-emerald-500/20 transition-all font-mono text-white/80"
+                      />
+                    )}
+                  </div>
                 </div>
 
-                {/* Speed Limit */}
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-                    Лимит скорости
-                  </label>
-                  <select
-                    value={formData.speedLimit}
-                    onChange={e => setFormData({ ...formData, speedLimit: e.target.value })}
-                    className="w-full bg-[#0d0d0d] border border-white/5 rounded-2xl p-4 text-xs text-white/70 focus:outline-none focus:border-white/20 transition-colors"
+                {/* Intelligent Parsed Info Cards */}
+                {postType === 'vless' && parsedInfo && (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="p-5 rounded-2xl border bg-white/[0.02] border-white/5"
                   >
-                    <option value="Без лимита">Без лимита (Uncapped)</option>
-                    <option value="10 Mbps">10 Mbps</option>
-                    <option value="50 Mbps">50 Mbps</option>
-                    <option value="100 Mbps">100 Mbps</option>
-                    <option value="500 Mbps">500 Mbps</option>
-                    <option value="1 Gbps">1 Gbps</option>
-                  </select>
-                </div>
+                    <h3 className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5" /> Анализ конфигурации
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                      <div>
+                        <div className="text-white/20 text-[9px] uppercase tracking-wider">Протокол</div>
+                        <div className="font-semibold text-white mt-0.5">{parsedInfo.protocol}</div>
+                      </div>
+                      <div>
+                        <div className="text-white/20 text-[9px] uppercase tracking-wider">Хост</div>
+                        <div className="font-mono text-white/60 mt-0.5 truncate" title={parsedInfo.host}>{parsedInfo.host}</div>
+                      </div>
+                      <div>
+                        <div className="text-white/20 text-[9px] uppercase tracking-wider">Порт</div>
+                        <div className="font-mono text-white mt-0.5">{parsedInfo.port}</div>
+                      </div>
+                      <div>
+                        <div className="text-white/20 text-[9px] uppercase tracking-wider">Имя в ссылке</div>
+                        <div className="font-bold text-amber-500 mt-0.5 truncate" title={parsedInfo.name}>{parsedInfo.name || 'Не указано'}</div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
 
-              </div>
-
-              {/* Icon selector */}
-              <div className="space-y-3">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1 block">
-                  Декоративный значок (Иконка)
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { key: 'Globe', label: '🌐 Globe' },
-                    { key: 'Server', label: '🖥️ Server' },
-                    { key: 'Zap', label: '⚡ Energy' },
-                    { key: 'Flame', label: '🔥 Flame' },
-                    { key: 'Shield', label: '🛡️ Safety' },
-                    { key: 'Sparkles', label: '✨ Sparkles' },
-                    { key: 'Heart', label: '❤️ Favorite' }
-                  ].map((ic) => (
+                {/* Live Subscription verify box */}
+                {postType === 'subscription' && formData.config && (
+                  <div className="p-4 rounded-2xl border bg-emerald-500/2 border-emerald-500/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                      <div className="text-xs font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-1">
+                        <CheckSquare className="w-3 h-3" /> Тестирование папки-подписки
+                      </div>
+                      <p className="text-[11px] text-white/40 leading-relaxed">
+                        Рекомендуется проверить ссылку на наличие валидных ключей перед публикацией в базу.
+                      </p>
+                    </div>
+                    
                     <button
-                      key={ic.key}
                       type="button"
-                      onClick={() => setFormData({ ...formData, customIcon: ic.key })}
-                      className={`px-3 py-1.5 rounded-xl text-[10px] font-mono border transition-all ${
-                        formData.customIcon === ic.key
-                          ? 'bg-white text-black font-extrabold border-transparent'
-                          : 'bg-white/5 hover:bg-white/10 text-white/60 border-white/5'
-                      }`}
+                      disabled={subVerifying}
+                      onClick={handleVerifySubscription}
+                      className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 font-bold uppercase tracking-wider text-[9px] text-white rounded-xl transition-all flex items-center gap-1.5 shrink-0"
                     >
-                      {ic.label}
+                      {subVerifying ? <RefreshCw className="w-3 h-3 animate-spin" /> : 'Проверить'}
                     </button>
-                  ))}
-                </div>
-              </div>
+                  </div>
+                )}
 
-              {/* Allowed clients multiselect */}
-              <div className="space-y-3">
-                <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1 block">
-                  Рекомендуемые клиенты
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {['v2rayN', 'Sing-box', 'Nekobox', 'Shadowrocket', 'Hiddify'].map((cl) => {
-                    const isChecked = formData.allowedClients.includes(cl);
-                    return (
-                      <button
-                        key={cl}
-                        type="button"
-                        onClick={() => {
-                          const updated = isChecked
-                            ? formData.allowedClients.filter(c => c !== cl)
-                            : [...formData.allowedClients, cl];
-                          setFormData({ ...formData, allowedClients: updated });
+                {/* Sub verifying results */}
+                {postType === 'subscription' && subVerifyResult && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`p-4 rounded-2xl border text-xs font-semibold flex items-center gap-3 ${
+                      subVerifyResult.success 
+                        ? 'bg-emerald-500/5 text-emerald-400 border-emerald-500/15' 
+                        : 'bg-rose-500/5 text-rose-400 border-rose-500/15'
+                    }`}
+                  >
+                    {subVerifyResult.success ? (
+                      <>
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                        <div>
+                          <span>Проверка успешно завершена! Найдено <strong>{subVerifyResult.count}</strong> активных конфигураций протоколов внутри файла. Ссылка готова к размещению.</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
+                        <div>{subVerifyResult.error}</div>
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+
+            {/* STEP 2: DETAILS (NAME, COUNTRY, CITY) */}
+            {activeStep === 2 && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Name field */}
+                  <div className="space-y-4">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">
+                      {postType === 'vless' ? 'Название сервера' : 'Название папки / подписки'}
+                    </label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-indigo-400 transition-colors">
+                        <Terminal size={16} />
+                      </div>
+                      <input
+                        required
+                        value={postType === 'vless' ? formData.name : formData.subscriptionName}
+                        onChange={e => {
+                          if (postType === 'vless') {
+                            setFormData({ ...formData, name: e.target.value });
+                          } else {
+                            setFormData({ ...formData, subscriptionName: e.target.value });
+                          }
                         }}
-                        className={`px-3 py-1.5 rounded-xl text-[10px] font-semibold border transition-all ${
-                          isChecked
-                            ? 'bg-indigo-600 border-transparent text-white'
+                        placeholder={postType === 'vless' ? 'Singapore High-Speed' : 'Премиум подписка Bypass'}
+                        className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all text-white font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Protocol (only for Vless) */}
+                  {postType === 'vless' ? (
+                    <div className="space-y-4">
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">
+                        Протокол применения
+                      </label>
+                      <select
+                        value={formData.protocol}
+                        onChange={e => setFormData({ ...formData, protocol: e.target.value })}
+                        className="w-full bg-[#0d0d0d] border border-white/5 rounded-2xl p-4 text-sm focus:outline-none focus:border-white/20 transition-all text-white appearance-none cursor-pointer font-medium"
+                      >
+                        <option value="VLESS / REALITY">VLESS / REALITY</option>
+                        <option value="Shadowsocks">Shadowsocks</option>
+                        <option value="Trojan">Trojan</option>
+                        <option value="Hysteria2">Hysteria2</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">
+                        Тип контента
+                      </label>
+                      <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-xs text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-2">
+                        <FolderOpen className="w-4 h-4" /> Subscription Folder URL
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {postType === 'vless' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Country code */}
+                    <div className="space-y-4">
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">
+                        Двухзначный код страны (ISO)
+                      </label>
+                      <div className="relative group">
+                        <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-indigo-400 transition-colors">
+                          <Globe size={16} />
+                        </div>
+                        <input
+                          required
+                          maxLength={2}
+                          value={formData.country}
+                          onChange={e => setFormData({ ...formData, country: e.target.value.toUpperCase().trim() })}
+                          placeholder="SG, US, NL, PL, DE..."
+                          className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all text-white uppercase font-mono font-bold tracking-widest"
+                        />
+                      </div>
+                      <p className="text-[9px] text-white/20 ml-2">например: NL для Нидерландов, SG для Сингапура.</p>
+                    </div>
+
+                    {/* City name */}
+                    <div className="space-y-4">
+                      <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">
+                        Город расположения
+                      </label>
+                      <div className="relative group">
+                        <div className="absolute inset-y-0 left-4 flex items-center text-white/20 group-focus-within:text-indigo-400 transition-colors">
+                          <MapPin size={16} />
+                        </div>
+                        <input
+                          required
+                          value={formData.city}
+                          onChange={e => setFormData({ ...formData, city: e.target.value })}
+                          placeholder="Amsterdam, Singapore..."
+                          className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:border-white/20 transition-all text-white font-medium"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* STEP 3: LIMITS, CATEGORIES & PRESETS */}
+            {activeStep === 3 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                {/* Expiry Pill Presets & Calendar Picker */}
+                <div className="space-y-3 bg-white/[0.01] border border-white/5 p-6 rounded-3xl">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888]">Срок действия ключа/подписки</label>
+                    <span className="text-[9px] text-amber-500 font-bold uppercase tracking-widest flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> auto-inactive system active
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { l: '7 Дней', v: 7 },
+                      { l: '30 Дней', v: 30 },
+                      { l: '90 Дней', v: 90 },
+                      { l: '180 Дней', v: 180 },
+                      { l: '1 Год', v: 365 }
+                    ].map(p => (
+                      <button
+                        key={p.l}
+                        type="button"
+                        onClick={() => applyPresetDate(p.v)}
+                        className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-xl text-[10px] uppercase tracking-wider font-bold transition-colors"
+                      >
+                        {p.l}
+                      </button>
+                    ))}
+                  </div>
+
+                  <input
+                    required
+                    type="date"
+                    value={formData.expiryDate}
+                    onChange={e => setFormData({ ...formData, expiryDate: e.target.value })}
+                    className="w-full bg-[#0d0d0d] border border-white/5 rounded-2xl p-4 text-xs font-mono text-white/70 focus:outline-none focus:border-white/20 mt-2"
+                  />
+                  <p className="text-[9px] text-white/20">
+                    * По достижении выбранной даты сервер автоматически скроется с главной и отправится во вкладку "Архив/Неактивные".
+                  </p>
+                </div>
+
+                {/* Performance selectors */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Category */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">
+                      Основное назначение
+                    </label>
+                    <select
+                      value={formData.category}
+                      onChange={e => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full bg-[#0d0d0d] border border-white/5 rounded-2xl p-4 text-xs text-white/70 focus:outline-none"
+                    >
+                      <option value="Общий обход block 🌐">Общий обход block 🌐</option>
+                      <option value="Для игр 🎮">Для игр 🎮</option>
+                      <option value="Для работы/учебы 💼">Для работы/учебы 💼</option>
+                      <option value="Для YouTube & Streaming 📺">Для YouTube & Streaming 📺</option>
+                      <option value="Высокая защита 🔐">Высокая защита 🔐</option>
+                    </select>
+                  </div>
+
+                  {/* speedLimit */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">
+                      Ограничение пропускной способности
+                    </label>
+                    <select
+                      value={formData.speedLimit}
+                      onChange={e => setFormData({ ...formData, speedLimit: e.target.value })}
+                      className="w-full bg-[#0d0d0d] border border-white/5 rounded-2xl p-4 text-xs text-white/70 focus:outline-none"
+                    >
+                      <option value="Без лимита">Без лимита (Capped by host)</option>
+                      <option value="10 Mbps">10 Mbps</option>
+                      <option value="50 Mbps">50 Mbps</option>
+                      <option value="100 Mbps">100 Mbps</option>
+                      <option value="500 Mbps">500 Mbps</option>
+                      <option value="1 Gbps">1 Gbps</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Custom Decorative Icon */}
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1 block">
+                    Визуальный маркер (Иконка)
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { key: 'Globe', label: '🌐 Спутник' },
+                      { key: 'Server', label: '🖥️ Виртуальн.' },
+                      { key: 'Zap', label: '⚡ Молния-Турбо' },
+                      { key: 'Flame', label: '🔥 Горячий' },
+                      { key: 'Shield', label: '🛡️ Защищённый' },
+                      { key: 'Sparkles', label: '✨ Магический' },
+                      { key: 'Heart', label: '❤️ Избранное' }
+                    ].map((ic) => (
+                      <button
+                        key={ic.key}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, customIcon: ic.key })}
+                        className={`px-3 py-1.5 rounded-xl text-[10px] font-mono border transition-all ${
+                          formData.customIcon === ic.key
+                            ? 'bg-white text-black font-extrabold border-transparent'
                             : 'bg-white/5 hover:bg-white/10 text-white/50 border-white/5'
                         }`}
                       >
-                        {cl}
+                        {ic.label}
                       </button>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Privacy and Anonymity options */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                {/* Privacy check */}
-                <label className="flex items-center gap-3 cursor-pointer bg-white/[0.02] border border-white/5 p-4 rounded-2xl hover:bg-white/[0.04] transition-all">
-                  <input
-                    type="checkbox"
-                    checked={formData.isPrivate}
-                    onChange={e => setFormData({ ...formData, isPrivate: e.target.checked })}
-                    className="accent-indigo-500 w-4 h-4"
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-xs text-white/70 font-semibold">Приватная публикация</span>
-                    <span className="text-[9px] text-white/30">Скрывает сервер из общего списка</span>
+                {/* Clients support */}
+                <div className="space-y-3">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1 block">
+                    Где тестировалось / Рекомендуемые клиенты
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {['v2rayN', 'Sing-box', 'Nekobox', 'Shadowrocket', 'Hiddify', 'v2rayTun', 'Happ'].map((cl) => {
+                      const isChecked = formData.allowedClients.includes(cl);
+                      return (
+                        <button
+                          key={cl}
+                          type="button"
+                          onClick={() => {
+                            const updated = isChecked
+                              ? formData.allowedClients.filter(c => c !== cl)
+                              : [...formData.allowedClients, cl];
+                            setFormData({ ...formData, allowedClients: updated });
+                          }}
+                          className={`px-3 py-1.5 rounded-xl text-[10px] font-semibold border transition-all ${
+                            isChecked
+                              ? postType === 'subscription' ? 'bg-emerald-600 border-transparent text-white' : 'bg-indigo-600 border-transparent text-white'
+                              : 'bg-white/5 text-white/50 border-white/5 hover:bg-white/10'
+                          }`}
+                        >
+                          {cl}
+                        </button>
+                      );
+                    })}
                   </div>
-                </label>
+                </div>
+              </motion.div>
+            )}
 
-                {/* Anonymity check */}
-                <label className="flex items-center gap-3 cursor-pointer bg-white/[0.02] border border-[#ff3f5e]/10 p-4 rounded-2xl hover:bg-white/[0.04] transition-all">
-                  <input
-                    type="checkbox"
-                    checked={formData.hideAuthor}
-                    onChange={e => setFormData({ ...formData, hideAuthor: e.target.checked })}
-                    className="accent-[#ff3f5e] w-4 h-4"
+            {/* STEP 4: PRIVACY, SYSTEM NOTATIONS, AND CONFIRMATION */}
+            {activeStep === 4 && (
+              <motion.div
+                key="step4"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                {/* Notes explainer */}
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-[#888] ml-1">
+                    Инструкции или примечания для пользователей
+                  </label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                    placeholder="Например: 'Рекомендуется прописать SNI: m.youtube.com в случае медленной загрузки видео' или 'Пароль отсутствует'."
+                    maxLength={400}
+                    className="w-full h-24 bg-white/[0.02] border border-white/5 focus:border-white/15 rounded-2xl p-4 text-xs focus:outline-none transition-all resize-none text-white/80"
                   />
-                  <div className="flex flex-col">
-                    <span className="text-xs text-white/70 font-semibold">Анонимное предложение</span>
-                    <span className="text-[9px] text-white/30">Скрывает автора и ссылку на профиль</span>
-                  </div>
-                </label>
+                </div>
 
-              </div>
-            </motion.div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-            {/* Active Date expiry */}
-            <div className="space-y-4">
-              <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1">
-                Активен до
-              </label>
-              <input
-                required
-                type="date"
-                value={formData.expiryDate}
-                onChange={e => setFormData({ ...formData, expiryDate: e.target.value })}
-                className="w-full bg-white/2 border border-white/5 rounded-2xl p-4 text-sm focus:outline-none focus:border-white/20 transition-all text-white/60"
-              />
-            </div>
-
-            {/* Scheduled publication (запланированное опубликование) */}
-            <div className="space-y-4">
-              <label className="text-[10px] uppercase font-bold tracking-widest text-white/30 ml-1 flex justify-between items-center">
-                <span>Отложенный старт</span>
-                <span className="text-[8px] text-[#ffdd67] lowercase">(опционально)</span>
-              </label>
-              <div className="space-y-2">
-                <label className="flex items-center gap-3 cursor-pointer bg-white/[0.02] border border-white/5 p-4 rounded-2xl hover:bg-white/[0.04]">
-                  <input 
-                    type="checkbox"
-                    checked={formData.isScheduled}
-                    onChange={e => setFormData({ ...formData, isScheduled: e.target.checked })}
-                    className="accent-indigo-500 w-4 h-4"
-                  />
-                  <span className="text-xs text-white/60 font-medium">Запланировать публикацию?</span>
-                </label>
-
-                {formData.isScheduled && (
-                  <div className="relative animate-slideDown">
-                    <input 
-                      required={formData.isScheduled}
-                      type="datetime-local"
-                      value={formData.scheduledAt}
-                      onChange={e => setFormData({ ...formData, scheduledAt: e.target.value })}
-                      className="w-full bg-white/2 border border-indigo-500/20 focus:border-indigo-500/40 rounded-2xl p-4 text-xs font-mono text-white/80 focus:outline-none"
+                {/* Anonymous / Private options */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <label className="flex items-center gap-3 cursor-pointer bg-white/[0.02] border border-white/5 p-4 rounded-2xl hover:bg-white/[0.03] transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={formData.isPrivate}
+                      onChange={e => setFormData({ ...formData, isPrivate: e.target.checked })}
+                      className="accent-indigo-500 w-4 h-4"
                     />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-white/75 font-semibold">Приватный сервер</span>
+                      <span className="text-[9px] text-white/30">Скрывает сервер из основного листинга главной (только по direct ссылке)</span>
+                    </div>
+                  </label>
 
-          <div className="pt-6">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`w-full py-5 rounded-2xl flex items-center justify-center gap-3 font-bold uppercase tracking-[0.2em] transition-all text-xs ${
-                isSubmitting
-                ? 'bg-white/5 text-white/20 cursor-not-allowed'
-                : postType === 'subscription' 
-                ? 'bg-emerald-500 text-white shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(16,185,129,0.3)]'
-                : 'bg-indigo-500 text-white shadow-[0_0_30px_rgba(99,102,241,0.2)] hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(99,102,241,0.3)]'
-              }`}
-            >
-              {isSubmitting ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-              {isSubmitting ? 'Отправка...' : postType === 'subscription' ? 'Опубликовать папку-подписку' : 'Опубликовать ключ VLESS'}
-            </button>
-            <p className="mt-4 text-[9px] text-white/20 text-center leading-relaxed italic px-4">
-              * Все добавленные публикации автоматически появляются на главной странице мгновенно без премодерации.
-            </p>
+                  <label className="flex items-center gap-3 cursor-pointer bg-white/[0.02] border border-white/5 p-4 rounded-2xl hover:bg-white/[0.03] transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={formData.hideAuthor}
+                      onChange={e => setFormData({ ...formData, hideAuthor: e.target.checked })}
+                      className="accent-rose-500 w-4 h-4"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-xs text-white/75 font-semibold">Анонимное предложение</span>
+                      <span className="text-[9px] text-white/30">Скроет ваше авторство и ссылку на профиль со страницы серверов</span>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Deferred timing check */}
+                <div className="space-y-4">
+                  <label className="flex items-center gap-3 cursor-pointer bg-white/[0.02] border border-white/5 p-4 rounded-2xl hover:bg-white/[0.03]">
+                    <input 
+                      type="checkbox"
+                      checked={formData.isScheduled}
+                      onChange={e => setFormData({ ...formData, isScheduled: e.target.checked })}
+                      className="accent-indigo-500 w-4 h-4"
+                    />
+                    <span className="text-xs text-white/80 font-semibold">Запланировать старт позже? (Отложенный запуск)</span>
+                  </label>
+
+                  {formData.isScheduled && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="relative"
+                    >
+                      <input 
+                        required={formData.isScheduled}
+                        type="datetime-local"
+                        value={formData.scheduledAt}
+                        onChange={e => setFormData({ ...formData, scheduledAt: e.target.value })}
+                        className="w-full bg-[#0d0d0d] border border-indigo-500/20 focus:border-indigo-500/40 rounded-2xl p-4 text-xs font-mono text-white/80 focus:outline-none"
+                      />
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Summary Pre-publication review */}
+                <div className="p-5 rounded-2xl border bg-indigo-500/2 border-indigo-500/10 space-y-3">
+                  <div className="text-[10px] uppercase font-bold tracking-widest text-indigo-400 flex items-center gap-1">
+                    <Info className="w-3.5 h-3.5" /> Сводная информация публикации
+                  </div>
+                  <ul className="space-y-1.5 text-xs text-white/60 leading-relaxed">
+                    <li>• Тип: <strong>{postType === 'vless' ? `Ключ ${formData.protocol}` : 'Закодированная подписка-папка'}</strong></li>
+                    <li>• Название: <strong>{postType === 'vless' ? formData.name : formData.subscriptionName}</strong></li>
+                    <li>• Активен до: <strong>{formData.expiryDate} (Будет сконвертировано в базу автоматически)</strong></li>
+                    <li>• Степень приватности: <strong>{formData.isPrivate ? 'Приватная (доступ по direct-ссылке)' : 'Публичная на главной'}</strong></li>
+                  </ul>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Stepper Wizard Bottom Controls Buttons */}
+          <div className="flex items-center justify-between gap-4 pt-6 mt-10 border-t border-white/5 relative z-10">
+            {activeStep > 1 ? (
+              <button
+                type="button"
+                onClick={handlePrevStep}
+                className="px-6 py-4 bg-white/5 hover:bg-white/10 active:scale-95 transition-all rounded-xl font-bold uppercase tracking-widest text-[10px] text-white"
+              >
+                Назад
+              </button>
+            ) : (
+              <div />
+            )}
+
+            {activeStep < 4 ? (
+              <button
+                type="button"
+                onClick={handleNextStep}
+                className={`px-8 py-4 active:scale-[0.98] transition-all rounded-xl font-bold uppercase tracking-widest text-[10px] text-white flex items-center gap-1.5 ${
+                  postType === 'subscription' ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-indigo-500 hover:bg-indigo-600'
+                }`}
+              >
+                Далее
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`px-8 py-4 rounded-xl flex items-center justify-center gap-2 font-bold uppercase tracking-widest text-[10px] transition-all ${
+                  isSubmitting
+                  ? 'bg-white/5 text-white/20 cursor-not-allowed'
+                  : postType === 'subscription' 
+                  ? 'bg-emerald-500 text-white shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:scale-[1.02]'
+                  : 'bg-indigo-500 text-white shadow-[0_0_25px_rgba(99,102,241,0.3)] hover:scale-[1.02]'
+                }`}
+              >
+                {isSubmitting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                {isSubmitting ? 'Отправка...' : 'Опубликовать'}
+              </button>
+            )}
           </div>
         </form>
       </motion.div>
@@ -901,7 +1361,7 @@ export default function SuggestServerPage({ currentUser, userProfile }: SuggestS
         <div className="space-y-3">
           {historyItems.length > 0 ? (
             [...historyItems].reverse().map((item: any) => (
-              <div key={item.id} className="glass p-4 rounded-2xl flex items-center justify-between group">
+              <div key={item.id} className="glass p-4 rounded-2xl flex items-center justify-between group border border-white/5">
                 <div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-bold">{item.name}</span>

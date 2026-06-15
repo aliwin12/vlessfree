@@ -620,9 +620,18 @@ export default function UserProfilePage() {
     setSavingPost(true);
     
     try {
+      // Auto-format expiryDate from YYYY-MM-DD to DD.MM.YYYY if needed
+      let formattedEditExpiry = editPostExpiryDate.trim();
+      if (formattedEditExpiry.includes('-')) {
+        const parts = formattedEditExpiry.split('-');
+        if (parts.length === 3) {
+          formattedEditExpiry = `${parts[2]}.${parts[1]}.${parts[0]}`;
+        }
+      }
+
       const payload = {
         name: editPostName.trim(),
-        expiryDate: editPostExpiryDate,
+        expiryDate: formattedEditExpiry,
         status: editPostStatus,
         notes: editPostNotes.trim(),
         category: editPostCategory,
@@ -642,7 +651,7 @@ export default function UserProfilePage() {
       if (editingPost.serverId) {
          await updateDoc(doc(db, 'servers', editingPost.serverId), {
            name: editPostName.trim(),
-           expiryDate: editPostExpiryDate,
+           expiryDate: formattedEditExpiry,
            status: editPostStatus,
            notes: editPostNotes.trim(),
            category: editPostCategory,
@@ -663,7 +672,7 @@ export default function UserProfilePage() {
            if (docRef.data().config === editingPost.config) {
              await updateDoc(doc(db, 'servers', docRef.id), {
                name: editPostName.trim(),
-               expiryDate: editPostExpiryDate,
+               expiryDate: formattedEditExpiry,
                status: editPostStatus,
                notes: editPostNotes.trim(),
                category: editPostCategory,
