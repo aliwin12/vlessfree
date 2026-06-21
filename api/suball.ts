@@ -37,27 +37,74 @@ export default async function handler(req: any, res: any) {
     console.error("Firestore error:", error);
   }
 
-  const userAgent = req.headers['user-agent'] || '';
-  
-  const configs = servers.filter(s => s && s.status === 'online' && s.config && !s.isUserPost).map(s => {
-    let config = s.config;
-    let displayName = s.name || 'Server';
-    
-    if (s.country || s.city) {
-      const location = [s.country, s.city].filter(Boolean).join(', ');
-      if (location) {
-        displayName += ` / ${location}`;
+  const isServerActive = (s: any) => {
+    if (!s) return false;
+    const isOnlineStatus = s.status === 'online' || s.status === 'unstable';
+    if (!isOnlineStatus) return false;
+    if (s.isComingSoon) return false;
+    if (s.isUserPost) return false;
+    if (s.isPrivate) return false;
+
+    if (s.expiryDate) {
+      let expiry: Date | null = null;
+      const expStr = String(s.expiryDate).trim();
+      if (expStr.includes('.')) {
+        const parts = expStr.split('.');
+        if (parts.length === 3) {
+          const [day, month, year] = parts.map(Number);
+          if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+            expiry = new Date(year, month - 1, day, 23, 59, 59, 999);
+          }
+        }
+      } else if (expStr.includes('-')) {
+        const parts = expStr.split('-');
+        if (parts.length === 3) {
+          const [year, month, day] = parts.map(Number);
+          if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+            expiry = new Date(year, month - 1, day, 23, 59, 59, 999);
+          }
+        }
+      }
+      if (expiry) {
+        const now = new Date();
+        if (expiry < now) return false;
       }
     }
+    return true;
+  };
 
-    if (config.includes('#')) {
-      config = config.split('#')[0] + '#' + encodeURIComponent(displayName);
-    } else {
-      config = config + '#' + encodeURIComponent(displayName);
+  const userAgent = req.headers['user-agent'] || '';
+  
+  const configsList: string[] = [];
+  const activeServers = servers.filter(isServerActive);
+
+  for (const s of activeServers) {
+    if (!s.config) continue;
+    const lines = s.config.split(/[\r\n]+/).map((line: string) => line.trim()).filter(Boolean);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      let displayName = s.name || 'Server';
+      if (lines.length > 1) {
+        displayName += ` [${i + 1}]`;
+      }
+      if (s.country || s.city) {
+        const location = [s.country, s.city].filter(Boolean).join(', ');
+        if (location) {
+          displayName += ` / ${location}`;
+        }
+      }
+
+      let cleanedConfig = line;
+      if (line.includes('#')) {
+        cleanedConfig = line.split('#')[0] + '#' + encodeURIComponent(displayName);
+      } else {
+        cleanedConfig = line + '#' + encodeURIComponent(displayName);
+      }
+      configsList.push(cleanedConfig);
     }
-    return config;
-  }).join('\n');
+  }
 
+  const configs = configsList.join('\n');
   const base64Content = Buffer.from(configs).toString('base64');
 
   // Simple detection for non-client access

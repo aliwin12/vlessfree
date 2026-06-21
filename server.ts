@@ -199,128 +199,12 @@ async function startServer() {
         return protocols.some(proto => lowerLine.startsWith(proto));
       });
 
-      // Format server names inside subscription client profile matching user specification
-      const formattedConfigs = lines.map((configStr, idx) => {
-        let configWithoutTag = configStr;
-        let originalTag = '';
-        if (configStr.includes('#')) {
-          const parts = configStr.split('#');
-          configWithoutTag = parts[0];
-          originalTag = parts.slice(1).join('#');
-        }
-
-        let decodedTag = '';
-        if (originalTag) {
-          try {
-            decodedTag = decodeURIComponent(originalTag).trim();
-          } catch (e) {
-            decodedTag = originalTag.trim();
-          }
-        }
-
-        // Determine protocol label
-        let protoLabel = 'VLESS';
-        const lowerConfig = configStr.toLowerCase();
-        if (lowerConfig.startsWith('vmess://')) protoLabel = 'VMess';
-        else if (lowerConfig.startsWith('ss://')) protoLabel = 'Shadowsocks';
-        else if (lowerConfig.startsWith('ssr://')) protoLabel = 'SSR';
-        else if (lowerConfig.startsWith('trojan://')) protoLabel = 'Trojan';
-        else if (lowerConfig.startsWith('hysteria2://') || lowerConfig.startsWith('hysteria://')) protoLabel = 'Hysteria2';
-        else if (lowerConfig.startsWith('tuic://')) protoLabel = 'TUIC';
-
-        // Extract host and SNI to check for location clues
-        let host = '';
-        let sni = '';
-        try {
-          const mainPart = configWithoutTag.substring(configWithoutTag.indexOf('://') + 3);
-          const atIdx = mainPart.indexOf('@');
-          let socketStr = atIdx !== -1 ? mainPart.substring(atIdx + 1) : mainPart;
-          
-          const qIdx = socketStr.indexOf('?');
-          if (qIdx !== -1) {
-            const paramsStr = socketStr.substring(qIdx + 1);
-            socketStr = socketStr.substring(0, qIdx);
-            
-            const params = paramsStr.split('&');
-            for (const p of params) {
-              if (p.toLowerCase().startsWith('sni=')) {
-                sni = p.substring(4);
-              }
-            }
-          }
-          
-          const colonIdx = socketStr.lastIndexOf(':');
-          host = colonIdx !== -1 ? socketStr.substring(0, colonIdx) : socketStr;
-        } catch (e) {
-          // ignore
-        }
-
-        // Match country using keyword scanning
-        const searchPool = `${decodedTag} ${host} ${sni}`.toLowerCase();
-        
-        const countriesReference = [
-          { keywords: ['singapore', 'сингапур', 'sg', '🇸🇬'], flag: '🇸🇬', nameRu: 'Сингапур' },
-          { keywords: ['usa', 'сша', 'america', 'united states', 'new york', 'ny', 'us', '🇺🇸'], flag: '🇺🇸', nameRu: 'США' },
-          { keywords: ['germany', 'германия', 'de', 'frankfurt', '🇩🇪'], flag: '🇩🇪', nameRu: 'Германия' },
-          { keywords: ['netherlands', 'нидерланды', 'amsterdam', 'nl', '🇳🇱', 'neth'], flag: '🇳🇱', nameRu: 'Нидерланды' },
-          { keywords: ['finland', 'финляндия', 'fi', 'helsinki', '🇫🇮'], flag: '🇫🇮', nameRu: 'Финляндия' },
-          { keywords: ['poland', 'польша', 'pl', 'warsaw', 'warszawa', '🇵🇱'], flag: '🇵🇱', nameRu: 'Польша' },
-          { keywords: ['france', 'франция', 'fr', 'paris', '🇫🇷'], flag: '🇫🇷', nameRu: 'Франция' },
-          { keywords: ['turkey', 'турция', 'tr', 'istanbul', '🇹🇷'], flag: '🇹🇷', nameRu: 'Турция' },
-          { keywords: ['japan', 'япония', 'jp', 'tokyo', '🇯🇵'], flag: '🇯🇵', nameRu: 'Япония' },
-          { keywords: ['russia', 'россия', 'ru', 'moscow', 'мск', '🇷🇺'], flag: '🇷🇺', nameRu: 'Россия' },
-          { keywords: ['ukraine', 'украина', 'ua', 'kyiv', 'киев', '🇺🇦'], flag: '🇺🇦', nameRu: 'Украина' },
-          { keywords: ['kazakhstan', 'казахстан', 'kz', 'almaty', 'алматы', '🇰🇿'], flag: '🇰🇿', nameRu: 'Казахстан' },
-          { keywords: ['united kingdom', 'london', 'gb', 'uk', 'англия', 'великобритания', '🇬🇧', 'britain'], flag: '🇬🇧', nameRu: 'Великобритания' },
-          { keywords: ['sweden', 'швеция', 'se', 'stockholm', '🇸🇪'], flag: '🇸🇪', nameRu: 'Швеция' },
-          { keywords: ['switzerland', 'швейцария', 'ch', 'zurich', '🇨🇭'], flag: '🇨🇭', nameRu: 'Швейцария' },
-          { keywords: ['austria', 'австрия', 'at', 'vienna', '🇦🇹'], flag: '🇦🇹', nameRu: 'Австрия' },
-          { keywords: ['spain', 'испания', 'es', 'madrid', '🇪🇸'], flag: '🇪🇸', nameRu: 'Испания' },
-          { keywords: ['italy', 'италия', 'it', 'milan', 'roma', '🇮🇹'], flag: '🇮🇹', nameRu: 'Италия' },
-          { keywords: ['canada', 'канада', 'ca', 'toronto', '🇨🇦'], flag: '🇨🇦', nameRu: 'Канада' },
-          { keywords: ['hong kong', 'гонконг', 'hk', '🇭🇰'], flag: '🇭🇰', nameRu: 'Гонконг' }
-        ];
-
-        let matched = countriesReference.find(c => {
-          return c.keywords.some(kw => searchPool.includes(kw));
-        });
-
-        let geoPrefix = '🌐 Global';
-        if (matched) {
-          geoPrefix = `${matched.flag} ${matched.nameRu}`;
-        } else if (decodedTag) {
-          // Keep original tag partially if it has non-empty text, truncating extreme length
-          geoPrefix = decodedTag.replace(/[|#@]/g, '').trim().substring(0, 24);
-        }
-
-        const customTagName = `${geoPrefix} | ${protoLabel} | от @${username} [${idx + 1}]`;
-
-        // VMess uses JSON inside its base64 config, and appending #tag at the end breaks many client decoders.
-        // We modify the "ps" tag inside VMess configurations instead.
-        if (lowerConfig.startsWith('vmess://')) {
-          try {
-            const vmessB64 = configWithoutTag.substring(8).trim();
-            const jsonStr = Buffer.from(vmessB64, 'base64').toString('utf-8');
-            const jsonObj = JSON.parse(jsonStr);
-            jsonObj.ps = customTagName;
-            const newVmessB64 = Buffer.from(JSON.stringify(jsonObj)).toString('base64');
-            return `vmess://${newVmessB64}`;
-          } catch (e) {
-            // Fallback to standard tag extension if JSON parsing fails
-            return `${configWithoutTag}#${encodeURIComponent(customTagName)}`;
-          }
-        }
-
-        return `${configWithoutTag}#${encodeURIComponent(customTagName)}`;
-      }).join('\n');
-
       const reqHost = req.headers.host ? `${req.protocol}://${req.headers.host}` : 'https://vlessfree.vercel.app';
       
       const safeTitleName = getSlug(foundSub.name || 'sub').replace(/-/g, ' ');
       const safeTitle = `${safeTitleName} | by @${foundSub.username} | vlessfree`;
       
-      // Fallback: If no recognized protocol lines could be parsed, send the original unpacked configurations as is
-      const finalConfigsToSend = (lines.length > 0) ? formattedConfigs : unpackedText;
+      const finalConfigsToSend = (lines.length > 0) ? lines.join('\n') : unpackedText.trim();
       const base64Content = Buffer.from(finalConfigsToSend).toString('base64');
 
       res.setHeader('Content-Type', 'text/plain; charset=utf-8');
@@ -359,27 +243,74 @@ async function startServer() {
       console.error("Firestore error:", error);
     }
 
-    const userAgent = req.headers['user-agent'] || '';
+    const isServerActive = (s: any) => {
+      if (!s) return false;
+      const isOnlineStatus = s.status === 'online' || s.status === 'unstable';
+      if (!isOnlineStatus) return false;
+      if (s.isComingSoon) return false;
+      if (s.isUserPost) return false;
+      if (s.isPrivate) return false;
 
-    const configs = servers.filter(s => s && s.status === 'online' && s.config && !s.isUserPost).map(s => {
-      let config = s.config;
-      let displayName = s.name || 'Server';
-      
-      if (s.country || s.city) {
-        const location = [s.country, s.city].filter(Boolean).join(', ');
-        if (location) {
-          displayName += ` / ${location}`;
+      if (s.expiryDate) {
+        let expiry: Date | null = null;
+        const expStr = String(s.expiryDate).trim();
+        if (expStr.includes('.')) {
+          const parts = expStr.split('.');
+          if (parts.length === 3) {
+            const [day, month, year] = parts.map(Number);
+            if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+              expiry = new Date(year, month - 1, day, 23, 59, 59, 999);
+            }
+          }
+        } else if (expStr.includes('-')) {
+          const parts = expStr.split('-');
+          if (parts.length === 3) {
+            const [year, month, day] = parts.map(Number);
+            if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+              expiry = new Date(year, month - 1, day, 23, 59, 59, 999);
+            }
+          }
+        }
+        if (expiry) {
+          const now = new Date();
+          if (expiry < now) return false;
         }
       }
+      return true;
+    };
 
-      if (config.includes('#')) {
-        config = config.split('#')[0] + '#' + encodeURIComponent(displayName);
-      } else {
-        config = config + '#' + encodeURIComponent(displayName);
+    const userAgent = req.headers['user-agent'] || '';
+
+    const configsList: string[] = [];
+    const activeServers = servers.filter(isServerActive);
+
+    for (const s of activeServers) {
+      if (!s.config) continue;
+      const lines = s.config.split(/[\r\n]+/).map((line: string) => line.trim()).filter(Boolean);
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        let displayName = s.name || 'Server';
+        if (lines.length > 1) {
+          displayName += ` [${i + 1}]`;
+        }
+        if (s.country || s.city) {
+          const location = [s.country, s.city].filter(Boolean).join(', ');
+          if (location) {
+            displayName += ` / ${location}`;
+          }
+        }
+
+        let cleanedConfig = line;
+        if (line.includes('#')) {
+          cleanedConfig = line.split('#')[0] + '#' + encodeURIComponent(displayName);
+        } else {
+          cleanedConfig = line + '#' + encodeURIComponent(displayName);
+        }
+        configsList.push(cleanedConfig);
       }
-      return config;
-    }).join('\n');
+    }
 
+    const configs = configsList.join('\n');
     const base64Content = Buffer.from(configs).toString('base64');
 
     const isBrowser = checkIsBrowser(req);
